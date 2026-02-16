@@ -14,9 +14,12 @@ from app.api.v1 import api_router
 # Set up logging
 logger = setup_logging()
 
-# Create database tables (commented out - run migrations instead)
-# Base.metadata.create_all(bind=engine)
-logger.info("💾 Database migrations should be run via Alembic: 'alembic upgrade head'")
+# Import all models so they register with Base
+from app.models.user import User, Tenant  # noqa: E402
+
+# Create database tables automatically for local dev
+Base.metadata.create_all(bind=engine)
+logger.info("💾 Database tables created/verified")
 
 
 # Initialize FastAPI app with enhanced metadata

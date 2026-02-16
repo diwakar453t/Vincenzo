@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
+import os
 
 
 class Settings(BaseSettings):
@@ -10,13 +11,13 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
     
-    # Database
-    DATABASE_URL: str = "postgresql://preskool_user:preskool_password@localhost:5432/preskool_db"
+    # Database - defaults to SQLite for local dev, use PostgreSQL in production
+    DATABASE_URL: str = "sqlite:///./preskool.db"
     
-    # Redis
+    # Redis (optional for local dev)
     REDIS_URL: str = "redis://localhost:6379"
     
-    # Keycloak
+    # Keycloak (optional for local dev)
     KEYCLOAK_URL: str = "http://localhost:8080"
     KEYCLOAK_REALM: str = "preskool"
     KEYCLOAK_CLIENT_ID: str = "preskool-api"
@@ -29,7 +30,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:5173"]
+    CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:5173"]
     
     # File Upload
     UPLOAD_DIR: str = "uploads"
