@@ -42,6 +42,7 @@ import {
     Snackbar,
     Alert,
     LinearProgress,
+    Skeleton,
 } from '@mui/material';
 import {
     Search,
@@ -61,7 +62,7 @@ import {
 import PageWrapper from '../../components/ui/PageWrapper';
 import PageHeader from '../../components/ui/PageHeader';
 import EmptyState from '../../components/ui/EmptyState';
-import SkeletonTable from '../../components/ui/SkeletonTable';
+
 
 export default function StudentsListPage() {
     const dispatch = useDispatch<AppDispatch>();

@@ -6,10 +6,9 @@ import {
 import {
     Person, Email, Phone, CalendarMonth, Badge, Edit, School, Home,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+
 
 export default function ProfilePage() {
-    const navigate = useNavigate();
     const { user } = useSelector((state: RootState) => state.auth);
 
     const getAvatarColor = () => {
@@ -51,7 +50,7 @@ export default function ProfilePage() {
                                 boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
                                 mb: 2,
                             }}>
-                                {user?.full_name ? user.full_name.split(' ').map(n => n[0]).join('') : '?'}
+                                {user?.full_name ? user.full_name.split(' ').map((n: string) => n[0]).join('') : '?'}
                             </Avatar>
                             <Typography variant="h5" fontWeight={700}>{user?.full_name || 'User Name'}</Typography>
                             <Typography variant="body2" color="text.secondary" mb={1}>{user?.username || 'username'}</Typography>
