@@ -1,0 +1,216 @@
+{
+    "annotations": {
+        "list": []
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 1,
+    "id": null,
+    "links": [],
+    "panels": [
+        {
+            "title": "Trace Search",
+            "type": "traces",
+            "gridPos": {
+                "h": 12,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "datasource": "Jaeger",
+            "targets": [
+                {
+                    "queryType": "search",
+                    "service": "$service",
+                    "operation": "$operation",
+                    "tags": "tenant.id=$tenant_id",
+                    "minDuration": "$min_duration",
+                    "limit": 50,
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "title": "Service Map",
+            "type": "nodeGraph",
+            "gridPos": {
+                "h": 10,
+                "w": 12,
+                "x": 0,
+                "y": 12
+            },
+            "datasource": "Jaeger",
+            "targets": [
+                {
+                    "queryType": "dependencyGraph",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "title": "P95 Latency by Operation",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 10,
+                "w": 12,
+                "x": 12,
+                "y": 12
+            },
+            "datasource": "Prometheus",
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, path_template))",
+                    "legendFormat": "{{ path_template }}",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s"
+                }
+            }
+        },
+        {
+            "title": "Slowest Traces (>1s)",
+            "type": "traces",
+            "gridPos": {
+                "h": 10,
+                "w": 24,
+                "x": 0,
+                "y": 22
+            },
+            "datasource": "Jaeger",
+            "targets": [
+                {
+                    "queryType": "search",
+                    "service": "preskool-backend",
+                    "minDuration": "1s",
+                    "limit": 20,
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "title": "Error Traces",
+            "type": "traces",
+            "gridPos": {
+                "h": 10,
+                "w": 24,
+                "x": 0,
+                "y": 32
+            },
+            "datasource": "Jaeger",
+            "targets": [
+                {
+                    "queryType": "search",
+                    "service": "preskool-backend",
+                    "tags": "error=true",
+                    "limit": 20,
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "title": "Span Count by Service",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 42
+            },
+            "datasource": "Prometheus",
+            "targets": [
+                {
+                    "expr": "sum(rate(traces_spanmetrics_calls_total[5m])) by (service_name)",
+                    "legendFormat": "{{ service_name }}",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "ops"
+                }
+            }
+        },
+        {
+            "title": "DB Query Traces (Slow)",
+            "type": "traces",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 42
+            },
+            "datasource": "Jaeger",
+            "targets": [
+                {
+                    "queryType": "search",
+                    "service": "preskool-backend",
+                    "operation": "db.*",
+                    "minDuration": "100ms",
+                    "limit": 20,
+                    "refId": "A"
+                }
+            ]
+        }
+    ],
+    "schemaVersion": 39,
+    "tags": [
+        "preskool",
+        "tracing",
+        "jaeger"
+    ],
+    "templating": {
+        "list": [
+            {
+                "name": "service",
+                "type": "query",
+                "datasource": "Jaeger",
+                "query": "services",
+                "refresh": 2,
+                "current": {
+                    "text": "preskool-backend",
+                    "value": "preskool-backend"
+                }
+            },
+            {
+                "name": "operation",
+                "type": "query",
+                "datasource": "Jaeger",
+                "query": "operations|$service",
+                "refresh": 2,
+                "includeAll": true,
+                "current": {
+                    "selected": true,
+                    "text": "All",
+                    "value": "$__all"
+                }
+            },
+            {
+                "name": "tenant_id",
+                "type": "textbox",
+                "current": {
+                    "text": "",
+                    "value": ""
+                }
+            },
+            {
+                "name": "min_duration",
+                "type": "textbox",
+                "current": {
+                    "text": "",
+                    "value": ""
+                }
+            }
+        ]
+    },
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "timezone": "browser",
+    "title": "PreSkool ERP — Distributed Tracing",
+    "uid": "preskool-tracing",
+    "version": 1
+}

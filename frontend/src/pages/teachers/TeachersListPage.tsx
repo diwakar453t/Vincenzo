@@ -1,0 +1,262 @@
+import { useEffect, useState, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import type { AppDispatch, RootState } from '../../store/store';
+import {
+    fetchTeachers,
+    deleteTeacher,
+    setSearchQuery,
+    setStatusFilter,
+    setPage,
+    clearError,
+} from '../../store/slices/teachersSlice';
+import {
+    Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer,
+    TableHead, TableRow, TablePagination, TextField, InputAdornment, Chip,
+    IconButton, Avatar, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions,
+    MenuItem, Select, FormControl, InputLabel, Grid, Card, CardContent,
+    Snackbar, Alert, LinearProgress, Breadcrumbs, Link, Skeleton,
+} from '@mui/material';
+import {
+    Search, Add, Edit, Delete, Visibility, People, PersonAdd, CheckCircle, Cancel, Refresh, School,
+} from '@mui/icons-material';
+
+export default function TeachersListPage() {
+    const dispatch = useDispatch<AppDispatch>();
+    const navigate = useNavigate();
+    const { teachers, total, skip, limit, loading, error, searchQuery, statusFilter } = useSelector(
+        (state: RootState) => state.teachers
+    );
+
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [selectedTeacherId, setSelectedTeacherId] = useState<number | null>(null);
+    const [viewDialogOpen, setViewDialogOpen] = useState(false);
+    const [viewTeacher, setViewTeacher] = useState<any>(null);
+    const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+        open: false, message: '', severity: 'success',
+    });
+
+    const loadTeachers = useCallback(() => {
+        dispatch(fetchTeachers({
+            skip, limit,
+            search: searchQuery || undefined,
+            status: statusFilter || undefined,
+        }));
+    }, [dispatch, skip, limit, searchQuery, statusFilter]);
+
+    useEffect(() => { loadTeachers(); }, [loadTeachers]);
+
+    useEffect(() => {
+        if (error) {
+            setSnackbar({ open: true, message: error, severity: 'error' });
+            dispatch(clearError());
+        }
+    }, [error, dispatch]);
+
+    const handlePageChange = (_: unknown, newPage: number) => dispatch(setPage(newPage));
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => dispatch(setSearchQuery(e.target.value));
+    const handleStatusFilter = (e: any) => dispatch(setStatusFilter(e.target.value));
+
+    const handleDeleteClick = (id: number) => { setSelectedTeacherId(id); setDeleteDialogOpen(true); };
+    const handleDeleteConfirm = async () => {
+        if (selectedTeacherId) {
+            const result = await dispatch(deleteTeacher(selectedTeacherId));
+            if (!result.type.endsWith('/rejected')) {
+                setSnackbar({ open: true, message: 'Teacher deleted successfully', severity: 'success' });
+                loadTeachers();
+            }
+        }
+        setDeleteDialogOpen(false);
+    };
+
+    const getAvatarColor = (name: string) => {
+        const colors = ['#3D5EE1', '#FF6B6B', '#51CF66', '#FCC419', '#845EF7', '#FF922B', '#22B8CF', '#E64980'];
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        return colors[Math.abs(hash) % colors.length];
+    };
+
+    const getStatusChip = (status: string) => {
+        const map: Record<string, { color: 'success' | 'error' | 'warning' | 'default'; icon: React.ReactElement }> = {
+            active: { color: 'success', icon: <CheckCircle sx={{ fontSize: 14 }} /> },
+            inactive: { color: 'error', icon: <Cancel sx={{ fontSize: 14 }} /> },
+            on_leave: { color: 'warning', icon: <Cancel sx={{ fontSize: 14 }} /> },
+        };
+        const config = map[status] || map.active;
+        return <Chip label={status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} color={config.color} size="small" icon={config.icon} sx={{ fontWeight: 500, fontSize: '0.75rem' }} />;
+    };
+
+    const currentPage = Math.floor(skip / limit);
+    const activeCount = teachers.filter(t => t.status === 'active').length;
+    const inactiveCount = teachers.filter(t => t.status === 'inactive').length;
+
+    return (
+        <Box>
+            <Breadcrumbs sx={{ mb: 2 }}>
+                <Link color="inherit" href="/dashboard" onClick={(e: React.MouseEvent) => { e.preventDefault(); navigate('/dashboard'); }}
+                    sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>Dashboard</Link>
+                <Typography color="text.primary" fontWeight={500}>Teachers</Typography>
+            </Breadcrumbs>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+                <Box>
+                    <Typography variant="h4" fontWeight={700}>Teachers</Typography>
+                    <Typography variant="body2" color="text.secondary" mt={0.5}>Manage and monitor teaching staff</Typography>
+                </Box>
+                <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/teachers/add')}
+                    sx={{ background: 'linear-gradient(135deg, #3D5EE1, #6B82F0)', boxShadow: '0 4px 14px rgba(61,94,225,0.35)', '&:hover': { background: 'linear-gradient(135deg, #2A44B8, #3D5EE1)' } }}>
+                    Add Teacher
+                </Button>
+            </Box>
+
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+                {[
+                    { label: 'Total Teachers', value: total, icon: <People />, color: '#3D5EE1', bg: 'rgba(61,94,225,0.1)' },
+                    { label: 'Active', value: activeCount, icon: <CheckCircle />, color: '#28A745', bg: 'rgba(40,167,69,0.1)' },
+                    { label: 'Inactive', value: inactiveCount, icon: <Cancel />, color: '#DC3545', bg: 'rgba(220,53,69,0.1)' },
+                    { label: 'Departments', value: 0, icon: <School />, color: '#FFC107', bg: 'rgba(255,193,7,0.1)' },
+                ].map((stat) => (
+                    <Grid size={{ xs: 6, md: 3 }} key={stat.label}>
+                        <Card sx={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.06)', transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' } }}>
+                            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 2 }}>
+                                <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: stat.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color }}>{stat.icon}</Box>
+                                <Box>
+                                    <Typography variant="h5" fontWeight={700}>{stat.value}</Typography>
+                                    <Typography variant="caption" color="text.secondary">{stat.label}</Typography>
+                                </Box>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                ))}
+            </Grid>
+
+            <Paper sx={{ p: 2, mb: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.06)' }}>
+                <TextField placeholder="Search teachers..." size="small" value={searchQuery} onChange={handleSearch} sx={{ minWidth: 260, flex: 1 }}
+                    slotProps={{ input: { startAdornment: <InputAdornment position="start"><Search sx={{ color: 'text.secondary' }} /></InputAdornment> } }} />
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                    <InputLabel>Status</InputLabel>
+                    <Select value={statusFilter} label="Status" onChange={handleStatusFilter}>
+                        <MenuItem value="">All</MenuItem>
+                        <MenuItem value="active">Active</MenuItem>
+                        <MenuItem value="inactive">Inactive</MenuItem>
+                        <MenuItem value="on_leave">On Leave</MenuItem>
+                    </Select>
+                </FormControl>
+                <Tooltip title="Refresh"><IconButton onClick={loadTeachers} color="primary"><Refresh /></IconButton></Tooltip>
+            </Paper>
+
+            <Paper sx={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+                {loading && <LinearProgress />}
+                <TableContainer>
+                    <Table>
+                        <TableHead>
+                            <TableRow sx={{ bgcolor: '#f8f9fa' }}>
+                                <TableCell sx={{ fontWeight: 600, color: '#495057' }}>Teacher</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#495057' }}>Employee ID</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#495057' }}>Specialization</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#495057' }}>Phone</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#495057' }}>Hire Date</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#495057' }}>Status</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#495057' }} align="center">Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {loading && teachers.length === 0 ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={i}>{Array.from({ length: 7 }).map((_, j) => <TableCell key={j}><Skeleton variant="text" /></TableCell>)}</TableRow>
+                                ))
+                            ) : teachers.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} sx={{ textAlign: 'center', py: 6 }}>
+                                        <People sx={{ fontSize: 64, color: 'text.disabled', mb: 1 }} />
+                                        <Typography variant="h6" color="text.secondary">No teachers found</Typography>
+                                        <Typography variant="body2" color="text.disabled" mb={2}>Add your first teacher to get started</Typography>
+                                        <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/teachers/add')}>Add Teacher</Button>
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                teachers.map((teacher) => (
+                                    <TableRow key={teacher.id} sx={{ '&:hover': { bgcolor: 'rgba(61,94,225,0.04)' }, transition: 'background-color 0.15s' }}>
+                                        <TableCell>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                                <Avatar sx={{ width: 36, height: 36, bgcolor: getAvatarColor(teacher.full_name), fontSize: '0.875rem', fontWeight: 600 }}>
+                                                    {teacher.first_name[0]}{teacher.last_name[0]}
+                                                </Avatar>
+                                                <Typography variant="body2" fontWeight={600}>{teacher.full_name}</Typography>
+                                            </Box>
+                                        </TableCell>
+                                        <TableCell><Chip label={teacher.employee_id} size="small" variant="outlined" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }} /></TableCell>
+                                        <TableCell><Typography variant="body2" color="text.secondary">{teacher.specialization || '—'}</Typography></TableCell>
+                                        <TableCell><Typography variant="body2" color="text.secondary">{teacher.phone || '—'}</Typography></TableCell>
+                                        <TableCell><Typography variant="body2" color="text.secondary">{new Date(teacher.hire_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</Typography></TableCell>
+                                        <TableCell>{getStatusChip(teacher.status)}</TableCell>
+                                        <TableCell align="center">
+                                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
+                                                <Tooltip title="View"><IconButton size="small" sx={{ color: '#3D5EE1' }} onClick={() => { setViewTeacher(teacher); setViewDialogOpen(true); }}><Visibility fontSize="small" /></IconButton></Tooltip>
+                                                <Tooltip title="Edit"><IconButton size="small" sx={{ color: '#FFC107' }} onClick={() => navigate(`/teachers/edit/${teacher.id}`)}><Edit fontSize="small" /></IconButton></Tooltip>
+                                                <Tooltip title="Delete"><IconButton size="small" sx={{ color: '#DC3545' }} onClick={() => handleDeleteClick(teacher.id)}><Delete fontSize="small" /></IconButton></Tooltip>
+                                            </Box>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+                <TablePagination component="div" count={total} page={currentPage} onPageChange={handlePageChange}
+                    rowsPerPage={limit} rowsPerPageOptions={[10, 25, 50]} onRowsPerPageChange={() => { }} />
+            </Paper>
+
+            {/* View Dialog */}
+            <Dialog open={viewDialogOpen} onClose={() => setViewDialogOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ fontWeight: 600 }}>Teacher Details</DialogTitle>
+                <DialogContent dividers>
+                    {viewTeacher && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                                <Avatar sx={{ width: 56, height: 56, bgcolor: getAvatarColor(viewTeacher.full_name), fontSize: '1.25rem', fontWeight: 700 }}>
+                                    {viewTeacher.first_name[0]}{viewTeacher.last_name[0]}
+                                </Avatar>
+                                <Box>
+                                    <Typography variant="h6" fontWeight={600}>{viewTeacher.full_name}</Typography>
+                                    <Typography variant="body2" color="text.secondary">ID: {viewTeacher.employee_id}</Typography>
+                                </Box>
+                            </Box>
+                            <Grid container spacing={2}>
+                                {[
+                                    { label: 'Phone', value: viewTeacher.phone || '—' },
+                                    { label: 'Specialization', value: viewTeacher.specialization || '—' },
+                                    { label: 'Status', value: viewTeacher.status },
+                                    { label: 'Hire Date', value: new Date(viewTeacher.hire_date).toLocaleDateString() },
+                                ].map((item) => (
+                                    <Grid size={{ xs: 6 }} key={item.label}>
+                                        <Typography variant="caption" color="text.secondary" display="block">{item.label}</Typography>
+                                        <Typography variant="body2" fontWeight={500}>{item.value}</Typography>
+                                    </Grid>
+                                ))}
+                            </Grid>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setViewDialogOpen(false)}>Close</Button>
+                    <Button variant="contained" onClick={() => { setViewDialogOpen(false); navigate(`/teachers/edit/${viewTeacher?.id}`); }}>Edit</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Delete Dialog */}
+            <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+                <DialogTitle sx={{ fontWeight: 600 }}>Delete Teacher</DialogTitle>
+                <DialogContent><Typography>Are you sure you want to delete this teacher? This action cannot be undone.</Typography></DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+                    <Button color="error" variant="contained" onClick={handleDeleteConfirm}>Delete</Button>
+                </DialogActions>
+            </Dialog>
+
+            <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar({ ...snackbar, open: false })} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+                <Alert severity={snackbar.severity} variant="filled" onClose={() => setSnackbar({ ...snackbar, open: false })}>{snackbar.message}</Alert>
+            </Snackbar>
+        </Box>
+    );
+}

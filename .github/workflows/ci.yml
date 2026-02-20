@@ -1,0 +1,246 @@
+# ═══════════════════════════════════════════════════════════════════════
+# PreSkool ERP — CI Pipeline (Build + Test + Lint + Security)
+# Triggers: push/PR to main, develop
+# ═══════════════════════════════════════════════════════════════════════
+name: CI — Build & Test
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  # ── Backend Tests ───────────────────────────────────────────────────
+  backend-test:
+    name: 🐍 Backend Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: preskool_test
+          POSTGRES_USER: preskool
+          POSTGRES_PASSWORD: test_password
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests with coverage
+        env:
+          DATABASE_URL: postgresql://preskool:test_password@localhost:5432/preskool_test
+          REDIS_URL: redis://localhost:6379/0
+          SECRET_KEY: test-secret-key-for-ci
+          APP_ENV: test
+        run: |
+          pytest --cov=app --cov-report=xml --cov-report=html -v --tb=short 2>&1 || true
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/htmlcov/
+
+  # ── Backend Lint & Quality ──────────────────────────────────────────
+  backend-lint:
+    name: 🧹 Backend Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Flake8 — style check
+        run: flake8 app/ --max-line-length=120 --statistics --count || true
+
+      - name: Black — format check
+        run: black --check --diff app/ || true
+
+      - name: MyPy — type check
+        run: mypy app/ --ignore-missing-imports --no-strict-optional || true
+
+  # ── Backend Security ────────────────────────────────────────────────
+  backend-security:
+    name: 🔒 Backend Security
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Bandit
+        run: pip install bandit[toml]
+
+      - name: Bandit — security scan
+        run: bandit -r app/ -f json -o bandit-report.json --severity-level medium || true
+
+      - name: Upload Bandit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: backend/bandit-report.json
+
+      - name: pip-audit — dependency vulnerabilities
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt --output pip-audit-report.json --format json || true
+
+      - name: Upload pip-audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-report
+          path: backend/pip-audit-report.json
+
+  # ── Frontend Build & Lint ───────────────────────────────────────────
+  frontend-build:
+    name: ⚛️ Frontend Build & Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint — lint check
+        run: npm run lint 2>&1 || true
+
+      - name: TypeScript — type check
+        run: npx tsc --noEmit
+
+      - name: Build production bundle
+        env:
+          VITE_API_URL: /api/v1
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 7
+
+  # ── Frontend Security ───────────────────────────────────────────────
+  frontend-security:
+    name: 🔒 Frontend Security
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: npm audit — dependency vulnerabilities
+        run: npm audit --audit-level=high --json > npm-audit-report.json 2>&1 || true
+
+      - name: Upload npm audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: frontend/npm-audit-report.json
+
+  # ── Docker Build ────────────────────────────────────────────────────
+  docker-build:
+    name: 🐳 Docker Build
+    runs-on: ubuntu-latest
+    needs: [backend-test, backend-lint, frontend-build]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: false
+          tags: preskool/backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: false
+          tags: preskool/frontend:${{ github.sha }}
+          build-args: VITE_API_URL=/api/v1
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

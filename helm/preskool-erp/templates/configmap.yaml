@@ -1,0 +1,33 @@
+# ── ConfigMap ──────────────────────────────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "preskool.fullname" . }}-config
+  labels: {{- include "preskool.labels" . | nindent 4 }}
+data:
+  APP_ENV: {{ .Values.global.environment | quote }}
+  POSTGRES_DB: {{ .Values.postgresql.auth.database | quote }}
+  POSTGRES_USER: {{ .Values.postgresql.auth.username | quote }}
+  DB_HOST: "{{ include "preskool.fullname" . }}-postgres"
+  DB_PORT: "5432"
+  REDIS_HOST: "{{ include "preskool.fullname" . }}-redis"
+  REDIS_PORT: "6379"
+  REDIS_URL: "redis://{{ include "preskool.fullname" . }}-redis:6379/0"
+  ALLOWED_ORIGINS: {{ .Values.backend.env.ALLOWED_ORIGINS | quote }}
+  UVICORN_WORKERS: {{ .Values.backend.env.UVICORN_WORKERS | quote }}
+  LOG_LEVEL: {{ .Values.backend.env.LOG_LEVEL | quote }}
+  RAZORPAY_ENABLED: {{ .Values.backend.env.RAZORPAY_ENABLED | quote }}
+  VITE_API_URL: {{ .Values.frontend.buildArgs.VITE_API_URL | quote }}
+---
+# ── Secret ────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "preskool.fullname" . }}-secrets
+  labels: {{- include "preskool.labels" . | nindent 4 }}
+type: Opaque
+stringData:
+  POSTGRES_PASSWORD: {{ .Values.secrets.postgresPassword | quote }}
+  SECRET_KEY: {{ .Values.secrets.secretKey | quote }}
+  RAZORPAY_KEY_ID: {{ .Values.secrets.razorpayKeyId | quote }}
+  RAZORPAY_KEY_SECRET: {{ .Values.secrets.razorpayKeySecret | quote }}

@@ -1,68 +1,163 @@
+/* ───────────────────────────────────────────────── */
+/* PreSkool ERP — Global Stylesheet                  */
+/* ───────────────────────────────────────────────── */
+
+/* Google Fonts — Inter */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ── CSS Custom Properties ─────────────────────── */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  /* Brand colours */
+  --color-primary:        #3D5EE1;
+  --color-primary-dark:   #2A44B8;
+  --color-primary-light:  #6B82F0;
+  --color-primary-alpha:  rgba(61, 94, 225, 0.08);
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* Semantic colours */
+  --color-success:  #28A745;
+  --color-danger:   #DC3545;
+  --color-warning:  #FFC107;
+  --color-info:     #17A2B8;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+  /* Surface */
+  --bg-page:        #F5F6FA;
+  --bg-card:        #FFFFFF;
+  --border-color:   rgba(0, 0, 0, 0.08);
+
+  /* Typography */
+  --font-family:    'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Shadow tokens */
+  --shadow-xs:  0 1px 4px rgba(0, 0, 0, 0.06);
+  --shadow-sm:  0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md:  0 4px 20px rgba(0, 0, 0, 0.10);
+  --shadow-lg:  0 8px 32px rgba(0, 0, 0, 0.14);
+
+  /* Radius */
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+
+  /* Transitions */
+  --transition-fast:   0.15s ease;
+  --transition-normal: 0.25s ease;
+
+  /* Rendering */
+  font-synthesis:          none;
+  text-rendering:          optimizeLegibility;
+  -webkit-font-smoothing:  antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+/* ── Base Reset ────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
-a:hover {
-  color: #535bf2;
+
+html, body, #root {
+  margin:     0;
+  padding:    0;
+  min-height: 100vh;
+  width:      100%;
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  font-family:     var(--font-family);
+  font-size:       16px;
+  line-height:     1.6;
+  background:      var(--bg-page);
+  color:           #1e293b;
+  /* Remove Vite dark defaults */
+  color-scheme:    light;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+#root {
+  display: block; /* override Vite's place-items: center */
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
+/* ── Links ─────────────────────────────────────── */
+a {
+  color:           var(--color-primary);
+  text-decoration: none;
 }
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+a:hover {
+  text-decoration: underline;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+/* ── Scrollbars ────────────────────────────────── */
+::-webkit-scrollbar {
+  width:  6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background:    rgba(0, 0, 0, 0.18);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.32);
+}
+
+/* ── Page Transition Animation ─────────────────── */
+@keyframes pageEnter {
+  from {
+    opacity:   0;
+    transform: translateY(14px);
   }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
+  to {
+    opacity:   1;
+    transform: translateY(0);
   }
 }
+
+.page-enter {
+  animation: pageEnter 0.32s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ── Skeleton shimmer ──────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Card hover utility ────────────────────────── */
+.card-hover {
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+.card-hover:hover {
+  transform:  translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Focus ring ────────────────────────────────── */
+:focus-visible {
+  outline:        2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ── Print utilities ────────────────────────────── */
+@media print {
+  .no-print { display: none !important; }
+}
+
+/* ── Mobile refinements ─────────────────────────── */
+@media (max-width: 600px) {
+  body {
+    font-size: 14px;
+  }
+}
+

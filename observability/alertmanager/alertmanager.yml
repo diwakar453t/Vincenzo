@@ -1,0 +1,254 @@
+# ═══════════════════════════════════════════════════════════════════════
+# Alertmanager Configuration — PreSkool ERP (200+ Colleges)
+# Full notification routing: Slack, Email, PagerDuty, Webhook
+# ═══════════════════════════════════════════════════════════════════════
+
+global:
+  resolve_timeout: 5m
+
+  # ── Email (SMTP) ────────────────────────────────────────────────────
+  smtp_smarthost: "${SMTP_HOST:-smtp.gmail.com}:${SMTP_PORT:-587}"
+  smtp_from: "${ALERT_EMAIL_FROM:-alerts@preskool.com}"
+  smtp_auth_username: "${ALERT_EMAIL_FROM:-alerts@preskool.com}"
+  smtp_auth_password: "${ALERT_EMAIL_PASSWORD:-}"
+  smtp_require_tls: true
+
+  # ── Slack ───────────────────────────────────────────────────────────
+  slack_api_url: "${SLACK_WEBHOOK_URL:-https://hooks.slack.com/services/CONFIGURE_ME}"
+
+  # ── PagerDuty ───────────────────────────────────────────────────────
+  pagerduty_url: "https://events.pagerduty.com/v2/enqueue"
+
+# ── Custom Templates ──────────────────────────────────────────────────
+templates:
+  - "/etc/alertmanager/templates/*.tmpl"
+
+# ═══════════════════════════════════════════════════════════════════════
+# ROUTING TREE
+# ═══════════════════════════════════════════════════════════════════════
+route:
+  receiver: "slack-default"
+  group_by: ["alertname", "severity", "tenant_id"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+  routes:
+    # ── P0: Critical → PagerDuty + Slack + Email (On-Call) ────────────
+    - match:
+        severity: critical
+      receiver: "pagerduty-critical"
+      group_wait: 10s
+      repeat_interval: 30m
+      continue: true  # Also send to Slack
+
+    - match:
+        severity: critical
+      receiver: "slack-critical"
+      group_wait: 10s
+      repeat_interval: 1h
+      continue: true
+
+    - match:
+        severity: critical
+      receiver: "email-oncall"
+      group_wait: 30s
+      repeat_interval: 2h
+
+    # ── P1: Warning → Slack + Email (Engineering) ─────────────────────
+    - match:
+        severity: warning
+      receiver: "slack-warning"
+      repeat_interval: 4h
+      continue: true
+
+    - match:
+        severity: warning
+      receiver: "email-engineering"
+      repeat_interval: 8h
+
+    # ── P2: Info → Slack quiet channel only ────────────────────────────
+    - match:
+        severity: info
+      receiver: "slack-info"
+      repeat_interval: 12h
+
+    # ── Security alerts → dedicated channel + email ───────────────────
+    - match_re:
+        alertname: "(AuthBruteForce|SuspiciousLoginPattern|TooManyFailedLogins|WAFHighBlockRate)"
+      receiver: "slack-security"
+      group_wait: 5s
+      repeat_interval: 15m
+      continue: true
+
+    - match_re:
+        alertname: "(AuthBruteForce|SuspiciousLoginPattern|TooManyFailedLogins|WAFHighBlockRate)"
+      receiver: "email-security"
+      repeat_interval: 1h
+
+    # ── Capacity alerts → ops channel + email ─────────────────────────
+    - match_re:
+        alertname: "(DiskSpaceCritical|DiskSpaceLow|HighCPUUsage|HighMemoryUsage|DatabaseConnectionPoolExhausted)"
+      receiver: "slack-capacity"
+      repeat_interval: 2h
+
+    # ── Tenant-specific alerts → webhook for tenant notification ──────
+    - match_re:
+        alertname: "(TenantInactive|HighTenantErrorRate)"
+      receiver: "webhook-tenant-alerts"
+      repeat_interval: 24h
+
+# ═══════════════════════════════════════════════════════════════════════
+# RECEIVERS
+# ═══════════════════════════════════════════════════════════════════════
+receivers:
+  # ── Default (catch-all) ─────────────────────────────────────────────
+  - name: "slack-default"
+    slack_configs:
+      - channel: "#preskool-alerts"
+        title: '{{ template "slack.title" . }}'
+        text: '{{ template "slack.text" . }}'
+        send_resolved: true
+        color: '{{ template "slack.color" . }}'
+        actions:
+          - type: button
+            text: "📖 Runbook"
+            url: '{{ (index .Alerts 0).Annotations.runbook_url }}'
+          - type: button
+            text: "📊 Dashboard"
+            url: '{{ (index .Alerts 0).Annotations.dashboard_url }}'
+
+  # ── Critical → PagerDuty ────────────────────────────────────────────
+  - name: "pagerduty-critical"
+    pagerduty_configs:
+      - routing_key: "${PAGERDUTY_ROUTING_KEY:-CONFIGURE_ME}"
+        severity: critical
+        description: '{{ .GroupLabels.alertname }}: {{ (index .Alerts 0).Annotations.summary }}'
+        details:
+          alertname: "{{ .GroupLabels.alertname }}"
+          severity: "{{ .GroupLabels.severity }}"
+          description: "{{ (index .Alerts 0).Annotations.description }}"
+          runbook: "{{ (index .Alerts 0).Annotations.runbook_url }}"
+
+  # ── Critical → Slack ────────────────────────────────────────────────
+  - name: "slack-critical"
+    slack_configs:
+      - channel: "#preskool-critical"
+        title: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
+        text: '{{ template "slack.text" . }}'
+        send_resolved: true
+        color: "danger"
+        actions:
+          - type: button
+            text: "📖 Runbook"
+            url: '{{ (index .Alerts 0).Annotations.runbook_url }}'
+          - type: button
+            text: "📊 Grafana"
+            url: "http://localhost:3200/grafana"
+
+  # ── Critical → Email (On-Call) ──────────────────────────────────────
+  - name: "email-oncall"
+    email_configs:
+      - to: "${ONCALL_EMAIL:-oncall@preskool.com}"
+        subject: '[CRITICAL] PreSkool: {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.html" . }}'
+        send_resolved: true
+        require_tls: true
+
+  # ── Warning → Slack ─────────────────────────────────────────────────
+  - name: "slack-warning"
+    slack_configs:
+      - channel: "#preskool-alerts"
+        title: '⚠️ WARNING: {{ .GroupLabels.alertname }}'
+        text: '{{ template "slack.text" . }}'
+        send_resolved: true
+        color: "warning"
+
+  # ── Warning → Email (Engineering) ───────────────────────────────────
+  - name: "email-engineering"
+    email_configs:
+      - to: "${ENGINEERING_EMAIL:-engineering@preskool.com}"
+        subject: '[WARNING] PreSkool: {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.html" . }}'
+        send_resolved: true
+
+  # ── Info → Slack (Quiet) ────────────────────────────────────────────
+  - name: "slack-info"
+    slack_configs:
+      - channel: "#preskool-info"
+        title: 'ℹ️ {{ .GroupLabels.alertname }}'
+        text: '{{ template "slack.text" . }}'
+        send_resolved: true
+        color: "#36a64f"
+
+  # ── Security → Slack ────────────────────────────────────────────────
+  - name: "slack-security"
+    slack_configs:
+      - channel: "#preskool-security"
+        title: '🔒 SECURITY: {{ .GroupLabels.alertname }}'
+        text: '{{ template "slack.text" . }}'
+        send_resolved: true
+        color: "danger"
+
+  # ── Security → Email ───────────────────────────────────────────────
+  - name: "email-security"
+    email_configs:
+      - to: "${SECURITY_EMAIL:-security@preskool.com}"
+        subject: '[SECURITY] PreSkool: {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.html" . }}'
+        send_resolved: true
+
+  # ── Capacity → Slack ────────────────────────────────────────────────
+  - name: "slack-capacity"
+    slack_configs:
+      - channel: "#preskool-infrastructure"
+        title: '💾 CAPACITY: {{ .GroupLabels.alertname }}'
+        text: '{{ template "slack.text" . }}'
+        send_resolved: true
+        color: "warning"
+
+  # ── Tenant alerts → Webhook ─────────────────────────────────────────
+  - name: "webhook-tenant-alerts"
+    webhook_configs:
+      - url: "http://backend:8000/api/v1/webhooks/alerts"
+        send_resolved: true
+        max_alerts: 10
+
+# ═══════════════════════════════════════════════════════════════════════
+# INHIBITION RULES — Suppress noise during cascading failures
+# ═══════════════════════════════════════════════════════════════════════
+inhibit_rules:
+  # Critical suppresses warning for same alert
+  - source_match:
+      severity: critical
+    target_match:
+      severity: warning
+    equal: ["alertname"]
+
+  # App down suppresses all app-level alerts
+  - source_match:
+      alertname: AppDown
+    target_match_re:
+      alertname: "(HighErrorRate|HighLatency|TooManyInFlightRequests)"
+    equal: []
+
+  # Postgres down suppresses DB-level alerts
+  - source_match:
+      alertname: PostgresDown
+    target_match_re:
+      alertname: "(DatabaseConnectionPoolExhausted|SlowQueries|PostgresHighConnections|PostgresDeadlocks)"
+    equal: []
+
+  # Redis down suppresses cache alerts
+  - source_match:
+      alertname: RedisDown
+    target_match_re:
+      alertname: "(RedisHighMemory|RedisHighClients)"
+    equal: []
+
+  # High CPU suppresses latency warnings (root cause)
+  - source_match:
+      alertname: HighCPUUsage
+    target_match:
+      alertname: HighLatency
+    equal: []

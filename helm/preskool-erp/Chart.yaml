@@ -1,0 +1,14 @@
+apiVersion: v2
+name: preskool-erp
+description: PreSkool ERP — Comprehensive School/College Management System
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - education
+  - erp
+  - school
+  - management
+maintainers:
+  - name: PreSkool Team
+    email: admin@preskool.com

@@ -1,0 +1,260 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run full security scan every Monday 02:00 UTC
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+    inputs:
+      fail_on:
+        description: 'Minimum severity to fail: LOW, MEDIUM, HIGH, CRITICAL'
+        required: false
+        default: 'HIGH'
+
+env:
+  FAIL_SEVERITY: ${{ github.event.inputs.fail_on || 'HIGH' }}
+
+jobs:
+  # ── 1. Bandit — Python SAST ─────────────────────────────────────────
+  bandit-sast:
+    name: Bandit SAST Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Bandit
+        run: pip install bandit[toml]
+
+      - name: Run Bandit SAST
+        run: |
+          bandit -r backend/app/ \
+            -f json -o bandit-report.json \
+            --severity-level medium \
+            --confidence-level medium \
+            -x backend/venv,backend/tests
+        continue-on-error: true
+
+      - name: Check results
+        run: |
+          HIGH=$(python3 -c "import json; d=json.load(open('bandit-report.json')); m=d.get('metrics',{}).get('_totals',{}); print(m.get('SEVERITY.HIGH',0))")
+          MED=$(python3  -c "import json; d=json.load(open('bandit-report.json')); m=d.get('metrics',{}).get('_totals',{}); print(m.get('SEVERITY.MEDIUM',0))")
+          echo "HIGH=$HIGH MED=$MED"
+          if [[ "${{ env.FAIL_SEVERITY }}" == "HIGH" && "$HIGH" -gt 0 ]]; then echo "::error::$HIGH HIGH severity issues found"; exit 1; fi
+          if [[ "${{ env.FAIL_SEVERITY }}" == "MEDIUM" && "$MED" -gt 0 ]]; then echo "::error::$MED MEDIUM severity issues found"; exit 1; fi
+
+      - name: Upload Bandit Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+  # ── 2. Dependency Vulnerability Scan ───────────────────────────────
+  dependency-audit:
+    name: Dependency Vulnerability Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Audit Python dependencies
+        run: |
+          pip-audit \
+            -r backend/requirements.txt \
+            --format json \
+            -o pip-audit-report.json
+        continue-on-error: true
+
+      - name: Check for vulnerabilities
+        run: |
+          VULNS=$(python3 -c "
+          import json, sys
+          try:
+              data = json.load(open('pip-audit-report.json'))
+              if isinstance(data, list):
+                  total = sum(len(d.get('vulns', [])) for d in data)
+              else:
+                  total = 0
+              print(total)
+          except: print(0)")
+          echo "Vulnerable packages: $VULNS"
+          if [[ "$VULNS" -gt 0 ]]; then
+            echo "::error::$VULNS vulnerable dependencies found!"
+            exit 1
+          fi
+
+      - name: Upload Audit Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pip-audit-report
+          path: pip-audit-report.json
+
+      - name: Audit JavaScript dependencies
+        run: |
+          cd frontend
+          npm audit --audit-level high --json > npm-audit-report.json 2>&1 || true
+          VULNS=$(node -e "
+            const d = require('./npm-audit-report.json');
+            const meta = d.metadata || {};
+            const vulns = meta.vulnerabilities || {};
+            console.log((vulns.high || 0) + (vulns.critical || 0));
+          " 2>/dev/null || echo 0)
+          echo "High/Critical npm vulns: $VULNS"
+          if [[ "$VULNS" -gt 0 ]]; then
+            echo "::warning::$VULNS high/critical npm vulnerabilities found"
+          fi
+
+  # ── 3. Trivy — Container Security Scan ────────────────────────────
+  trivy-container:
+    name: Trivy Container Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend Docker image
+        run: |
+          docker build -t preskool-backend:scan backend/
+
+      - name: Run Trivy vulnerability scanner (container)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'preskool-backend:scan'
+          format: 'sarif'
+          output: 'trivy-container.sarif'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+          exit-code: '0'  # Don't fail — upload results
+
+      - name: Upload Trivy container results to Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-container.sarif'
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'HIGH,CRITICAL'
+          skip-dirs: '.git,node_modules,venv,__pycache__'
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Upload Trivy SARIF
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-results
+          path: trivy-container.sarif
+
+  # ── 4. Secret Detection (Gitleaks) ─────────────────────────────────
+  secret-detection:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for secret scanning
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  # ── 5. OWASP Dependency-Check ──────────────────────────────────────
+  owasp-depcheck:
+    name: OWASP Dependency Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'PreSkool ERP'
+          path: '.'
+          format: 'HTML'
+          out: 'owasp-report'
+          args: >
+            --failOnCVSS 7
+            --enableRetired
+            --exclude "**/venv/**"
+            --exclude "**/node_modules/**"
+
+      - name: Upload OWASP Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: owasp-dependency-check-report
+          path: owasp-report/
+
+  # ── 6. CodeQL — Semantic Code Analysis ────────────────────────────
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      matrix:
+        language: ['python', 'javascript']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: +security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  # ── 7. Security Summary Gate ───────────────────────────────────────
+  security-gate:
+    name: Security Gate
+    needs: [bandit-sast, dependency-audit, trivy-container, secret-detection]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check all security jobs
+        run: |
+          FAILED=()
+          [[ "${{ needs.bandit-sast.result }}" == "failure" ]] && FAILED+=("Bandit SAST")
+          [[ "${{ needs.dependency-audit.result }}" == "failure" ]] && FAILED+=("Dependency Audit")
+          [[ "${{ needs.trivy-container.result }}" == "failure" ]] && FAILED+=("Trivy Scan")
+          [[ "${{ needs.secret-detection.result }}" == "failure" ]] && FAILED+=("Secret Detection")
+
+          if [[ ${#FAILED[@]} -gt 0 ]]; then
+            echo "::error::Security gate FAILED: ${FAILED[*]}"
+            exit 1
+          fi
+          echo "✅ All security checks passed"

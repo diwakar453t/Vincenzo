@@ -1,0 +1,21 @@
+# Grafana Jaeger datasource auto-provisioning
+apiVersion: 1
+datasources:
+  - name: Jaeger
+    type: jaeger
+    access: proxy
+    url: http://jaeger:16686
+    isDefault: false
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: loki
+        tags: ["tenant_id"]
+        filterByTraceID: true
+        filterBySpanID: true
+      tracesToMetrics:
+        datasourceUid: prometheus
+        tags:
+          - key: service.name
+            value: service
+      nodeGraph:
+        enabled: true

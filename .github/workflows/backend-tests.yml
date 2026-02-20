@@ -1,0 +1,301 @@
+name: Backend Tests & Coverage
+
+on:
+  push:
+    branches: [main, develop, feature/**]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-tests.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Test scope: all | unit | integration | api'
+        required: false
+        default: 'all'
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  # ── Linting & Type Checking ─────────────────────────────────────────
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Ruff lint (fast, modern linter)
+        run: |
+          pip install ruff
+          ruff check app/ --output-format=github
+
+      - name: Black formatting check
+        run: black --check app/
+
+      - name: MyPy type check
+        run: mypy app/ --ignore-missing-imports --no-error-summary
+        continue-on-error: true  # Don't block CI on type errors (fix gradually)
+
+  # ── Unit Tests ──────────────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt && pip install faker factory-boy pytest-mock
+
+      - name: Run unit tests
+        run: |
+          pytest app/tests/unit/ -v \
+            --tb=short \
+            -m "unit or not (integration or api)" \
+            --cov=app/core --cov=app/models \
+            --cov-report=xml:unit-coverage.xml \
+            --cov-report=term-missing \
+            --junit-xml=unit-test-results.xml
+        env:
+          APP_ENV: test
+          DATABASE_URL: sqlite:///./test.db
+          JWT_SECRET_KEY: ci-test-secret-key-32bytes-long!!
+          ENCRYPTION_MASTER_KEY: ci-encryption-key-for-testing-only!
+          OTEL_ENABLED: "false"
+          RATE_LIMIT_PER_MINUTE: "100000"
+
+      - name: Upload unit test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results
+          path: backend/unit-test-results.xml
+
+      - name: Upload unit coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-coverage
+          path: backend/unit-coverage.xml
+
+  # ── Integration Tests ───────────────────────────────────────────────
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    services:
+      # PostgreSQL service for integration tests
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: preskool_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt && pip install faker factory-boy pytest-mock
+
+      - name: Run database migrations
+        run: alembic upgrade head
+        env:
+          DATABASE_URL: postgresql://testuser:testpass@localhost:5432/preskool_test
+
+      - name: Run integration tests
+        run: |
+          pytest app/tests/integration/ -v \
+            --tb=short \
+            -m "integration" \
+            --cov=app \
+            --cov-report=xml:integration-coverage.xml \
+            --cov-report=term-missing \
+            --junit-xml=integration-test-results.xml
+        env:
+          APP_ENV: test
+          DATABASE_URL: sqlite:///./test_integration.db
+          JWT_SECRET_KEY: ci-test-secret-key-32bytes-long!!
+          ENCRYPTION_MASTER_KEY: ci-encryption-key-for-testing-only!
+          OTEL_ENABLED: "false"
+          RATE_LIMIT_PER_MINUTE: "100000"
+
+      - name: Upload integration test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results
+          path: backend/integration-test-results.xml
+
+  # ── API Tests ───────────────────────────────────────────────────────
+  api-tests:
+    name: API Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt && pip install faker factory-boy pytest-mock
+
+      - name: Run API tests
+        run: |
+          pytest app/tests/api/ -v \
+            --tb=long \
+            -m "api or security or gdpr" \
+            --cov=app \
+            --cov-report=xml:api-coverage.xml \
+            --cov-report=html:htmlcov \
+            --junit-xml=api-test-results.xml
+        env:
+          APP_ENV: test
+          DATABASE_URL: sqlite:///./test_api.db
+          JWT_SECRET_KEY: ci-test-secret-key-32bytes-long!!
+          ENCRYPTION_MASTER_KEY: ci-encryption-key-for-testing-only!
+          OTEL_ENABLED: "false"
+          RATE_LIMIT_PER_MINUTE: "100000"
+
+      - name: Upload API test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-test-results
+          path: backend/api-test-results.xml
+
+      - name: Upload HTML coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: html-coverage-report
+          path: backend/htmlcov/
+
+  # ── Full Coverage Report ────────────────────────────────────────────
+  coverage:
+    name: Full Test Suite & Coverage
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, api-tests]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install all dependencies
+        run: pip install -r requirements.txt && pip install faker factory-boy pytest-mock
+
+      - name: Run complete test suite with coverage
+        run: |
+          pytest app/tests/ -v \
+            --tb=short \
+            --cov=app \
+            --cov-report=xml:coverage.xml \
+            --cov-report=html:htmlcov \
+            --cov-report=term-missing \
+            --cov-fail-under=70 \
+            --junit-xml=all-test-results.xml \
+            -q
+        env:
+          APP_ENV: test
+          DATABASE_URL: sqlite:///./test_full.db
+          JWT_SECRET_KEY: ci-test-secret-key-32bytes-long!!
+          ENCRYPTION_MASTER_KEY: ci-encryption-key-for-testing-only!
+          OTEL_ENABLED: "false"
+          RATE_LIMIT_PER_MINUTE: "100000"
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: backend/coverage.xml
+          flags: backend
+          name: preskool-backend
+          fail_ci_if_error: false
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Backend Test Results
+          path: backend/all-test-results.xml
+          reporter: java-junit
+
+      - name: Check coverage threshold
+        run: |
+          COVERAGE=$(python3 -c "
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('coverage.xml')
+          root = tree.getroot()
+          line_rate = float(root.attrib.get('line-rate', 0)) * 100
+          print(f'{line_rate:.1f}')
+          " 2>/dev/null || echo "0")
+          echo "Coverage: ${COVERAGE}%"
+          if python3 -c "exit(0 if float('${COVERAGE}') >= 70 else 1)"; then
+            echo "✅ Coverage ${COVERAGE}% meets threshold (70%)"
+          else
+            echo "❌ Coverage ${COVERAGE}% below threshold (70%)"
+            exit 1
+          fi
+
+  # ── Test Gate ───────────────────────────────────────────────────────
+  test-gate:
+    name: Test Gate
+    needs: [lint, unit-tests, integration-tests, api-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check all test jobs
+        run: |
+          FAILED=()
+          [[ "${{ needs.lint.result }}" == "failure" ]] && FAILED+=("Lint")
+          [[ "${{ needs.unit-tests.result }}" == "failure" ]] && FAILED+=("Unit Tests")
+          [[ "${{ needs.integration-tests.result }}" == "failure" ]] && FAILED+=("Integration Tests")
+          [[ "${{ needs.api-tests.result }}" == "failure" ]] && FAILED+=("API Tests")
+
+          if [[ ${#FAILED[@]} -gt 0 ]]; then
+            echo "::error::Test gate FAILED: ${FAILED[*]}"
+            exit 1
+          fi
+          echo "✅ All tests passed!"

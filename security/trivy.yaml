@@ -1,0 +1,46 @@
+# Trivy Configuration — PreSkool ERP
+# https://aquasecurity.github.io/trivy/latest/docs/configuration/
+
+# ── Scan Settings ─────────────────────────────────────────────────────
+severity: ["HIGH", "CRITICAL"]
+ignore-unfixed: true
+skip-dirs:
+  - .git
+  - node_modules
+  - venv
+  - __pycache__
+  - .venv
+  - dist
+  - build
+
+# ── Output ────────────────────────────────────────────────────────────
+format: table
+output: ""
+
+# ── Vulnerability Database ────────────────────────────────────────────
+db:
+  no-progress: false
+  skip-update: false
+
+# ── Secret Detection ──────────────────────────────────────────────────
+secret:
+  config: security/.trivysecret.yaml
+
+# ── Misconfiguration ──────────────────────────────────────────────────
+misconfiguration:
+  include-non-failures: false
+
+# ── License ───────────────────────────────────────────────────────────
+license:
+  ignored:
+    - MIT
+    - Apache-2.0
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - ISC
+    - Python-2.0
+
+# ── Ignore specific CVEs (after manual review + mitigated) ───────────
+# Add known false positives or accepted risks here
+# Example:
+# ignorefile: security/.trivyignore

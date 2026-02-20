@@ -1,0 +1,259 @@
+# ═══════════════════════════════════════════════════════════════════════
+# PreSkool ERP — CD Pipeline (Deploy to Staging / Production)
+# Triggers: push to main (production), push to develop (staging)
+# ═══════════════════════════════════════════════════════════════════════
+name: CD — Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deploy environment"
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/preskool
+
+jobs:
+  # ── Determine Environment ───────────────────────────────────────────
+  setup:
+    name: 🎯 Determine Environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      image_tag: ${{ steps.env.outputs.image_tag }}
+    steps:
+      - id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          fi
+          echo "image_tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+
+  # ── Build & Push Images ─────────────────────────────────────────────
+  build-push:
+    name: 🐳 Build & Push
+    runs-on: ubuntu-latest
+    needs: setup
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-backend:${{ needs.setup.outputs.image_tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-backend:${{ needs.setup.outputs.environment }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Build & push frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-frontend:${{ needs.setup.outputs.image_tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-frontend:${{ needs.setup.outputs.environment }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-frontend:latest
+          build-args: |
+            VITE_API_URL=/api/v1
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── Deploy to Staging ───────────────────────────────────────────────
+  deploy-staging:
+    name: 🚀 Deploy Staging
+    runs-on: ubuntu-latest
+    needs: [setup, build-push]
+    if: needs.setup.outputs.environment == 'staging'
+    environment:
+      name: staging
+      url: https://staging.preskool.com
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update image tags in K8s overlay
+        run: |
+          cd k8s/overlays/staging
+          # Update image references
+          sed -i "s|newTag:.*|newTag: ${{ needs.setup.outputs.image_tag }}|g" kustomization.yaml
+
+      - name: Deploy via kubectl
+        env:
+          KUBECONFIG_DATA: ${{ secrets.STAGING_KUBECONFIG }}
+        run: |
+          echo "$KUBECONFIG_DATA" | base64 -d > /tmp/kubeconfig
+          export KUBECONFIG=/tmp/kubeconfig
+          kubectl apply -k k8s/overlays/staging
+          kubectl -n preskool-staging rollout status deployment/backend --timeout=120s
+          kubectl -n preskool-staging rollout status deployment/frontend --timeout=60s
+          rm /tmp/kubeconfig
+
+      - name: Smoke test
+        run: |
+          sleep 10
+          curl -sf https://staging.preskool.com/api/v1/health || echo "⚠️ Health check pending"
+
+  # ── Deploy to Production ────────────────────────────────────────────
+  deploy-production:
+    name: 🏭 Deploy Production
+    runs-on: ubuntu-latest
+    needs: [setup, build-push]
+    if: needs.setup.outputs.environment == 'production'
+    environment:
+      name: production
+      url: https://erp.preskool.com
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update image tags in K8s overlay
+        run: |
+          cd k8s/overlays/production
+          sed -i "s|newTag:.*|newTag: ${{ needs.setup.outputs.image_tag }}|g" kustomization.yaml
+
+      - name: Deploy via kubectl
+        env:
+          KUBECONFIG_DATA: ${{ secrets.PRODUCTION_KUBECONFIG }}
+        run: |
+          echo "$KUBECONFIG_DATA" | base64 -d > /tmp/kubeconfig
+          export KUBECONFIG=/tmp/kubeconfig
+          kubectl apply -k k8s/overlays/production
+          kubectl -n preskool rollout status deployment/backend --timeout=180s
+          kubectl -n preskool rollout status deployment/frontend --timeout=60s
+          rm /tmp/kubeconfig
+
+      - name: Smoke test
+        run: |
+          sleep 15
+          curl -sf https://erp.preskool.com/api/v1/health || echo "⚠️ Health check pending"
+
+      - name: Write deployment record
+        if: success()
+        run: |
+          mkdir -p deployment-records
+          cat > deployment-records/latest.json << EOF
+          {
+            "sha": "${{ needs.setup.outputs.image_tag }}",
+            "environment": "production",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "deployer": "${{ github.actor }}",
+            "run_id": "${{ github.run_id }}",
+            "run_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          }
+          EOF
+          cp deployment-records/latest.json deployment-records/$(date +%Y%m%d_%H%M%S).json
+
+      - name: Notify Slack on success
+        if: success()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "✅ *PreSkool ERP deployed to Production*",
+              "attachments": [{
+                "color": "good",
+                "fields": [
+                  {"title": "Version", "value": "${{ needs.setup.outputs.image_tag }}", "short": true},
+                  {"title": "Deployed by", "value": "${{ github.actor }}", "short": true},
+                  {"title": "Environment", "value": "Production 🏭", "short": true},
+                  {"title": "Time", "value": "$(date -u +'%Y-%m-%d %H:%M UTC')", "short": true}
+                ],
+                "actions": [
+                  {"type": "button", "text": "View on GitHub", "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"},
+                  {"type": "button", "text": "Grafana Dashboard", "url": "https://grafana.preskool.com/d/preskool-slo"}
+                ]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_RELEASES_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "❌ *PreSkool ERP production deploy FAILED*",
+              "attachments": [{
+                "color": "danger",
+                "fields": [
+                  {"title": "SHA", "value": "${{ needs.setup.outputs.image_tag }}", "short": true},
+                  {"title": "Triggered by", "value": "${{ github.actor }}", "short": true}
+                ],
+                "actions": [
+                  {"type": "button", "text": "View Failed Run", "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"},
+                  {"type": "button", "text": "Rollback Guide", "url": "${{ github.server_url }}/${{ github.repository }}/blob/main/docs/rollback-runbook.md"}
+                ]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_RELEASES_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Notify on success
+        if: success()
+        run: echo "✅ Production deployment successful — ${{ needs.setup.outputs.image_tag }}"
+
+
+  # ── Database Migration ──────────────────────────────────────────────
+  migrate:
+    name: 🗃️ Run Migrations
+    runs-on: ubuntu-latest
+    needs: [setup, build-push]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Alembic migrations
+        env:
+          KUBECONFIG_DATA: ${{ secrets[format('{0}_KUBECONFIG', needs.setup.outputs.environment == 'production' && 'PRODUCTION' || 'STAGING')] }}
+        run: |
+          echo "$KUBECONFIG_DATA" | base64 -d > /tmp/kubeconfig
+          export KUBECONFIG=/tmp/kubeconfig
+          NAMESPACE=${{ needs.setup.outputs.environment == 'production' && 'preskool' || 'preskool-staging' }}
+          POD=$(kubectl -n $NAMESPACE get pod -l app=backend -o jsonpath='{.items[0].metadata.name}')
+          kubectl -n $NAMESPACE exec $POD -- alembic upgrade head
+          rm /tmp/kubeconfig

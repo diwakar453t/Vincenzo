@@ -1,0 +1,419 @@
+# ═══════════════════════════════════════════════════════════════════════
+# Prometheus Alert Rules — PreSkool ERP (200+ Colleges)
+# 35+ rules across 7 groups with runbook links
+# ═══════════════════════════════════════════════════════════════════════
+
+groups:
+  # ═══════════════════════════════════════════════════════════════════
+  # 1. APPLICATION HEALTH
+  # ═══════════════════════════════════════════════════════════════════
+  - name: preskool.application
+    rules:
+      - alert: AppDown
+        expr: up{job="preskool-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "PreSkool backend is DOWN"
+          description: "Backend has been unreachable for 1 minute. All 200+ colleges affected."
+          runbook_url: "https://wiki.preskool.com/runbooks/app-down"
+          dashboard_url: "http://localhost:3200/grafana/d/preskool-metrics"
+
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status_code=~"5.."}[5m]))
+          / sum(rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Error rate >5% — {{ $value | humanizePercentage }} of requests failing"
+          description: "5xx error rate has exceeded 5% for 5 minutes. Check backend logs for root cause."
+          runbook_url: "https://wiki.preskool.com/runbooks/high-error-rate"
+          dashboard_url: "http://localhost:3200/grafana/d/preskool-metrics"
+
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
+          > 2.0
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "P95 latency exceeds 2s — currently {{ $value | humanizeDuration }}"
+          runbook_url: "https://wiki.preskool.com/runbooks/high-latency"
+
+      - alert: HighLatencyP99Critical
+        expr: |
+          histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
+          > 5.0
+        for: 3m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "P99 latency exceeds 5s — {{ $value | humanizeDuration }}"
+          description: "99th percentile response time critically high. Likely DB or external dependency issue."
+          runbook_url: "https://wiki.preskool.com/runbooks/high-latency"
+
+      - alert: TooManyInFlightRequests
+        expr: sum(http_requests_in_flight) > 200
+        for: 2m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "{{ $value }} concurrent requests in-flight (threshold: 200)"
+          runbook_url: "https://wiki.preskool.com/runbooks/high-concurrency"
+
+      - alert: HealthCheckFailing
+        expr: |
+          probe_success{job="preskool-backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Health check endpoint is failing"
+
+  # ═══════════════════════════════════════════════════════════════════
+  # 2. DATABASE HEALTH
+  # ═══════════════════════════════════════════════════════════════════
+  - name: preskool.database
+    rules:
+      - alert: PostgresDown
+        expr: up{job="postgres-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "PostgreSQL is DOWN — all services affected"
+          runbook_url: "https://wiki.preskool.com/runbooks/postgres-down"
+
+      - alert: DatabaseConnectionPoolExhausted
+        expr: db_connections_active / db_connections_pool_size > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "DB pool {{ $value | humanizePercentage }} utilized"
+          runbook_url: "https://wiki.preskool.com/runbooks/db-pool-exhaustion"
+
+      - alert: DatabaseConnectionPoolCritical
+        expr: db_connections_active / db_connections_pool_size > 0.95
+        for: 2m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "DB pool >95% — imminent connection exhaustion"
+          runbook_url: "https://wiki.preskool.com/runbooks/db-pool-exhaustion"
+
+      - alert: SlowQueries
+        expr: |
+          histogram_quantile(0.95, rate(db_query_duration_seconds_bucket[5m]))
+          > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "P95 DB query time exceeds 500ms"
+          runbook_url: "https://wiki.preskool.com/runbooks/slow-queries"
+
+      - alert: PostgresHighConnections
+        expr: pg_stat_activity_count > 250
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "PostgreSQL connections at {{ $value }} (max: 300)"
+          runbook_url: "https://wiki.preskool.com/runbooks/postgres-connections"
+
+      - alert: PostgresDeadlocks
+        expr: rate(pg_stat_database_deadlocks[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "PostgreSQL deadlocks detected — check concurrent transactions"
+          runbook_url: "https://wiki.preskool.com/runbooks/deadlocks"
+
+      - alert: PostgresReplicationLag
+        expr: pg_replication_lag > 30
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "PostgreSQL replication lag >30s"
+
+      - alert: PostgresDiskUsage
+        expr: pg_database_size_bytes > 50e9
+        for: 1h
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "PostgreSQL database >50GB — plan capacity increase"
+
+  # ═══════════════════════════════════════════════════════════════════
+  # 3. REDIS / CACHE HEALTH
+  # ═══════════════════════════════════════════════════════════════════
+  - name: preskool.redis
+    rules:
+      - alert: RedisDown
+        expr: up{job="redis-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Redis is DOWN — caching, sessions, Celery affected"
+          runbook_url: "https://wiki.preskool.com/runbooks/redis-down"
+
+      - alert: RedisHighMemory
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Redis memory {{ $value | humanizePercentage }} utilized"
+          runbook_url: "https://wiki.preskool.com/runbooks/redis-memory"
+
+      - alert: RedisHighClients
+        expr: redis_connected_clients > 500
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Redis has {{ $value }} connected clients"
+
+      - alert: LowCacheHitRate
+        expr: |
+          sum(rate(cache_hits_total[5m]))
+          / (sum(rate(cache_hits_total[5m])) + sum(rate(cache_misses_total[5m])))
+          < 0.7
+        for: 15m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Cache hit rate dropped below 70% — currently {{ $value | humanizePercentage }}"
+          runbook_url: "https://wiki.preskool.com/runbooks/low-cache-hit"
+
+  # ═══════════════════════════════════════════════════════════════════
+  # 4. INFRASTRUCTURE (CPU, Memory, Disk, Network)
+  # ═══════════════════════════════════════════════════════════════════
+  - name: preskool.infrastructure
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "CPU usage >80% for 10 minutes"
+          runbook_url: "https://wiki.preskool.com/runbooks/high-cpu"
+
+      - alert: HighCPUCritical
+        expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+        for: 5m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "CPU usage >95% — system under extreme load"
+          runbook_url: "https://wiki.preskool.com/runbooks/high-cpu"
+
+      - alert: HighMemoryUsage
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Memory usage >85%"
+          runbook_url: "https://wiki.preskool.com/runbooks/high-memory"
+
+      - alert: DiskSpaceLow
+        expr: (1 - node_filesystem_avail_bytes / node_filesystem_size_bytes) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Disk usage >85%"
+          runbook_url: "https://wiki.preskool.com/runbooks/disk-space"
+
+      - alert: DiskSpaceCritical
+        expr: (1 - node_filesystem_avail_bytes / node_filesystem_size_bytes) > 0.95
+        for: 1m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Disk usage >95% — IMMEDIATE action required"
+          runbook_url: "https://wiki.preskool.com/runbooks/disk-space"
+
+      - alert: ContainerRestarting
+        expr: increase(container_restart_count[15m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Container {{ $labels.container }} restarted {{ $value }} times in 15 min"
+
+      - alert: ContainerOOMKilled
+        expr: container_oom_events_total > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Container {{ $labels.container }} OOM killed"
+          runbook_url: "https://wiki.preskool.com/runbooks/oom-killed"
+
+  # ═══════════════════════════════════════════════════════════════════
+  # 5. SECURITY
+  # ═══════════════════════════════════════════════════════════════════
+  - name: preskool.security
+    rules:
+      - alert: AuthBruteForce
+        expr: rate(auth_attempts_total{result="failure"}[5m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+          team: security
+        annotations:
+          summary: "Brute force detected — >10 auth failures/sec for 2 minutes"
+          description: "High volume of failed authentication attempts detected. Consider blocking source IPs."
+          runbook_url: "https://wiki.preskool.com/runbooks/brute-force"
+
+      - alert: SuspiciousLoginPattern
+        expr: |
+          sum(rate(auth_attempts_total{result="failure"}[10m])) by (tenant_id)
+          / sum(rate(auth_attempts_total[10m])) by (tenant_id) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "Tenant {{ $labels.tenant_id }}: >50% login failures in 10 min"
+          runbook_url: "https://wiki.preskool.com/runbooks/suspicious-login"
+
+      - alert: TooManyFailedLogins
+        expr: increase(auth_attempts_total{result="failure"}[1h]) > 100
+        for: 1m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "{{ $value }} failed logins in the last hour"
+
+      - alert: WAFHighBlockRate
+        expr: |
+          sum(rate(waf_blocked_requests_total[5m]))
+          / sum(rate(waf_total_requests_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "WAF blocking >10% of requests"
+
+  # ═══════════════════════════════════════════════════════════════════
+  # 6. BUSINESS KPIs & SLAs
+  # ═══════════════════════════════════════════════════════════════════
+  - name: preskool.business
+    rules:
+      - alert: TenantInactive
+        expr: |
+          increase(tenant_requests_total[1h]) == 0
+          and on(tenant_id) tenant_requests_total > 100
+        for: 4h
+        labels:
+          severity: info
+          team: customer-success
+        annotations:
+          summary: "Tenant {{ $labels.tenant_id }} inactive for 4 hours (normally active)"
+
+      - alert: HighTenantErrorRate
+        expr: |
+          sum(rate(http_requests_total{status_code=~"5.."}[5m])) by (tenant_id)
+          / sum(rate(http_requests_total[5m])) by (tenant_id) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Tenant {{ $labels.tenant_id }} error rate >10%"
+          runbook_url: "https://wiki.preskool.com/runbooks/tenant-errors"
+
+      - alert: SLABreachRisk
+        expr: |
+          (1 - sum(rate(http_requests_total{status_code=~"5.."}[1h]))
+          / sum(rate(http_requests_total[1h]))) < 0.995
+        for: 15m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "SLA breach risk — availability dropped below 99.5%"
+          description: "Current availability is {{ $value | humanizePercentage }}. SLA target is 99.9%."
+          runbook_url: "https://wiki.preskool.com/runbooks/sla-breach"
+
+      - alert: NoFeeCollections
+        expr: increase(fee_collections_total[24h]) == 0
+        for: 1h
+        labels:
+          severity: info
+          team: product
+        annotations:
+          summary: "No fee collections in the last 24 hours"
+
+  # ═══════════════════════════════════════════════════════════════════
+  # 7. CELERY / BACKGROUND TASKS
+  # ═══════════════════════════════════════════════════════════════════
+  - name: preskool.celery
+    rules:
+      - alert: CeleryWorkerDown
+        expr: celery_workers == 0
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "No Celery workers running — background tasks stalled"
+          runbook_url: "https://wiki.preskool.com/runbooks/celery-down"
+
+      - alert: CeleryQueueBacklog
+        expr: celery_queue_length > 1000
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Celery queue backlog: {{ $value }} pending tasks"
+          runbook_url: "https://wiki.preskool.com/runbooks/celery-backlog"
+
+      - alert: CeleryTaskFailures
+        expr: rate(celery_task_failures_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Celery tasks failing at {{ $value }}/sec"

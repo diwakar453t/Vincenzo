@@ -1,0 +1,253 @@
+{
+    "annotations": {
+        "list": []
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 1,
+    "id": null,
+    "links": [],
+    "panels": [
+        {
+            "title": "Log Volume by Service",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 0
+            },
+            "targets": [
+                {
+                    "expr": "sum(count_over_time({job=\"preskool\"} [$__interval])) by (service)",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "custom": {
+                        "drawStyle": "bars",
+                        "fillOpacity": 30
+                    }
+                }
+            }
+        },
+        {
+            "title": "Error Rate",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 0
+            },
+            "targets": [
+                {
+                    "expr": "sum(count_over_time({service=\"backend\", level=\"ERROR\"} [$__interval])) by (tenant_id)",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "fixed",
+                        "fixedColor": "red"
+                    },
+                    "custom": {
+                        "fillOpacity": 20
+                    }
+                }
+            }
+        },
+        {
+            "title": "Logs by Tenant (Top 10)",
+            "type": "barchart",
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 0,
+                "y": 8
+            },
+            "targets": [
+                {
+                    "expr": "topk(10, sum(count_over_time({service=\"backend\"} [$__range])) by (tenant_id))",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "title": "Log Level Distribution",
+            "type": "piechart",
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 8,
+                "y": 8
+            },
+            "targets": [
+                {
+                    "expr": "sum(count_over_time({service=\"backend\"} [$__range])) by (level)",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "title": "Slow Requests (>1s)",
+            "type": "stat",
+            "gridPos": {
+                "h": 4,
+                "w": 4,
+                "x": 16,
+                "y": 8
+            },
+            "targets": [
+                {
+                    "expr": "count_over_time({service=\"backend\"} | json | duration_ms > 1000 [$__range])",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 10
+                            },
+                            {
+                                "color": "red",
+                                "value": 50
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "title": "Auth Failures",
+            "type": "stat",
+            "gridPos": {
+                "h": 4,
+                "w": 4,
+                "x": 16,
+                "y": 12
+            },
+            "targets": [
+                {
+                    "expr": "count_over_time({service=\"backend\"} | json | status_code = 401 or status_code = 403 [$__range])",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "orange",
+                                "value": 50
+                            },
+                            {
+                                "color": "red",
+                                "value": 200
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "title": "Recent Error Logs",
+            "type": "logs",
+            "gridPos": {
+                "h": 10,
+                "w": 24,
+                "x": 0,
+                "y": 16
+            },
+            "targets": [
+                {
+                    "expr": "{service=\"backend\", level=~\"ERROR|CRITICAL\"}",
+                    "refId": "A"
+                }
+            ],
+            "options": {
+                "showTime": true,
+                "sortOrder": "Descending",
+                "enableLogDetails": true
+            }
+        },
+        {
+            "title": "PostgreSQL Slow Queries",
+            "type": "logs",
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 26
+            },
+            "targets": [
+                {
+                    "expr": "{service=\"postgres\"} |~ \"duration:\"",
+                    "refId": "A"
+                }
+            ],
+            "options": {
+                "showTime": true,
+                "sortOrder": "Descending"
+            }
+        }
+    ],
+    "schemaVersion": 39,
+    "tags": [
+        "preskool",
+        "logging"
+    ],
+    "templating": {
+        "list": [
+            {
+                "name": "tenant_id",
+                "type": "query",
+                "datasource": "Loki",
+                "query": "label_values({service=\"backend\"}, tenant_id)",
+                "refresh": 2,
+                "includeAll": true,
+                "multi": true,
+                "current": {
+                    "selected": true,
+                    "text": "All",
+                    "value": "$__all"
+                }
+            },
+            {
+                "name": "service",
+                "type": "query",
+                "datasource": "Loki",
+                "query": "label_values(service)",
+                "refresh": 2,
+                "includeAll": true,
+                "current": {
+                    "selected": true,
+                    "text": "All",
+                    "value": "$__all"
+                }
+            }
+        ]
+    },
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "PreSkool ERP — Logging Dashboard",
+    "uid": "preskool-logging",
+    "version": 1
+}

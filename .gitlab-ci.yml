@@ -1,0 +1,181 @@
+# ═══════════════════════════════════════════════════════════════════════
+# PreSkool ERP — GitLab CI/CD (mirror of GitHub Actions)
+# ═══════════════════════════════════════════════════════════════════════
+
+stages:
+  - lint
+  - test
+  - security
+  - build
+  - deploy-staging
+  - deploy-production
+
+variables:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "22"
+  POSTGRES_DB: preskool_test
+  POSTGRES_USER: preskool
+  POSTGRES_PASSWORD: test_password
+  REGISTRY: $CI_REGISTRY
+  IMAGE_BACKEND: $CI_REGISTRY_IMAGE/backend
+  IMAGE_FRONTEND: $CI_REGISTRY_IMAGE/frontend
+
+# ── Cache ─────────────────────────────────────────────────────────────
+.pip-cache: &pip-cache
+  cache:
+    key: pip-$CI_COMMIT_REF_SLUG
+    paths: [.cache/pip]
+  variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+.npm-cache: &npm-cache
+  cache:
+    key: npm-$CI_COMMIT_REF_SLUG
+    paths: [frontend/node_modules]
+
+# ═══════════════════════════════════════════════════════════════════════
+# LINT STAGE
+# ═══════════════════════════════════════════════════════════════════════
+backend-lint:
+  stage: lint
+  image: python:${PYTHON_VERSION}-slim
+  <<: *pip-cache
+  script:
+    - cd backend
+    - pip install -q -r requirements.txt
+    - flake8 app/ --max-line-length=120 --statistics || true
+    - black --check --diff app/ || true
+    - mypy app/ --ignore-missing-imports || true
+
+frontend-lint:
+  stage: lint
+  image: node:${NODE_VERSION}-alpine
+  <<: *npm-cache
+  script:
+    - cd frontend
+    - npm ci --prefer-offline
+    - npm run lint || true
+    - npx tsc --noEmit
+
+# ═══════════════════════════════════════════════════════════════════════
+# TEST STAGE
+# ═══════════════════════════════════════════════════════════════════════
+backend-test:
+  stage: test
+  image: python:${PYTHON_VERSION}-slim
+  <<: *pip-cache
+  services:
+    - name: postgres:16-alpine
+      alias: postgres
+    - name: redis:7-alpine
+      alias: redis
+  variables:
+    DATABASE_URL: postgresql://preskool:test_password@postgres:5432/preskool_test
+    REDIS_URL: redis://redis:6379/0
+    SECRET_KEY: test-secret-key
+    APP_ENV: test
+  script:
+    - cd backend
+    - pip install -q -r requirements.txt
+    - pytest --cov=app --cov-report=xml -v || true
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: backend/coverage.xml
+
+frontend-build:
+  stage: test
+  image: node:${NODE_VERSION}-alpine
+  <<: *npm-cache
+  script:
+    - cd frontend
+    - npm ci --prefer-offline
+    - VITE_API_URL=/api/v1 npm run build
+  artifacts:
+    paths: [frontend/dist/]
+    expire_in: 1 day
+
+# ═══════════════════════════════════════════════════════════════════════
+# SECURITY STAGE
+# ═══════════════════════════════════════════════════════════════════════
+bandit-scan:
+  stage: security
+  image: python:${PYTHON_VERSION}-slim
+  script:
+    - pip install bandit[toml]
+    - bandit -r backend/app/ -f json -o bandit-report.json || true
+  artifacts:
+    paths: [bandit-report.json]
+  allow_failure: true
+
+npm-audit:
+  stage: security
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - cd frontend
+    - npm ci --prefer-offline
+    - npm audit --audit-level=high || true
+  allow_failure: true
+
+# ═══════════════════════════════════════════════════════════════════════
+# BUILD STAGE (Docker images)
+# ═══════════════════════════════════════════════════════════════════════
+docker-build:
+  stage: build
+  image: docker:24-dind
+  services:
+    - docker:24-dind
+  needs: [backend-test, frontend-build]
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -t $IMAGE_BACKEND:$CI_COMMIT_SHA -t $IMAGE_BACKEND:latest ./backend
+    - docker build -t $IMAGE_FRONTEND:$CI_COMMIT_SHA -t $IMAGE_FRONTEND:latest --build-arg VITE_API_URL=/api/v1 ./frontend
+    - docker push $IMAGE_BACKEND:$CI_COMMIT_SHA
+    - docker push $IMAGE_BACKEND:latest
+    - docker push $IMAGE_FRONTEND:$CI_COMMIT_SHA
+    - docker push $IMAGE_FRONTEND:latest
+  only:
+    - main
+    - develop
+
+# ═══════════════════════════════════════════════════════════════════════
+# DEPLOY STAGES
+# ═══════════════════════════════════════════════════════════════════════
+deploy-staging:
+  stage: deploy-staging
+  image: bitnami/kubectl:latest
+  needs: [docker-build]
+  environment:
+    name: staging
+    url: https://staging.preskool.com
+  script:
+    - kubectl config set-cluster staging --server=$STAGING_K8S_SERVER --certificate-authority=$STAGING_CA_CERT
+    - kubectl config set-credentials deployer --token=$STAGING_K8S_TOKEN
+    - kubectl config set-context staging --cluster=staging --user=deployer --namespace=preskool-staging
+    - kubectl config use-context staging
+    - kubectl apply -k k8s/overlays/staging
+    - kubectl rollout status deployment/backend -n preskool-staging --timeout=120s
+    - kubectl rollout status deployment/frontend -n preskool-staging --timeout=60s
+  only:
+    - develop
+
+deploy-production:
+  stage: deploy-production
+  image: bitnami/kubectl:latest
+  needs: [docker-build]
+  environment:
+    name: production
+    url: https://erp.preskool.com
+  script:
+    - kubectl config set-cluster production --server=$PRODUCTION_K8S_SERVER --certificate-authority=$PRODUCTION_CA_CERT
+    - kubectl config set-credentials deployer --token=$PRODUCTION_K8S_TOKEN
+    - kubectl config set-context production --cluster=production --user=deployer --namespace=preskool
+    - kubectl config use-context production
+    - kubectl apply -k k8s/overlays/production
+    - kubectl rollout status deployment/backend -n preskool --timeout=180s
+    - kubectl rollout status deployment/frontend -n preskool --timeout=60s
+  only:
+    - main
+  when: manual

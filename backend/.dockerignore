@@ -1,0 +1,37 @@
+# Dependencies
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Data (not part of image)
+*.db
+*.sqlite3
+data/
+uploads/
+logs/
+
+# Tests & dev tools
+tests/
+pytest.ini
+.coverage
+htmlcov/

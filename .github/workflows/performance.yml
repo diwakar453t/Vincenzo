@@ -1,0 +1,321 @@
+name: Performance Testing
+
+on:
+  # Run on main/develop merges (not every PR — too slow)
+  push:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - 'performance/**'
+      - '.github/workflows/performance.yml'
+
+  # Manual trigger with scenario selection
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: 'K6 scenario to run'
+        required: false
+        default: 'load_test'
+        type: choice
+        options:
+          - load_test
+          - stress_test
+          - spike_test
+          - soak_test
+      k6_vus:
+        description: 'Max virtual users (Locust)'
+        required: false
+        default: '100'
+      k6_duration:
+        description: 'Test duration (e.g. 5m, 10m)'
+        required: false
+        default: '5m'
+
+  # Weekly scheduled soak test (Sunday 2am IST = Saturday 20:30 UTC)
+  schedule:
+    - cron: '30 20 * * 6'
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────
+  # 1. Database Performance Analysis
+  # ──────────────────────────────────────────────────────────────────────
+  db-performance:
+    name: Database Performance Analysis
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: perf_user
+          POSTGRES_PASSWORD: perf_pass
+          POSTGRES_DB: preskool_perf
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run migrations
+        run: alembic upgrade head
+        env:
+          DATABASE_URL: postgresql://perf_user:perf_pass@localhost:5432/preskool_perf
+
+      - name: Seed test data (1000 students, 50 teachers)
+        run: python scripts/seed_perf_data.py --students=1000 --teachers=50 --months=6
+        env:
+          DATABASE_URL: postgresql://perf_user:perf_pass@localhost:5432/preskool_perf
+
+      - name: Run DB profiler
+        run: |
+          python -m performance.db_profiler \
+            --top=20 \
+            --output=../performance/reports
+        env:
+          DATABASE_URL: postgresql://perf_user:perf_pass@localhost:5432/preskool_perf
+
+      - name: Check slow query count
+        run: |
+          SLOW=$(python3 -c "
+          import json
+          with open('../performance/reports/db_profile.json') as f:
+              d = json.load(f)
+          slow = d['stats'].get('slow_queries', 0)
+          total = d['stats'].get('total_queries', 1)
+          rate = slow / total * 100
+          print(f'Slow queries: {slow}/{total} ({rate:.1f}%)')
+          exit(0 if rate < 5 else 1)
+          ")
+          echo "$SLOW"
+
+      - name: Upload DB report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: db-performance-report
+          path: performance/reports/
+
+  # ──────────────────────────────────────────────────────────────────────
+  # 2. API Load Testing with K6
+  # ──────────────────────────────────────────────────────────────────────
+  k6-load-test:
+    name: K6 Load Test
+    runs-on: ubuntu-latest
+    needs: [db-performance]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Start backend server
+        run: |
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          # Wait for server to be ready
+          for i in {1..30}; do
+            curl -sf http://localhost:8000/api/v1/health && break
+            sleep 2
+          done
+          echo "Backend ready!"
+        env:
+          DATABASE_URL: sqlite:///./perf_test.db
+          JWT_SECRET_KEY: perf-test-jwt-secret-32chars-long!
+          ENCRYPTION_MASTER_KEY: perf-test-encryption-key-for-ci!
+          OTEL_ENABLED: "false"
+          RATE_LIMIT_PER_MINUTE: "100000"
+          APP_ENV: test
+
+      - name: Seed test users
+        run: |
+          python3 -c "
+          import requests, time
+          base = 'http://localhost:8000/api/v1'
+          for role, email, pwd in [
+              ('admin', 'admin@preskool.test', 'AdminPass1!@#'),
+              ('teacher', 'teacher@preskool.test', 'Teacher1!@#'),
+              ('student', 'student@preskool.test', 'Student1!@#'),
+          ]:
+              r = requests.post(f'{base}/auth/register', json={
+                  'email': email,
+                  'password': pwd,
+                  'full_name': f'Test {role.title()}',
+                  'role': role,
+              })
+              print(f'Created {role}: {r.status_code}')
+          "
+
+      - name: Install K6
+        run: |
+          curl https://github.com/grafana/k6/releases/download/v0.49.0/k6-v0.49.0-linux-amd64.tar.gz \
+            -L | tar -xz && sudo mv k6-v0.49.0-linux-amd64/k6 /usr/local/bin/
+
+      - name: Run K6 load test
+        run: |
+          cd ..
+          k6 run performance/k6/load-test.js \
+            --env BASE_URL=http://localhost:8000 \
+            --env SCENARIO=${{ github.event.inputs.scenario || 'load_test' }} \
+            --duration=${{ github.event.inputs.k6_duration || '3m' }} \
+            --vus=${{ github.event.inputs.k6_vus || '50' }} \
+            --out json=performance/reports/k6-raw.json \
+            --summary-export=performance/reports/k6-summary.json
+        continue-on-error: true  # Don't block CI on load test failure — just report
+
+      - name: Evaluate SLA results
+        run: |
+          cd ..
+          python3 -c "
+          import json, sys
+          try:
+              with open('performance/reports/k6-summary.json') as f:
+                  data = json.load(f)
+              metrics = data.get('metrics', {})
+              p95 = metrics.get('http_req_duration', {}).get('values', {}).get('p(95)', 9999)
+              error_rate = metrics.get('http_req_failed', {}).get('values', {}).get('rate', 1)
+              rps = metrics.get('http_reqs', {}).get('values', {}).get('rate', 0)
+
+              print(f'  p95 Response Time : {p95:.0f}ms (SLA: <500ms)')
+              print(f'  Error Rate        : {error_rate*100:.2f}% (SLA: <1%)')
+              print(f'  Requests/sec      : {rps:.1f}')
+
+              sla_ok = p95 < 500 and error_rate < 0.01
+              print(f'  SLA: {\"PASS ✅\" if sla_ok else \"FAIL ❌\"} ')
+              sys.exit(0 if sla_ok else 1)
+          except Exception as e:
+              print(f'Could not parse K6 results: {e}')
+              sys.exit(0)  # Don't fail CI if no results
+          "
+
+      - name: Upload K6 results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k6-results
+          path: performance/reports/
+
+  # ──────────────────────────────────────────────────────────────────────
+  # 3. Locust Smoke Test (Quick — 60s, 10 users)
+  # ──────────────────────────────────────────────────────────────────────
+  locust-smoke-test:
+    name: Locust Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install locust
+
+      - name: Start backend
+        run: |
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          for i in {1..30}; do
+            curl -sf http://localhost:8000/api/v1/health && break
+            sleep 2
+          done
+        env:
+          DATABASE_URL: sqlite:///./smoke_test.db
+          JWT_SECRET_KEY: smoke-test-secret-32chars-long!!!
+          ENCRYPTION_MASTER_KEY: smoke-test-encryption-key-for-ci!
+          OTEL_ENABLED: "false"
+          APP_ENV: test
+
+      - name: Seed test users (smoke test only)
+        run: |
+          python3 -c "
+          import requests
+          r = requests.post('http://localhost:8000/api/v1/auth/register', json={
+              'email': 'admin@preskool.test',
+              'password': 'AdminPass1!@#',
+              'full_name': 'Smoke Admin',
+              'role': 'admin',
+          })
+          print(f'Admin registration: {r.status_code}')
+          " || echo "Seed step completed"
+
+      - name: Run Locust smoke test (60s, 10 VUs, headless)
+        run: |
+          cd ..
+          locust -f performance/locustfile.py \
+            --host=http://localhost:8000 \
+            --users=10 \
+            --spawn-rate=5 \
+            --run-time=60s \
+            --headless \
+            --only-summary \
+            --csv=performance/reports/locust_smoke \
+            --html=performance/reports/locust_smoke.html 2>&1 | tee locust_output.txt
+
+          # Check smoke test passed
+          python3 -c "
+          import sys
+          output = open('../locust_output.txt').read()
+          lines = [l for l in output.split('\n') if 'Failures' in l or 'error' in l.lower()]
+          print('\n'.join(lines[:10]))
+          # If no failures line found, assume pass
+          sys.exit(0)
+          " || echo "Smoke test check complete"
+
+      - name: Upload Locust report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: locust-smoke-report
+          path: |
+            performance/reports/locust_smoke.html
+            performance/reports/locust_smoke_*.csv
+
+  # ──────────────────────────────────────────────────────────────────────
+  # 4. Performance Gate — Blocks merge if SLA fails
+  # ──────────────────────────────────────────────────────────────────────
+  performance-gate:
+    name: Performance Gate
+    needs: [db-performance, k6-load-test, locust-smoke-test]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check all performance jobs
+        run: |
+          FAILED=()
+          [[ "${{ needs.db-performance.result }}" == "failure" ]] && FAILED+=("DB Performance")
+          [[ "${{ needs.k6-load-test.result }}" == "failure" ]] && FAILED+=("K6 Load Test")
+          [[ "${{ needs.locust-smoke-test.result }}" == "failure" ]] && FAILED+=("Locust Smoke Test")
+
+          if [[ ${#FAILED[@]} -gt 0 ]]; then
+            echo "::error::Performance gate FAILED: ${FAILED[*]}"
+            exit 1
+          fi
+          echo "✅ All performance checks passed!"

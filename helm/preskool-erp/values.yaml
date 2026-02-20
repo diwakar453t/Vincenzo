@@ -1,0 +1,122 @@
+# ═══════════════════════════════════════════════════════════════════════
+# PreSkool ERP — Helm Values (defaults, override per environment)
+# ═══════════════════════════════════════════════════════════════════════
+
+# ── Global ────────────────────────────────────────────────────────────
+global:
+  namespace: preskool
+  environment: production
+
+# ── Backend ───────────────────────────────────────────────────────────
+backend:
+  replicaCount: 2
+  image:
+    repository: preskool/backend
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPU: 70
+    targetMemory: 80
+  env:
+    APP_ENV: production
+    LOG_LEVEL: info
+    UVICORN_WORKERS: "4"
+    ALLOWED_ORIGINS: "https://erp.preskool.com"
+    RAZORPAY_ENABLED: "false"
+  uploads:
+    enabled: true
+    size: 5Gi
+    accessMode: ReadWriteMany
+
+# ── Frontend ──────────────────────────────────────────────────────────
+frontend:
+  replicaCount: 2
+  image:
+    repository: preskool/frontend
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 128Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPU: 75
+  buildArgs:
+    VITE_API_URL: "/api/v1"
+
+# ── PostgreSQL ────────────────────────────────────────────────────────
+postgresql:
+  enabled: true
+  image: postgres:16-alpine
+  auth:
+    database: preskool
+    username: preskool
+    existingSecret: preskool-secrets
+    secretKey: POSTGRES_PASSWORD
+  storage:
+    size: 10Gi
+    accessMode: ReadWriteOnce
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+# ── Redis ─────────────────────────────────────────────────────────────
+redis:
+  enabled: true
+  image: redis:7-alpine
+  maxmemory: 128mb
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+# ── Ingress ───────────────────────────────────────────────────────────
+ingress:
+  enabled: true
+  className: nginx
+  host: erp.preskool.com
+  tls:
+    enabled: true
+    secretName: preskool-tls
+    clusterIssuer: letsencrypt-prod
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/limit-rps: "50"
+
+# ── Secrets ───────────────────────────────────────────────────────────
+secrets:
+  # Override these in your environment-specific values
+  secretKey: "change-me-in-production"
+  postgresPassword: "preskool_secret_2026"
+  razorpayKeyId: ""
+  razorpayKeySecret: ""

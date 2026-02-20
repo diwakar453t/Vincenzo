@@ -21,3 +21,16 @@ pytest-cov==4.1.0
 black==24.1.1
 flake8==7.0.0
 mypy==1.8.0
+email-validator>=2.1.0
+prometheus-client>=0.20.0
+
+# OpenTelemetry — Distributed Tracing
+opentelemetry-api>=1.22.0
+opentelemetry-sdk>=1.22.0
+opentelemetry-exporter-otlp-proto-grpc>=1.22.0
+opentelemetry-instrumentation-fastapi>=0.43b0
+opentelemetry-instrumentation-sqlalchemy>=0.43b0
+opentelemetry-instrumentation-redis>=0.43b0
+opentelemetry-instrumentation-requests>=0.43b0
+opentelemetry-instrumentation-logging>=0.43b0
+opentelemetry-propagator-b3>=1.22.0

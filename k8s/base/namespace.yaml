@@ -1,0 +1,10 @@
+# ═══════════════════════════════════════════════════════════════════════
+# PreSkool ERP — Kubernetes Namespace
+# ═══════════════════════════════════════════════════════════════════════
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: preskool
+  labels:
+    app.kubernetes.io/name: preskool-erp
+    app.kubernetes.io/part-of: preskool

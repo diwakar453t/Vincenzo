@@ -1,0 +1,104 @@
+# ═══════════════════════════════════════════════════════════════════════
+# PreSkool ERP — Security Scanning (scheduled + on-demand)
+# ═══════════════════════════════════════════════════════════════════════
+name: Security Scan
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"  # Every Monday 6:00 UTC
+  workflow_dispatch:
+
+permissions:
+  security-events: write
+
+jobs:
+  # ── Snyk Security Scan ──────────────────────────────────────────────
+  snyk:
+    name: 🛡️ Snyk Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Snyk — backend dependencies
+        uses: snyk/actions/python@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --file=backend/requirements.txt --severity-threshold=high
+
+      - name: Snyk — frontend dependencies
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --file=frontend/package.json --severity-threshold=high
+
+  # ── Container Image Scan ────────────────────────────────────────────
+  trivy:
+    name: 🔍 Trivy Container Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build -t preskool/backend:scan ./backend
+
+      - name: Trivy — scan backend image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: preskool/backend:scan
+          format: sarif
+          output: backend-trivy.sarif
+          severity: CRITICAL,HIGH
+
+      - name: Upload backend results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: backend-trivy.sarif
+          category: backend-trivy
+
+      - name: Build frontend image
+        run: docker build -t preskool/frontend:scan ./frontend
+
+      - name: Trivy — scan frontend image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: preskool/frontend:scan
+          format: sarif
+          output: frontend-trivy.sarif
+          severity: CRITICAL,HIGH
+
+      - name: Upload frontend results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: frontend-trivy.sarif
+          category: frontend-trivy
+
+  # ── CodeQL Analysis ─────────────────────────────────────────────────
+  codeql:
+    name: 🔬 CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    strategy:
+      matrix:
+        language: [python, javascript]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"

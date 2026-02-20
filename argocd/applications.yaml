@@ -1,0 +1,140 @@
+# ═══════════════════════════════════════════════════════════════════════
+# ArgoCD — GitOps Application Definitions
+# Prerequisites: ArgoCD installed in the cluster
+# ═══════════════════════════════════════════════════════════════════════
+
+# ── ArgoCD Project ────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: preskool
+  namespace: argocd
+spec:
+  description: PreSkool ERP Application
+  sourceRepos:
+    - "https://github.com/your-org/preskool-erp.git"
+  destinations:
+    - namespace: preskool
+      server: https://kubernetes.default.svc
+    - namespace: preskool-staging
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+
+---
+# ── Staging Application ──────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: preskool-staging
+  namespace: argocd
+  labels:
+    environment: staging
+  annotations:
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: preskool-deploys
+spec:
+  project: preskool
+  source:
+    repoURL: https://github.com/your-org/preskool-erp.git
+    targetRevision: develop
+    path: k8s/overlays/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: preskool-staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 10
+
+---
+# ── Production Application ───────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: preskool-production
+  namespace: argocd
+  labels:
+    environment: production
+  annotations:
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: preskool-deploys
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: preskool-alerts
+spec:
+  project: preskool
+  source:
+    repoURL: https://github.com/your-org/preskool-erp.git
+    targetRevision: main
+    path: k8s/overlays/production
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: preskool
+  syncPolicy:
+    # Production: manual sync for safety
+    automated: null
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m
+  revisionHistoryLimit: 20
+
+---
+# ── Flux Kustomization (alternative to ArgoCD) ───────────────────────
+# Uncomment if using Flux instead of ArgoCD
+#
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: preskool-staging
+#   namespace: flux-system
+# spec:
+#   interval: 5m
+#   path: ./k8s/overlays/staging
+#   prune: true
+#   sourceRef:
+#     kind: GitRepository
+#     name: preskool-erp
+#   healthChecks:
+#     - apiVersion: apps/v1
+#       kind: Deployment
+#       name: backend
+#       namespace: preskool-staging
+#     - apiVersion: apps/v1
+#       kind: Deployment
+#       name: frontend
+#       namespace: preskool-staging
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: preskool-production
+#   namespace: flux-system
+# spec:
+#   interval: 10m
+#   path: ./k8s/overlays/production
+#   prune: true
+#   sourceRef:
+#     kind: GitRepository
+#     name: preskool-erp
+#   suspend: true  # Manual trigger for production

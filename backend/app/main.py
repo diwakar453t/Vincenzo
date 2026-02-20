@@ -1,6 +1,8 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.core.logging_config import setup_logging
@@ -9,6 +11,9 @@ from app.core.middleware import (
     TenantMiddleware,
     ExceptionHandlerMiddleware
 )
+from app.core.metrics import setup_metrics
+from app.core.tracing import setup_tracing
+from app.core.security import setup_security
 from app.api.v1 import api_router
 
 # Set up logging
@@ -20,6 +25,16 @@ from app.models.user import User, Tenant  # noqa: E402
 # Create database tables automatically for local dev
 Base.metadata.create_all(bind=engine)
 logger.info("💾 Database tables created/verified")
+
+# Initialize Plugin System
+from app.plugins.loader import PluginLoader
+from app.plugins.registry import get_plugin_registry
+from app.core.database import SessionLocal
+
+_plugin_loader = PluginLoader()
+get_plugin_registry().context.set_db_factory(SessionLocal)
+_loaded = _plugin_loader.discover_and_load(auto_activate=True)
+logger.info(f"🔌 Plugins loaded: {_loaded}")
 
 
 # Initialize FastAPI app with enhanced metadata
@@ -51,7 +66,7 @@ app = FastAPI(
     openapi_url="/openapi.json",
     contact={
         "name": "PreSkool Support",
-        "email": "support@preskool.local",
+        "email": "support@preskool.com",
     },
     license_info={
         "name": "MIT",
@@ -62,13 +77,18 @@ app = FastAPI(
 # 1. Exception handler (first to catch all exceptions)
 app.add_middleware(ExceptionHandlerMiddleware)
 
-# 2. CORS middleware
+# 2. CORS middleware (restrictive in production)
+cors_origins = (
+    settings.CORS_ORIGINS if settings.APP_ENV == "development"
+    else settings.CORS_PRODUCTION_ORIGINS
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=cors_origins,
+    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+    allow_methods=settings.CORS_ALLOW_METHODS,
+    allow_headers=settings.CORS_ALLOW_HEADERS,
+    max_age=settings.CORS_MAX_AGE,
 )
 
 # 3. Trusted host middleware (security)
@@ -86,6 +106,20 @@ app.add_middleware(LoggingMiddleware)
 
 # Include API routers
 app.include_router(api_router, prefix="/api/v1")
+
+# Initialize Prometheus metrics (/metrics endpoint + middleware)
+setup_metrics(app)
+
+# Initialize OpenTelemetry distributed tracing
+if settings.OTEL_ENABLED:
+    setup_tracing(app)
+
+# Initialize security middleware (rate limiting, CSRF, headers, input validation)
+setup_security(app)
+
+# Mount uploads directory for serving syllabus documents
+os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 
 @app.on_event("startup")
