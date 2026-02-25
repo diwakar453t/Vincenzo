@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: preskool-erp-backend
+    env: python
+    region: singapore # or ohio, frankfurt, oregon
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: DATABASE_URL
+        value: sqlite:///./preskool.db # Change this if using PostgreSQL on Render
+      # Add other necessary environment variables here
