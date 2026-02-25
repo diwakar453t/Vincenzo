@@ -115,7 +115,7 @@ export default function DashboardPage() {
             value={stat.value}
             icon={getIcon(stat.icon)}
             color={stat.color}
-            trend={stat.trend}
+            trend={stat.trend as any}
           />
         ))}
       </Stack>
@@ -127,8 +127,8 @@ export default function DashboardPage() {
 
       {/* Dashboard Widgets Grid */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3, mb: 4 }}>
-        <ActivityFeed activities={data.recent_activities} />
-        <UpcomingEvents events={data.upcoming_events} />
+        <ActivityFeed activities={data.recent_activities as any[]} />
+        <UpcomingEvents events={data.upcoming_events as any[]} />
       </Box>
 
       {/* Attendance Overview (admin and teacher only) */}

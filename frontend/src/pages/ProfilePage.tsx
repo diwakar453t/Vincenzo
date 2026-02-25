@@ -1,5 +1,5 @@
 import { useSelector } from 'react-redux';
-import type { RootState } from '../../store/store';
+import type { RootState } from '../store/store';
 import {
     Box, Typography, Grid, Card, CardContent, Avatar, Chip, Divider, Paper, Button,
 } from '@mui/material';
@@ -53,13 +53,13 @@ export default function ProfilePage() {
                                 {user?.full_name ? user.full_name.split(' ').map((n: string) => n[0]).join('') : '?'}
                             </Avatar>
                             <Typography variant="h5" fontWeight={700}>{user?.full_name || 'User Name'}</Typography>
-                            <Typography variant="body2" color="text.secondary" mb={1}>{user?.username || 'username'}</Typography>
+                            <Typography variant="body2" color="text.secondary" mb={1}>{(user as any)?.username || 'username'}</Typography>
                             <Chip label={roleBadge.label} color={roleBadge.color} sx={{ fontWeight: 600, mb: 2 }} />
                             <Divider sx={{ width: '100%', mb: 2 }} />
                             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                                 {[
                                     { icon: <Email sx={{ fontSize: 18 }} />, label: 'Email', value: user?.email || '—' },
-                                    { icon: <Phone sx={{ fontSize: 18 }} />, label: 'Phone', value: user?.phone || '—' },
+                                    { icon: <Phone sx={{ fontSize: 18 }} />, label: 'Phone', value: (user as any)?.phone || '—' },
                                     { icon: <CalendarMonth sx={{ fontSize: 18 }} />, label: 'Joined', value: user?.created_at ? new Date(user.created_at).toLocaleDateString() : '—' },
                                 ].map((item, i) => (
                                     <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -90,11 +90,11 @@ export default function ProfilePage() {
                         <Grid container spacing={3}>
                             {[
                                 { label: 'Full Name', value: user?.full_name || '—', icon: <Badge sx={{ fontSize: 18, color: 'text.disabled' }} /> },
-                                { label: 'Username', value: user?.username || '—', icon: <Person sx={{ fontSize: 18, color: 'text.disabled' }} /> },
+                                { label: 'Username', value: (user as any)?.username || '—', icon: <Person sx={{ fontSize: 18, color: 'text.disabled' }} /> },
                                 { label: 'Email Address', value: user?.email || '—', icon: <Email sx={{ fontSize: 18, color: 'text.disabled' }} /> },
-                                { label: 'Phone Number', value: user?.phone || '—', icon: <Phone sx={{ fontSize: 18, color: 'text.disabled' }} /> },
+                                { label: 'Phone Number', value: (user as any)?.phone || '—', icon: <Phone sx={{ fontSize: 18, color: 'text.disabled' }} /> },
                                 { label: 'Role', value: roleBadge.label, icon: <School sx={{ fontSize: 18, color: 'text.disabled' }} /> },
-                                { label: 'Address', value: user?.address || '—', icon: <Home sx={{ fontSize: 18, color: 'text.disabled' }} /> },
+                                { label: 'Address', value: (user as any)?.address || '—', icon: <Home sx={{ fontSize: 18, color: 'text.disabled' }} /> },
                             ].map((item, i) => (
                                 <Grid size={{ xs: 12, sm: 6 }} key={i}>
                                     <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>

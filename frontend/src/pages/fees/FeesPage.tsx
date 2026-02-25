@@ -87,7 +87,7 @@ export default function FeesPage() {
         dispatch(fetchFeeGroups({}));
         dispatch(fetchFeeTypes({}));
         dispatch(fetchStudents({}));
-        dispatch(fetchClasses());
+        dispatch(fetchClasses({}));
     }, [dispatch]);
 
     useEffect(() => {

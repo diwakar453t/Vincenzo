@@ -47,7 +47,7 @@ export default function DepartmentsPage() {
     const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
 
     // ── Load ────────────────────────────────────────────────────────────
-    useEffect(() => { dispatch(fetchDepartments()); dispatch(fetchDesignations()); dispatch(fetchTeachers({})); }, [dispatch]);
+    useEffect(() => { dispatch(fetchDepartments({})); dispatch(fetchDesignations({})); dispatch(fetchTeachers({})); }, [dispatch]);
     useEffect(() => { if (tabIndex === 2) dispatch(fetchDepartmentTree()); }, [tabIndex, dispatch]);
     useEffect(() => { if (error) { setSnackbar({ open: true, message: error, severity: 'error' }); dispatch(clearError()); } }, [error, dispatch]);
 
@@ -65,7 +65,7 @@ export default function DepartmentsPage() {
             : await dispatch(createDepartment(payload));
         if (!result.type.endsWith('/rejected')) {
             setSnackbar({ open: true, message: editingDeptId ? 'Department updated!' : 'Department created!', severity: 'success' });
-            setDeptFormOpen(false); dispatch(fetchDepartments());
+            setDeptFormOpen(false); dispatch(fetchDepartments({}));
         }
     };
     const handleDeleteDept = async (id: number) => {
@@ -87,7 +87,7 @@ export default function DepartmentsPage() {
             : await dispatch(createDesignation(payload));
         if (!result.type.endsWith('/rejected')) {
             setSnackbar({ open: true, message: editingDesigId ? 'Designation updated!' : 'Designation created!', severity: 'success' });
-            setDesigFormOpen(false); dispatch(fetchDesignations());
+            setDesigFormOpen(false); dispatch(fetchDesignations({}));
         }
     };
     const handleDeleteDesig = async (id: number) => {
@@ -153,7 +153,7 @@ export default function DepartmentsPage() {
                             slotProps={{ input: { startAdornment: <InputAdornment position="start"><Search sx={{ fontSize: 18 }} /></InputAdornment> } }}
                             sx={{ minWidth: 200, flex: 1, maxWidth: 300 }} />
                         <Box sx={{ flex: 1 }} />
-                        <Tooltip title="Refresh"><IconButton onClick={() => dispatch(fetchDepartments())} color="primary"><Refresh /></IconButton></Tooltip>
+                        <Tooltip title="Refresh"><IconButton onClick={() => dispatch(fetchDepartments({}))} color="primary"><Refresh /></IconButton></Tooltip>
                         <Button variant="contained" startIcon={<Add />} onClick={handleOpenAddDept}
                             sx={{ background: 'linear-gradient(135deg, #3D5EE1, #6B82F0)', boxShadow: '0 4px 14px rgba(61,94,225,0.35)' }}>Add Department</Button>
                     </Paper>
@@ -210,7 +210,7 @@ export default function DepartmentsPage() {
                             slotProps={{ input: { startAdornment: <InputAdornment position="start"><Search sx={{ fontSize: 18 }} /></InputAdornment> } }}
                             sx={{ minWidth: 200, flex: 1, maxWidth: 300 }} />
                         <Box sx={{ flex: 1 }} />
-                        <Tooltip title="Refresh"><IconButton onClick={() => dispatch(fetchDesignations())} color="primary"><Refresh /></IconButton></Tooltip>
+                        <Tooltip title="Refresh"><IconButton onClick={() => dispatch(fetchDesignations({}))} color="primary"><Refresh /></IconButton></Tooltip>
                         <Button variant="contained" startIcon={<Add />} onClick={handleOpenAddDesig}
                             sx={{ background: 'linear-gradient(135deg, #3D5EE1, #6B82F0)', boxShadow: '0 4px 14px rgba(61,94,225,0.35)' }}>Add Designation</Button>
                     </Paper>
