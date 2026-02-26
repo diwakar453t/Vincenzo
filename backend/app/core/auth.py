@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from typing import Optional
-import hmac
 from jose import JWTError, jwt
 import bcrypt
 from fastapi import Depends, HTTPException, status
