@@ -31,6 +31,7 @@ import filesReducer from './slices/filesSlice';
 import settingsReducer from './slices/settingsSlice';
 import paymentsReducer from './slices/paymentsSlice';
 import pluginsReducer from './slices/pluginsSlice';
+import superAdminReducer from './slices/superAdminSlice';
 
 export const store = configureStore({
   reducer: {
@@ -66,6 +67,7 @@ export const store = configureStore({
     settings: settingsReducer,
     payments: paymentsReducer,
     plugins: pluginsReducer,
+    superAdmin: superAdminReducer,
   },
 });
 

@@ -43,13 +43,19 @@ import {
   AttachMoney,
   Payment,
   Extension,
-
   Settings,
   ExitToApp,
   ChevronLeft,
   ExpandLess,
   ExpandMore,
   Person,
+  AdminPanelSettings,
+  SupervisorAccount,
+  Business,
+  Security,
+  Flag,
+  MonitorHeart,
+  Grade,
 } from '@mui/icons-material';
 
 const DRAWER_WIDTH = 260;
@@ -61,80 +67,229 @@ interface NavItem {
   children?: { label: string; path: string }[];
 }
 
-const navItems: NavItem[] = [
-  { label: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
-  {
-    label: 'Students',
-    icon: <People />,
-    children: [
-      { label: 'All Students', path: '/students' },
-      { label: 'Add Student', path: '/students/add' },
-      { label: 'Promotion', path: '/students/promotion' },
-    ],
-  },
-  {
-    label: 'Teachers',
-    icon: <School />,
-    children: [
-      { label: 'All Teachers', path: '/teachers' },
-      { label: 'Add Teacher', path: '/teachers/add' },
-    ],
-  },
-  {
-    label: 'Guardians',
-    icon: <PersonOutline />,
-    children: [
-      { label: 'All Guardians', path: '/guardians' },
-      { label: 'Add Guardian', path: '/guardians/add' },
-    ],
-  },
-  {
-    label: 'Academics',
-    icon: <MenuBook />,
-    children: [
-      { label: 'Classes', path: '/classes' },
-      { label: 'Subjects', path: '/subjects' },
-      { label: 'Syllabus', path: '/syllabus' },
-      { label: 'Time Table', path: '/timetable' },
-    ],
-  },
-  {
-    label: 'Exams',
-    icon: <Assignment />,
-    children: [
-      { label: 'Schedule', path: '/exams' },
-      { label: 'Grades', path: '/grades' },
-    ],
-  },
-  {
-    label: 'Attendance',
-    icon: <CalendarMonth />,
-    children: [
-      { label: 'Student Attendance', path: '/attendance/students' },
-      { label: 'Staff Attendance', path: '/attendance/staff' },
-    ],
-  },
-  {
-    label: 'Fees',
-    icon: <AttachMoney />,
-    children: [
-      { label: 'Fee Collection', path: '/fees/collection' },
-      { label: 'Fee Structure', path: '/fees/structure' },
-    ],
-  },
-  { label: 'Library', icon: <LocalLibrary />, path: '/library' },
-  { label: 'Transport', icon: <DirectionsBus />, path: '/transport' },
-  { label: 'Hostel', icon: <Hotel />, path: '/hostel' },
-  { label: 'Sports', icon: <SportsBasketball />, path: '/sports' },
-  {
-    label: 'Reports',
-    icon: <Assessment />,
-    path: '/reports',
-  },
-  { label: 'Payments', icon: <Payment />, path: '/payments' },
-  { label: 'Plugins', icon: <Extension />, path: '/plugins' },
-  { label: 'Settings', icon: <Settings />, path: '/settings' },
-];
+function getNavItems(role?: string): NavItem[] {
+  if (role === 'student') {
+    return [
+      { label: 'My Dashboard', icon: <Dashboard />, path: '/student-dashboard' },
+      {
+        label: 'Academics',
+        icon: <MenuBook />,
+        children: [
+          { label: 'Timetable', path: '/timetable' },
+          { label: 'Subjects', path: '/subjects' },
+          { label: 'Syllabus', path: '/syllabus' },
+          { label: 'Study Materials', path: '/student-dashboard' },
+        ],
+      },
+      {
+        label: 'Exams & Results',
+        icon: <Assignment />,
+        children: [
+          { label: 'Exam Schedule', path: '/exams' },
+          { label: 'My Results', path: '/grades' },
+        ],
+      },
+      { label: 'Attendance', icon: <CalendarMonth />, path: '/attendance/students' },
+      {
+        label: 'Fees',
+        icon: <AttachMoney />,
+        children: [
+          { label: 'Fee Status', path: '/fees' },
+          { label: 'Payment History', path: '/payments' },
+        ],
+      },
+      { label: 'Library', icon: <LocalLibrary />, path: '/library' },
+      { label: 'Notifications', icon: <Assessment />, path: '/notifications' },
+      { label: 'My Profile', icon: <Person />, path: '/profile' },
+    ];
+  }
+
+  if (role === 'teacher') {
+    return [
+      { label: 'My Dashboard', icon: <Dashboard />, path: '/teacher-dashboard' },
+      {
+        label: 'My Classes',
+        icon: <School />,
+        children: [
+          { label: 'Class List', path: '/classes' },
+          { label: 'Students', path: '/students' },
+          { label: 'Timetable', path: '/timetable' },
+        ],
+      },
+      {
+        label: 'Academics',
+        icon: <MenuBook />,
+        children: [
+          { label: 'Subjects', path: '/subjects' },
+          { label: 'Syllabus', path: '/syllabus' },
+          { label: 'Study Materials', path: '/files' },
+        ],
+      },
+      {
+        label: 'Attendance',
+        icon: <CalendarMonth />,
+        children: [
+          { label: 'Mark Attendance', path: '/attendance/students' },
+          { label: 'My Attendance', path: '/attendance/staff' },
+        ],
+      },
+      {
+        label: 'Exams & Grades',
+        icon: <Grade />,
+        children: [
+          { label: 'Exams', path: '/exams' },
+          { label: 'Enter Marks', path: '/grades' },
+        ],
+      },
+      { label: 'Leave', icon: <Assignment />, path: '/leaves' },
+      { label: 'Notifications', icon: <Assessment />, path: '/notifications' },
+      { label: 'My Profile', icon: <Person />, path: '/profile' },
+    ];
+  }
+
+  if (role === 'parent') {
+    return [
+      { label: 'My Dashboard', icon: <Dashboard />, path: '/parent-dashboard' },
+      { label: 'My Child', icon: <People />, path: '/students' },
+      { label: 'Timetable', icon: <CalendarMonth />, path: '/timetable' },
+      { label: 'Attendance', icon: <CalendarMonth />, path: '/attendance/students' },
+      {
+        label: 'Fees',
+        icon: <AttachMoney />,
+        children: [
+          { label: 'Fee Status', path: '/fees' },
+          { label: 'Payments', path: '/payments' },
+        ],
+      },
+      { label: 'Notifications', icon: <Assessment />, path: '/notifications' },
+      { label: 'My Profile', icon: <Person />, path: '/profile' },
+    ];
+  }
+
+  if (role === 'super_admin') {
+    return [
+      { label: 'Super Admin', icon: <AdminPanelSettings />, path: '/super-admin-dashboard' },
+      { label: 'Admin Panel', icon: <SupervisorAccount />, path: '/admin-dashboard' },
+      {
+        label: 'Institutions',
+        icon: <Business />,
+        children: [
+          { label: 'All Institutions', path: '/super-admin-dashboard' },
+          { label: 'Domain Management', path: '/settings' },
+        ],
+      },
+      {
+        label: 'Users',
+        icon: <People />,
+        children: [
+          { label: 'All Students', path: '/students' },
+          { label: 'All Teachers', path: '/teachers' },
+          { label: 'Guardians', path: '/guardians' },
+        ],
+      },
+      {
+        label: 'Academics',
+        icon: <MenuBook />,
+        children: [
+          { label: 'Classes', path: '/classes' },
+          { label: 'Subjects', path: '/subjects' },
+          { label: 'Timetable', path: '/timetable' },
+          { label: 'Departments', path: '/departments' },
+        ],
+      },
+      {
+        label: 'Finance',
+        icon: <AttachMoney />,
+        children: [
+          { label: 'Fees', path: '/fees' },
+          { label: 'Payroll', path: '/payroll' },
+          { label: 'Payments', path: '/payments' },
+        ],
+      },
+      { label: 'Security & Audit', icon: <Security />, path: '/super-admin-dashboard' },
+      { label: 'Feature Flags', icon: <Flag />, path: '/super-admin-dashboard' },
+      { label: 'Infrastructure', icon: <MonitorHeart />, path: '/super-admin-dashboard' },
+      { label: 'Reports', icon: <Assessment />, path: '/reports' },
+      { label: 'Plugins', icon: <Extension />, path: '/plugins' },
+      { label: 'Settings', icon: <Settings />, path: '/settings' },
+    ];
+  }
+
+  // Default: Admin
+  return [
+    { label: 'Dashboard', icon: <Dashboard />, path: '/admin-dashboard' },
+    {
+      label: 'Students',
+      icon: <People />,
+      children: [
+        { label: 'All Students', path: '/students' },
+        { label: 'Add Student', path: '/students/add' },
+        { label: 'Promotion', path: '/students/promotion' },
+      ],
+    },
+    {
+      label: 'Teachers',
+      icon: <School />,
+      children: [
+        { label: 'All Teachers', path: '/teachers' },
+        { label: 'Add Teacher', path: '/teachers/add' },
+      ],
+    },
+    {
+      label: 'Guardians',
+      icon: <PersonOutline />,
+      children: [
+        { label: 'All Guardians', path: '/guardians' },
+        { label: 'Add Guardian', path: '/guardians/add' },
+      ],
+    },
+    {
+      label: 'Academics',
+      icon: <MenuBook />,
+      children: [
+        { label: 'Classes', path: '/classes' },
+        { label: 'Subjects', path: '/subjects' },
+        { label: 'Departments', path: '/departments' },
+        { label: 'Syllabus', path: '/syllabus' },
+        { label: 'Time Table', path: '/timetable' },
+      ],
+    },
+    {
+      label: 'Exams',
+      icon: <Assignment />,
+      children: [
+        { label: 'Schedule', path: '/exams' },
+        { label: 'Grades', path: '/grades' },
+      ],
+    },
+    {
+      label: 'Attendance',
+      icon: <CalendarMonth />,
+      children: [
+        { label: 'Student Attendance', path: '/attendance/students' },
+        { label: 'Staff Attendance', path: '/attendance/staff' },
+      ],
+    },
+    {
+      label: 'Fees',
+      icon: <AttachMoney />,
+      children: [
+        { label: 'Fee Collection', path: '/fees/collection' },
+        { label: 'Fee Structure', path: '/fees/structure' },
+      ],
+    },
+    { label: 'Library', icon: <LocalLibrary />, path: '/library' },
+    { label: 'Transport', icon: <DirectionsBus />, path: '/transport' },
+    { label: 'Hostel', icon: <Hotel />, path: '/hostel' },
+    { label: 'Sports', icon: <SportsBasketball />, path: '/sports' },
+    { label: 'Reports', icon: <Assessment />, path: '/reports' },
+    { label: 'Payments', icon: <Payment />, path: '/payments' },
+    { label: 'Leave', icon: <Assignment />, path: '/leaves' },
+    { label: 'Payroll', icon: <Payment />, path: '/payroll' },
+    { label: 'Plugins', icon: <Extension />, path: '/plugins' },
+    { label: 'Settings', icon: <Settings />, path: '/settings' },
+  ];
+}
 
 export default function DashboardLayout() {
   const theme = useTheme();
@@ -147,6 +302,8 @@ export default function DashboardLayout() {
   const [drawerOpen, setDrawerOpen] = useState(!isMobile);
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  const navItems = getNavItems(user?.role);
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');

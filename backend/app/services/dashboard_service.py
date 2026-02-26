@@ -23,7 +23,7 @@ class DashboardService:
         self, current_user: User
     ) -> DashboardStatistics:
         """Get dashboard statistics based on user role."""
-        if current_user.role == UserRole.ADMIN.value:
+        if current_user.role in [UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value]:
             return self._get_admin_dashboard(current_user)
         elif current_user.role == UserRole.TEACHER.value:
             return self._get_teacher_dashboard(current_user)

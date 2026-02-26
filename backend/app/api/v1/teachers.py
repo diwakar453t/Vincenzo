@@ -35,7 +35,7 @@ def list_teachers(
         raise HTTPException(status_code=404, detail="User not found")
     
     # Only admins can view all teachers
-    if user.role != "admin":
+    if user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Not authorized")
     
     service = TeacherService(db)
@@ -82,7 +82,7 @@ def create_teacher(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can create teachers")
     
     service = TeacherService(db)
@@ -127,7 +127,7 @@ def update_teacher(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can update teachers")
     
     service = TeacherService(db)
@@ -149,7 +149,7 @@ def delete_teacher(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can delete teachers")
     
     service = TeacherService(db)
@@ -172,7 +172,7 @@ def assign_class_teacher(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can assign class teachers")
     
     service = TeacherService(db)
@@ -196,7 +196,7 @@ def assign_subject_teacher(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can assign subject teachers")
     
     service = TeacherService(db)

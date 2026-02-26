@@ -3,7 +3,7 @@ API v1 router configuration
 """
 
 from fastapi import APIRouter
-from app.api.v1 import health, auth, dashboard, students, teachers, classes, subjects, student_profile, teacher_profile, parent_profile, guardians, rooms, syllabus, timetable, exams, grades, departments, attendance, leaves, payroll, fees, library, hostel, transport, sports, reports, notifications, search, files, settings, payments, plugins, webhooks, gdpr
+from app.api.v1 import health, auth, dashboard, students, teachers, classes, subjects, student_profile, teacher_profile, parent_profile, guardians, rooms, syllabus, timetable, exams, grades, departments, attendance, leaves, payroll, fees, library, hostel, transport, sports, reports, notifications, search, files, settings, payments, plugins, webhooks, gdpr, super_admin, feature_flags
 
 api_router = APIRouter()
 
@@ -52,6 +52,12 @@ api_router.include_router(files.router, prefix="/files", tags=["files"])
 api_router.include_router(settings.router, prefix="/settings", tags=["settings"])
 api_router.include_router(payments.router, prefix="/payments", tags=["payments"])
 api_router.include_router(plugins.router, prefix="/plugins", tags=["plugins"])
+
+# Super Admin endpoints (requires super_admin or admin role)
+api_router.include_router(super_admin.router, prefix="/super-admin", tags=["super-admin"])
+
+# Feature Flags (admin + super_admin)
+api_router.include_router(feature_flags.router, prefix="/feature-flags", tags=["feature-flags"])
 
 # Observability & Webhooks
 api_router.include_router(webhooks.router, tags=["webhooks"])

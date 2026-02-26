@@ -22,6 +22,8 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const StudentDashboardPage = lazy(() => import(/* @vite-ignore */ './pages/dashboards/StudentDashboardPage'));
 const TeacherDashboardPage = lazy(() => import(/* @vite-ignore */ './pages/dashboards/TeacherDashboardPage'));
 const ParentDashboardPage = lazy(() => import(/* @vite-ignore */ './pages/dashboards/ParentDashboardPage'));
+const AdminDashboardPage = lazy(() => import(/* @vite-ignore */ './pages/dashboards/AdminDashboardPage'));
+const SuperAdminDashboardPage = lazy(() => import(/* @vite-ignore */ './pages/dashboards/SuperAdminDashboardPage'));
 
 // ── People management ────────────────────────────────────────────────────────
 const StudentsListPage = lazy(() => import('./pages/students/StudentsListPage'));
@@ -83,8 +85,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const user = useSelector((state: RootState) => state.auth.user);
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    const role = user?.role;
+    if (role === 'student') return <Navigate to="/student-dashboard" replace />;
+    if (role === 'teacher') return <Navigate to="/teacher-dashboard" replace />;
+    if (role === 'parent') return <Navigate to="/parent-dashboard" replace />;
+    if (role === 'super_admin') return <Navigate to="/super-admin-dashboard" replace />;
+    return <Navigate to="/admin-dashboard" replace />;
   }
   return <>{children}</>;
 }
@@ -96,6 +104,16 @@ function ComingSoon({ title }: { title: string }) {
       <p style={{ color: '#666' }}>This module is coming soon in a future phase.</p>
     </div>
   );
+}
+
+function RoleRedirect() {
+  const user = useSelector((state: RootState) => state.auth.user);
+  const role = user?.role;
+  if (role === 'student') return <Navigate to="/student-dashboard" replace />;
+  if (role === 'teacher') return <Navigate to="/teacher-dashboard" replace />;
+  if (role === 'parent') return <Navigate to="/parent-dashboard" replace />;
+  if (role === 'super_admin') return <Navigate to="/super-admin-dashboard" replace />;
+  return <Navigate to="/admin-dashboard" replace />;
 }
 
 function AppRoutes() {
@@ -153,6 +171,8 @@ function AppRoutes() {
           <Route path="student-dashboard" element={<StudentDashboardPage />} />
           <Route path="teacher-dashboard" element={<TeacherDashboardPage />} />
           <Route path="parent-dashboard" element={<ParentDashboardPage />} />
+          <Route path="admin-dashboard" element={<AdminDashboardPage />} />
+          <Route path="super-admin-dashboard" element={<SuperAdminDashboardPage />} />
 
           {/* Profile */}
           <Route path="profile" element={<ProfilePage />} />

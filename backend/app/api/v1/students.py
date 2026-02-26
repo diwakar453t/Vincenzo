@@ -35,7 +35,7 @@ def list_students(
         raise HTTPException(status_code=404, detail="User not found")
     
     # Only admins and teachers can view all students
-    if user.role not in ["admin", "teacher"]:
+    if user.role not in ["admin", "teacher", "super_admin"]:
         raise HTTPException(status_code=403, detail="Not authorized")
     
     service = StudentService(db)
@@ -83,7 +83,7 @@ def create_student(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can create students")
     
     service = StudentService(db)
@@ -128,7 +128,7 @@ def update_student(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can update students")
     
     service = StudentService(db)
@@ -150,7 +150,7 @@ def delete_student(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can delete students")
     
     service = StudentService(db)
@@ -172,7 +172,7 @@ def bulk_import_students(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can import students")
     
     service = StudentService(db)
@@ -190,7 +190,7 @@ def export_students(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can export students")
     
     service = StudentService(db)

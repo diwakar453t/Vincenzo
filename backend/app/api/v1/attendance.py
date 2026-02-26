@@ -28,8 +28,8 @@ def _get_user(current_user: dict, db: Session) -> User:
 
 
 def _require_admin(user: User):
-    if user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can perform this action")
+    if user.role not in ["admin", "super_admin", "teacher"]:
+        raise HTTPException(status_code=403, detail="Not authorized to perform this action")
 
 
 # ═══════════════════════════════════════════════════════════════════════

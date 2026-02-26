@@ -7,6 +7,7 @@ import enum
 
 class UserRole(str, enum.Enum):
     """User role enumeration."""
+    SUPER_ADMIN = "super_admin"
     ADMIN = "admin"
     TEACHER = "teacher"
     STUDENT = "student"
