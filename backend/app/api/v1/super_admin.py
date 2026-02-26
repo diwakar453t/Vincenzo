@@ -17,7 +17,10 @@ router = APIRouter()
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
 def _get_super_admin(current_user: dict, db: Session) -> User:
-    user_id = int(current_user.get("sub"))
+    try:
+        user_id = int(current_user.get("sub"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=401, detail="Invalid token")
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -188,6 +191,9 @@ def get_audit_logs(
 ):
     """Get global audit logs across all tenants."""
     _get_super_admin(current_user, db)
+    # Enforce safe pagination limits to prevent DoS
+    limit = min(limit, 200)
+    skip = max(skip, 0)
 
     try:
         logs = (

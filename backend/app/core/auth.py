@@ -66,6 +66,20 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials"
+            detail="Could not validate credentials",
+        )
+    # Reject refresh tokens used as access tokens
+    if payload.get("type") == "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh tokens cannot be used for authentication",
+        )
+    # Safe int conversion
+    try:
+        int(user_id)
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token subject",
         )
     return payload

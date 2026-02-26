@@ -27,7 +27,10 @@ _DEFAULT_FLAGS = {
 
 
 def _get_admin_or_super(current_user: dict, db: Session) -> User:
-    user_id = int(current_user.get("sub"))
+    try:
+        user_id = int(current_user.get("sub"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=401, detail="Invalid token")
     user = db.query(User).filter(User.id == user_id).first()
     if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(
