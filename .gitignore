@@ -71,3 +71,16 @@ coverage/
 .temp/
 temp/
 tmp/
+
+# Security — never commit secrets or local databases
+*.db
+*.sqlite
+*.sqlite3
+backend/.env
+backend/.env.*
+!backend/.env.example
+seeds/demo_credentials.txt
+uploads/
+*.pem
+*.key
+*.p12

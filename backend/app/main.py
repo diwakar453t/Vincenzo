@@ -38,39 +38,20 @@ logger.info(f"🔌 Plugins loaded: {_loaded}")
 
 
 # Initialize FastAPI app with enhanced metadata
+_is_dev = settings.APP_ENV == "development"
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="""
-    ## PreSkool ERP - Comprehensive School/College Management System
-    
-    A modern, multi-tenant ERP platform for educational institutions with:
-    
-    * 🔐 **Role-based authentication** (Admin, Teacher, Student, Parent)
-    * 📊 **Interactive dashboards** with real-time data
-    * 👥 **People management** (Students, Teachers, Guardians)
-    * 📚 **Academic management** (Classes, Subjects, Timetables, Exams)
-    * 💼 **HRM** (Attendance, Leave, Payroll)
-    * 💰 **Fees management** with payment integration
-    * 📖 **Library, Hostel, Transport** management
-    * 📈 **Comprehensive reporting** system
-    
-    ### Authentication
-    Most endpoints require authentication via Bearer token.
-    
-    ### Multi-Tenancy
-    Include `X-Tenant-ID` header in requests to specify the tenant context.
-    """,
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    description="PreSkool ERP - Comprehensive School/College Management System",
+    # Disable Swagger UI and OpenAPI schema in production
+    docs_url="/docs" if _is_dev else None,
+    redoc_url="/redoc" if _is_dev else None,
+    openapi_url="/openapi.json" if _is_dev else None,
     contact={
         "name": "PreSkool Support",
         "email": "support@preskool.com",
     },
-    license_info={
-        "name": "MIT",
-    },
+    license_info={"name": "MIT"},
 )
 
 # Add middleware (order matters!)
@@ -125,8 +106,10 @@ app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads"
 @app.on_event("startup")
 async def startup_event():
     """Run on application startup."""
+    # Validate security configuration before accepting traffic
+    settings.validate_jwt_secret()
     logger.info(f"🚀 {settings.APP_NAME} v{settings.APP_VERSION} starting up...")
-    logger.info(f"📝 API documentation available at /docs")
+    logger.info(f"📝 API docs: {'enabled' if _is_dev else 'DISABLED (production)'}")
     logger.info(f"🔧 Environment: {'Development' if settings.DEBUG else 'Production'}")
 
 
@@ -138,18 +121,13 @@ async def shutdown_event():
 
 @app.get("/")
 async def root():
-    """Root endpoint with API information."""
-    return {
-        "app": settings.APP_NAME,
-        "version": settings.APP_VERSION,
-        "status": "running",
-        "documentation": {
-            "swagger": "/docs",
-            "redoc": "/redoc",
-            "openapi": "/openapi.json"
-        },
-        "api": {
-            "v1": "/api/v1"
-        }
-    }
+    """Root endpoint — health check info only (no internal details in production)."""
+    base = {"app": settings.APP_NAME, "status": "running"}
+    if _is_dev:
+        base.update({
+            "version": settings.APP_VERSION,
+            "documentation": {"swagger": "/docs", "redoc": "/redoc"},
+            "api": {"v1": "/api/v1"},
+        })
+    return base
 

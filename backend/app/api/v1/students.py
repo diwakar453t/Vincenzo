@@ -34,9 +34,13 @@ def list_students(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Only admins and teachers can view all students
+    # Only admins, teachers, and super_admin can view all students
     if user.role not in ["admin", "teacher", "super_admin"]:
         raise HTTPException(status_code=403, detail="Not authorized")
+
+    # Enforce safe pagination limits
+    limit = min(limit, 200)
+    skip = max(skip, 0)
     
     service = StudentService(db)
     students, total = service.get_students(

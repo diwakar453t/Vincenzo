@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     # ── Application ───────────────────────────────────────────────────
     APP_NAME: str = "PreSkool ERP"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = True
-    APP_ENV: str = "development"
+    DEBUG: bool = False          # NEVER True in production
+    APP_ENV: str = "development" # Override to 'production' in prod
 
     # ── Database — PostgreSQL (mandatory in production) ────────────────
     DATABASE_URL: str = "sqlite:///./preskool.db"
@@ -34,10 +34,27 @@ class Settings(BaseSettings):
     REDIS_KEY_PREFIX: str = "preskool:"  # Namespace all Redis keys
 
     # ── Authentication — JWT ──────────────────────────────────────────
-    JWT_SECRET_KEY: str = "your-secret-key-change-in-production"
+    # REQUIRED: generate with: python3 -c "import secrets; print(secrets.token_hex(32))"
+    JWT_SECRET_KEY: str = "CHANGE_ME_BEFORE_PRODUCTION_USE_token_hex_32"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    def validate_jwt_secret(self) -> None:
+        """Raise if JWT secret is weak or default."""
+        weak = {
+            "CHANGE_ME_BEFORE_PRODUCTION_USE_token_hex_32",
+            "your-secret-key-change-in-production",
+            "change-me-in-production-32chars!!",
+            "secret", "password", "test", "",
+        }
+        if self.APP_ENV == "production" and (
+            self.JWT_SECRET_KEY in weak or len(self.JWT_SECRET_KEY) < 32
+        ):
+            raise RuntimeError(
+                "SECURITY: JWT_SECRET_KEY is weak or default. "
+                "Generate one with: python3 -c \"import secrets; print(secrets.token_hex(32))\""
+            )
 
     # ── Keycloak (optional SSO) ───────────────────────────────────────
     KEYCLOAK_URL: str = "http://localhost:8080"
@@ -102,7 +119,7 @@ class Settings(BaseSettings):
     # ── Data Privacy & Encryption (Field-Level AES-256-GCM) ──────────
     # REQUIRED in production: python3 -c "import secrets; print(secrets.token_hex(32))"
     ENCRYPTION_MASTER_KEY: Optional[str] = None  # Master key for field-level encryption
-    ENCRYPTION_SALT: str = "preskool-erp-v1"     # PBKDF2 salt (change per deployment)
+    ENCRYPTION_SALT: str = "preskool-erp-v1-CHANGE-PER-DEPLOYMENT"  # Unique per deploy
     ENCRYPTION_OLD_KEY_1: Optional[str] = None   # For key rotation
 
     # ── GDPR & Data Retention ─────────────────────────────────────────
