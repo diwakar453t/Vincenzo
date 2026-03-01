@@ -55,11 +55,11 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
 
 EXPOSE ${PORT}
 
-# Uvicorn with 4 workers for production
-CMD ["uvicorn", "app.main:app", \
-    "--host", "0.0.0.0", \
-    "--port", "8000", \
-    "--workers", "4", \
-    "--proxy-headers", \
-    "--forwarded-allow-ips", "*", \
-    "--access-log"]
+# Uvicorn — shell form so $PORT is expanded by the shell at runtime
+CMD sh -c "exec uvicorn app.main:app \
+    --host 0.0.0.0 \
+    --port ${PORT:-8000} \
+    --workers 2 \
+    --proxy-headers \
+    --forwarded-allow-ips '*' \
+    --access-log"
