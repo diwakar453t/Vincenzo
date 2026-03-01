@@ -59,13 +59,13 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy to Railway
-        working-directory: backend
+        working-directory: preskool-erp/backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           # Link to the correct Railway environment and deploy
           railway up \
-            --service preskool-backend \
+            --service preskool-erp-backend \
             --environment ${{ needs.setup.outputs.environment }} \
             --detach
 
@@ -113,13 +113,13 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: preskool-erp/frontend/package-lock.json
 
       - name: Install Vercel CLI
-        run: npm install -g vercel
+        run: npm install -g vercel@latest
 
       - name: Pull Vercel project settings
-        working-directory: frontend
+        working-directory: preskool-erp/frontend
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -127,7 +127,7 @@ jobs:
         run: vercel pull --yes --environment=${{ needs.setup.outputs.environment == 'production' && 'production' || 'preview' }} --token=$VERCEL_TOKEN
 
       - name: Build frontend
-        working-directory: frontend
+        working-directory: preskool-erp/frontend
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -137,7 +137,7 @@ jobs:
         run: vercel build ${{ needs.setup.outputs.environment == 'production' && '--prod' || '' }} --token=$VERCEL_TOKEN
 
       - name: Deploy to Vercel
-        working-directory: frontend
+        working-directory: preskool-erp/frontend
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
