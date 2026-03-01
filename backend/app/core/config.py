@@ -84,13 +84,14 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
     ]
+    # NOTE: Starlette CORSMiddleware does NOT support wildcard subdomains.
+    # Only EXACT origins work. Add your specific Vercel URL via CORS_EXTRA_ORIGINS.
     CORS_PRODUCTION_ORIGINS: list = [
         "https://erp.preskool.com",
-        "https://*.erp.preskool.com",  # Tenant subdomains
-        "https://*.railway.app",       # Railway backend URL
-        "https://*.up.railway.app",
-        "https://*.vercel.app",        # Vercel frontend
     ]
+    # Injected at runtime via environment variable (set in Railway dashboard).
+    # Example: CORS_EXTRA_ORIGINS=["https://preskool-erp-abc123.vercel.app"]
+    CORS_EXTRA_ORIGINS: list = []
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: list = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
     CORS_ALLOW_HEADERS: list = [

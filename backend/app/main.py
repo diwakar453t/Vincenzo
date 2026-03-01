@@ -59,10 +59,14 @@ app = FastAPI(
 app.add_middleware(ExceptionHandlerMiddleware)
 
 # 2. CORS middleware (restrictive in production)
-cors_origins = (
-    settings.CORS_ORIGINS if settings.APP_ENV == "development"
-    else settings.CORS_PRODUCTION_ORIGINS
-)
+if settings.APP_ENV == "development":
+    cors_origins = settings.CORS_ORIGINS
+else:
+    # Merge base production origins with operator-injected extra origins.
+    # Set CORS_EXTRA_ORIGINS in Railway env to include your exact Vercel URL:
+    #   CORS_EXTRA_ORIGINS=["https://preskool-erp-abc123.vercel.app"]
+    cors_origins = list(set(settings.CORS_PRODUCTION_ORIGINS + settings.CORS_EXTRA_ORIGINS))
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
