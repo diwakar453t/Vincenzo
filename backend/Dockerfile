@@ -37,6 +37,9 @@ COPY --from=builder /install /usr/local
 # Copy application source
 COPY . .
 
+# Copy startup script and make executable (must be done as root before USER switch)
+RUN chmod +x /app/start.sh
+
 # Create data directories
 RUN mkdir -p /app/data /app/uploads /app/logs && \
     chown -R preskool:preskool /app
@@ -55,8 +58,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
 
 EXPOSE ${PORT}
 
-# Use exec-form (JSON array) so the shell NEVER sees the command — prevents
-# glob expansion of '*' in --forwarded-allow-ips which caused Railway startup crash.
-# PORT env var is read by uvicorn's --port flag using the shell wrapper below.
-CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port \"${PORT:-8000}\" --workers 2 --proxy-headers --forwarded-allow-ips \"*\" --access-log"]
-
+# start.sh uses 'set -f' (noglob) before calling uvicorn so the '*' in
+# --forwarded-allow-ips is never shell-expanded to filenames.
+CMD ["/app/start.sh"]
