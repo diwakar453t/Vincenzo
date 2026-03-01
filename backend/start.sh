@@ -1,12 +1,11 @@
 #!/bin/sh
 # start.sh — PreSkool ERP backend startup script
 # 
-# CRITICAL: set -f disables shell glob expansion (noglob).
-# Without this, the '*' in --forwarded-allow-ips '*' gets
-# expanded to all filenames in /app, crashing uvicorn.
+# FORWARDED_ALLOW_IPS is set as an environment variable so uvicorn reads it
+# directly without any shell expansion of '*'. This completely avoids the
+# glob expansion issue that occurred with --forwarded-allow-ips '*' in CMD.
 #
-set -f
-
+export FORWARDED_ALLOW_IPS="${FORWARDED_ALLOW_IPS:-*}"
 PORT="${PORT:-8000}"
 
 exec uvicorn app.main:app \
@@ -14,5 +13,4 @@ exec uvicorn app.main:app \
     --port "$PORT" \
     --workers 2 \
     --proxy-headers \
-    --forwarded-allow-ips '*' \
     --access-log
