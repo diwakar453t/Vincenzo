@@ -50,6 +50,9 @@ class Settings(BaseSettings):
         "*.preskool.local",
         "erp.preskool.com",
         "*.erp.preskool.com",
+        "*.railway.app",
+        "*.up.railway.app",
+        "*.vercel.app",
     ]
 
     def validate_jwt_secret(self) -> None:
@@ -84,6 +87,9 @@ class Settings(BaseSettings):
     CORS_PRODUCTION_ORIGINS: list = [
         "https://erp.preskool.com",
         "https://*.erp.preskool.com",  # Tenant subdomains
+        "https://*.railway.app",       # Railway backend URL
+        "https://*.up.railway.app",
+        "https://*.vercel.app",        # Vercel frontend
     ]
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: list = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
@@ -119,7 +125,7 @@ class Settings(BaseSettings):
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
 
     # ── OpenTelemetry / Tracing ───────────────────────────────────────
-    OTEL_ENABLED: bool = True
+    OTEL_ENABLED: bool = False  # Enable only when OTEL exporter is available
     OTEL_EXPORTER_ENDPOINT: str = "http://localhost:4317"  # Jaeger OTLP gRPC
     OTEL_SERVICE_NAME: str = "preskool-backend"
 
