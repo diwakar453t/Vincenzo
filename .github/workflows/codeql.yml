@@ -1,0 +1,92 @@
+# ═══════════════════════════════════════════════════════════════════════
+# CodeQL — Semantic Security Analysis
+# Runs on every push to main/develop and on every pull request.
+# A dedicated workflow is required — CodeQL inside a scheduled-only
+# workflow causes the "CodeQL configuration error" in GitHub Security.
+# ═══════════════════════════════════════════════════════════════════════
+name: CodeQL
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Also run weekly to catch newly-published CVEs in unchanged code
+    - cron: "0 3 * * 1"  # Every Monday 03:00 UTC
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: python
+            build-mode: none   # Python is interpreted — no build needed
+          - language: javascript-typescript
+            build-mode: none   # TypeScript/JS — no build needed
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Python: install dependencies so CodeQL sees all imports ──────
+      - name: Set up Python
+        if: matrix.language == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        if: matrix.language == 'python'
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # ── Node: install dependencies so CodeQL sees all imports ─────────
+      - name: Set up Node
+        if: matrix.language == 'javascript-typescript'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Node dependencies
+        if: matrix.language == 'javascript-typescript'
+        working-directory: frontend
+        run: npm ci --prefer-offline
+
+      # ── CodeQL core steps ─────────────────────────────────────────────
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          # Use security-and-quality for deeper analysis
+          queries: security-and-quality
+          # Exclude generated/vendor paths
+          config: |
+            paths-ignore:
+              - backend/venv
+              - backend/alembic/versions
+              - frontend/node_modules
+              - frontend/dist
+              - frontend/build
+              - "**/__pycache__"
+              - "**/*.min.js"
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+          upload: always

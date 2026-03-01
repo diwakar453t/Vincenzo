@@ -1,0 +1,77 @@
+version: 2
+updates:
+  # ── Python (pip) — backend dependencies ──────────────────────────────
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "backend"
+      - "security"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      fastapi-stack:
+        patterns:
+          - "fastapi*"
+          - "uvicorn*"
+          - "starlette*"
+          - "pydantic*"
+      security-libs:
+        patterns:
+          - "python-jose*"
+          - "bcrypt*"
+          - "cryptography*"
+          - "passlib*"
+
+  # ── npm — frontend dependencies ───────────────────────────────────────
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "frontend"
+      - "security"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      react-stack:
+        patterns:
+          - "react*"
+          - "@types/react*"
+          - "react-dom*"
+          - "react-router*"
+      mui-stack:
+        patterns:
+          - "@mui/*"
+          - "@emotion/*"
+      redux-stack:
+        patterns:
+          - "@reduxjs/*"
+          - "redux*"
+          - "react-redux*"
+
+  # ── GitHub Actions — workflow dependencies ────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci(deps)"
