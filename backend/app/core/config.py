@@ -39,6 +39,18 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    # Issue 12: Configurable bcrypt rounds (12 = good default, increase for higher security)
+    BCRYPT_ROUNDS: int = 12
+
+    # ── Trusted Hosts (TrustedHostMiddleware) ─────────────────────────
+    # Issue 7: Production hosts must be listed here or all prod requests will be rejected
+    ALLOWED_HOSTS: list = [
+        "localhost",
+        "127.0.0.1",
+        "*.preskool.local",
+        "erp.preskool.com",
+        "*.erp.preskool.com",
+    ]
 
     def validate_jwt_secret(self) -> None:
         """Raise if JWT secret is weak or default."""

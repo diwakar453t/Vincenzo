@@ -88,13 +88,20 @@ def get_file(file_id: int, current_user: dict = Depends(get_current_user), db: S
 
 @router.get("/{file_id}/download")
 def download_file(file_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    import os
     user = _get_user(current_user, db)
     file_info = FileService(db).get_file(file_id, user.tenant_id)
-    import os
-    if not os.path.exists(file_info["file_path"]):
+
+    # Issue 14: Prevent path traversal — validate path is inside uploads dir
+    upload_root = os.path.realpath(settings.UPLOAD_DIR)
+    safe_path = os.path.realpath(file_info["file_path"])
+    if not safe_path.startswith(upload_root + os.sep):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    if not os.path.exists(safe_path):
         raise HTTPException(status_code=404, detail="File not found on disk")
     return FileResponse(
-        file_info["file_path"],
+        safe_path,
         filename=file_info["original_name"],
         media_type=file_info["mime_type"],
     )

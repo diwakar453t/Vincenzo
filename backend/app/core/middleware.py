@@ -172,7 +172,8 @@ class TenantMiddleware(BaseHTTPMiddleware):
         if cached is False:
             return JSONResponse(
                 status_code=403,
-                content={"error": f"Unknown tenant: {tenant_id}"},
+                # Issue 8: Generic message — do NOT reveal tenant ID in errors
+                content={"error": "Access denied", "detail": "Unknown or inactive tenant"},
             )
 
         if cached is None:
@@ -191,7 +192,8 @@ class TenantMiddleware(BaseHTTPMiddleware):
                 if not is_valid:
                     return JSONResponse(
                         status_code=403,
-                        content={"error": f"Unknown or inactive tenant: {tenant_id}"},
+                        # Issue 8: Generic message — do NOT reveal tenant ID in errors
+                        content={"error": "Access denied", "detail": "Unknown or inactive tenant"},
                     )
             finally:
                 db.close()

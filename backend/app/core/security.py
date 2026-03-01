@@ -169,7 +169,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         allowed, retry_after = _rate_limiter.check(ip, tenant_id, path)
         if not allowed:
             logger.warning(
-                f"Rate limit exceeded: ip={ip}, tenant={tenant_id}, path={path}",
+                "Rate limit exceeded",
                 extra={"client_ip": ip, "tenant_id": tenant_id, "path": path},
             )
             return JSONResponse(
@@ -213,7 +213,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         if settings.APP_ENV != "development":
             response.headers["Content-Security-Policy"] = (
                 "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline'; "
+                # Issue 6: Removed 'unsafe-inline' from script-src — React
+                # doesn't require inline scripts; this was an XSS risk.
+                "script-src 'self'; "
                 "style-src 'self' 'unsafe-inline' fonts.googleapis.com; "
                 "font-src 'self' fonts.gstatic.com; "
                 "img-src 'self' data: blob:; "
@@ -271,7 +273,10 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         # Safe methods don't need CSRF
         if request.method in self.SAFE_METHODS:
             response = await call_next(request)
-            self._set_csrf_cookie(response)
+            # Issue 5: Only set cookie if not already present — prevents race
+            # conditions on concurrent GET requests overwriting each other's token
+            if not request.cookies.get("csrf_token"):
+                self._set_csrf_cookie(response)
             return response
 
         # API requests with Bearer token are exempt (JWT is itself CSRF-proof)
@@ -431,8 +436,8 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
         for key, value in request.query_params.items():
             if not InputSanitizer.is_safe(value):
                 logger.warning(
-                    f"Malicious input detected in query param '{key}': {value[:100]}",
-                    extra={"client_ip": request.client.host if request.client else "-"},
+                    "Malicious input in query parameter",
+                    extra={"param_key": key, "client_ip": request.client.host if request.client else "-"},
                 )
                 return JSONResponse(
                     status_code=400,
@@ -441,7 +446,10 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
 
         # Check URL path
         if not InputSanitizer.is_safe(request.url.path):
-            logger.warning(f"Malicious path detected: {request.url.path}")
+            logger.warning(
+                "Malicious path detected",
+                extra={"path": request.url.path},
+            )
             return JSONResponse(
                 status_code=400,
                 content={"error": "Invalid request path"},
@@ -630,11 +638,16 @@ class AccountLockout:
 
         self._attempts[email_lower] = entry
 
+        # Issue 13: Calculate remaining dynamically from the next threshold
+        next_threshold = min(
+            (t for t, _ in self.THRESHOLDS if t > entry["count"]),
+            default=self.THRESHOLDS[-1][0],
+        )
         return {
             "locked": lock_duration > 0,
             "attempts": entry["count"],
             "locked_until": entry.get("locked_until", 0),
-            "remaining_attempts": max(0, 5 - entry["count"]),
+            "remaining_attempts": max(0, next_threshold - entry["count"]),
         }
 
     def is_locked(self, email: str) -> Tuple[bool, int]:

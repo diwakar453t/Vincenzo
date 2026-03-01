@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '../store/store';
@@ -6,6 +6,7 @@ import { logout } from '../store/slices/authSlice';
 import NotificationDropdown from '../components/notifications/NotificationDropdown';
 import GlobalSearch from '../components/search/GlobalSearch';
 import HelpSystem from '../components/help/HelpSystem';
+import ButtonBase from '@mui/material/ButtonBase';
 import {
   Box,
   AppBar,
@@ -303,29 +304,41 @@ export default function DashboardLayout() {
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  const navItems = getNavItems(user?.role);
+  const navItems = useMemo(() => getNavItems(user?.role), [user?.role]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+  // Fix: handleLogout no longer duplicates token removal — dispatch(logout())
+  // already clears both localStorage and sessionStorage in authSlice.
+  const handleLogout = useCallback(() => {
     dispatch(logout());
     navigate('/login');
-  };
+  }, [dispatch, navigate]);
 
-  const handleNavClick = (item: NavItem) => {
+  // Fix: sync drawer state when viewport crosses the mobile breakpoint
+  // (e.g. user resizes browser window from desktop to mobile width)
+  useEffect(() => {
+    setDrawerOpen(!isMobile);
+  }, [isMobile]);
+
+  const handleNavClick = useCallback((item: NavItem) => {
     if (item.children) {
-      setExpandedItem(expandedItem === item.label ? null : item.label);
+      setExpandedItem((prev) => (prev === item.label ? null : item.label));
     } else if (item.path) {
       navigate(item.path);
-      if (isMobile) setDrawerOpen(false);
+      if (isMobile) {
+        setDrawerOpen(false);
+        setExpandedItem(null); // Fix: collapse open sub-menu when navigating on mobile
+      }
     }
-  };
+  }, [isMobile, navigate]);
 
-  const isActive = (path: string) => location.pathname === path;
-  const isGroupActive = (item: NavItem) =>
-    item.children?.some((c) => location.pathname.startsWith(c.path)) || false;
+  const isActive = useCallback((path: string) => location.pathname === path, [location.pathname]);
+  const isGroupActive = useCallback((item: NavItem) =>
+    item.children?.some((c) => location.pathname === c.path || location.pathname.startsWith(c.path + '/')) || false,
+    [location.pathname]);
 
-  const drawerContent = (
+  // Fix: memoize drawerContent so it only re-renders when its actual
+  // dependencies change, not on every parent state update.
+  const drawerContent = useMemo(() => (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Logo Area */}
       <Box
@@ -343,7 +356,7 @@ export default function DashboardLayout() {
           PreSkool
         </Typography>
         {isMobile && (
-          <IconButton onClick={() => setDrawerOpen(false)} sx={{ ml: 'auto' }}>
+          <IconButton onClick={() => setDrawerOpen(false)} sx={{ ml: 'auto' }} aria-label="Close navigation">
             <ChevronLeft />
           </IconButton>
         )}
@@ -399,7 +412,10 @@ export default function DashboardLayout() {
                       <ListItemButton
                         onClick={() => {
                           navigate(child.path);
-                          if (isMobile) setDrawerOpen(false);
+                          if (isMobile) {
+                            setDrawerOpen(false);
+                            setExpandedItem(null);
+                          }
                         }}
                         sx={{
                           borderRadius: 2,
@@ -431,11 +447,12 @@ export default function DashboardLayout() {
           color="text.secondary"
           sx={{ display: 'block', textAlign: 'center' }}
         >
-          © 2026 PreSkool ERP
+          &copy; 2026 PreSkool ERP
         </Typography>
       </Box>
     </Box>
-  );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [navItems, expandedItem, isMobile, location.pathname, handleNavClick, isActive, isGroupActive, navigate]);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f5f6fa' }}>
@@ -489,13 +506,18 @@ export default function DashboardLayout() {
 
             <NotificationDropdown />
 
-            <Box
+            {/* Fix: ButtonBase gives this a semantic role, keyboard focus,
+                and accessible name — plain Box is not interactive for a11y */}
+            <ButtonBase
               onClick={(e) => setAnchorEl(e.currentTarget)}
+              aria-label={`Open account menu for ${user?.full_name || 'User'}`}
+              aria-haspopup="true"
+              aria-controls={Boolean(anchorEl) ? 'account-menu' : undefined}
+              aria-expanded={Boolean(anchorEl)}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1,
-                cursor: 'pointer',
                 px: 1,
                 py: 0.5,
                 borderRadius: 2,
@@ -503,9 +525,9 @@ export default function DashboardLayout() {
               }}
             >
               <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main', fontSize: '0.875rem' }}>
-                {user?.full_name?.charAt(0) || 'U'}
+                {user?.full_name?.charAt(0).toUpperCase() || 'U'}
               </Avatar>
-              <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+              <Box sx={{ display: { xs: 'none', sm: 'block' }, textAlign: 'left' }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
                   {user?.full_name || 'User'}
                 </Typography>
@@ -517,9 +539,10 @@ export default function DashboardLayout() {
                   {user?.role || 'admin'}
                 </Typography>
               </Box>
-            </Box>
+            </ButtonBase>
 
             <Menu
+              id="account-menu"
               anchorEl={anchorEl}
               open={Boolean(anchorEl)}
               onClose={() => setAnchorEl(null)}

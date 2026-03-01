@@ -19,10 +19,31 @@ interface AuthState {
   loading: boolean;
 }
 
+// SECURITY NOTE: Access tokens are stored in localStorage for convenience.
+// This exposes them to XSS if any injected script runs in the app context.
+// For production hardening, migrate to httpOnly cookies served by the backend.
+// As a mitigation, we validate the token format at startup to reject injected
+// values that are not valid JWTs.
+function readStoredToken(): string | null {
+  const raw = localStorage.getItem('access_token');
+  if (!raw) return null;
+  // A JWT must have exactly 2 dots (header.payload.signature)
+  const parts = raw.split('.');
+  if (parts.length !== 3) {
+    // Malformed — clear it and treat as unauthenticated
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('refresh_token');
+    return null;
+  }
+  return raw;
+}
+
 const initialState: AuthState = {
   user: null,
-  token: localStorage.getItem('access_token'),
-  isAuthenticated: !!localStorage.getItem('access_token'),
+  token: readStoredToken(),   // Issue 10: validated on read
+  isAuthenticated: !!readStoredToken(),
   loading: false,
 };
 
@@ -39,8 +60,11 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
+      // Issue 11: Clear both storage types to ensure complete logout
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
+      sessionStorage.removeItem('access_token');
+      sessionStorage.removeItem('refresh_token');
     },
     setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;

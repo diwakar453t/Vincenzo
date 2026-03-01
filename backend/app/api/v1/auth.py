@@ -10,6 +10,7 @@ from app.core.auth import (
     create_refresh_token,
     decode_token,
     get_current_user,
+    revoke_token,
 )
 from app.core.config import settings
 from app.core.security import (
@@ -29,6 +30,7 @@ from app.schemas.user import (
     UserResponse,
     TokenResponse,
     MessageResponse,
+    ValidatePasswordRequest,
 )
 from datetime import timedelta
 
@@ -165,10 +167,10 @@ def login(request: UserLoginRequest, req: Request, db: Session = Depends(get_db)
                 }
             )
 
-        remaining = lockout_status["remaining_attempts"]
+        # Issue 1 (partial): Don't reveal attempt count — reduces attacker info
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid email or password. {remaining} attempts remaining."
+            detail="Invalid email or password"
         )
 
     if not user.is_active:
@@ -199,8 +201,15 @@ def login(request: UserLoginRequest, req: Request, db: Session = Depends(get_db)
 def refresh_token(request: TokenRefreshRequest, db: Session = Depends(get_db)):
     """Refresh access token using refresh token."""
     payload = decode_token(request.refresh_token)
-    user_id = payload.get("sub")
 
+    # Issue 1: Validate this is actually a refresh token — not an access token
+    if payload.get("type") != "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token: a refresh token is required"
+        )
+
+    user_id = payload.get("sub")
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -311,8 +320,12 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
             data={"sub": str(user.id), "email": user.email, "type": "password_reset"},
             expires_delta=timedelta(minutes=15)
         )
-        # In production: send email with link like /reset-password?token=<reset_token>
-        logger.info(f"Password reset token for {user.email}: {reset_token}")
+        # TODO: In production, send email with the reset link (token must NOT be logged)
+        # Email service integration point — send reset_token via email only
+        logger.info(
+            "Password reset token generated",
+            extra={"user_id": user.id, "event": "password_reset_requested"},
+        )
 
     return MessageResponse(message="If an account with that email exists, a password reset link has been sent.")
 
@@ -369,7 +382,15 @@ def reset_password(request: ResetPasswordRequest, req: Request, db: Session = De
 
 @router.post("/logout", response_model=MessageResponse)
 def logout(current_user: dict = Depends(get_current_user)):
-    """Logout user (client-side token removal)."""
+    """Logout user — revokes the current access token JTI immediately.
+
+    NOTE(production): _revoked_jtis is an in-memory set. In a multi-worker
+    deployment, replace with a Redis SET keyed by jti with TTL matching
+    ACCESS_TOKEN_EXPIRE_MINUTES. See docs/security/token-revocation.md.
+    """
+    jti = current_user.get("jti")
+    if jti:
+        revoke_token(jti)  # Issue 4: actual token invalidation
     return MessageResponse(message="Logged out successfully")
 
 
@@ -391,12 +412,12 @@ def get_password_policy():
 
 
 @router.post("/validate-password")
-def validate_password_strength(request: dict):
+def validate_password_strength(request: ValidatePasswordRequest):
     """
     Check password strength without creating/changing password.
     Frontend can call this for real-time validation.
+    Issue 3: Uses a typed Pydantic schema instead of raw dict to prevent
+    type confusion / unhandled exceptions on malformed input.
     """
-    password = request.get("password", "")
-    email = request.get("email", "")
-    result = PasswordPolicy.validate(password, email)
+    result = PasswordPolicy.validate(request.password, request.email or "")
     return result

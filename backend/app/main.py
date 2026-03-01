@@ -73,10 +73,12 @@ app.add_middleware(
 )
 
 # 3. Trusted host middleware (security)
+# Issue 7: Use settings.ALLOWED_HOSTS which includes production domains.
+# Previously hardcoded to localhost-only, breaking all production traffic.
 if not settings.DEBUG:
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=["*.preskool.local", "localhost"]
+        allowed_hosts=settings.ALLOWED_HOSTS,
     )
 
 # 4. Tenant middleware

@@ -43,6 +43,12 @@ class ResetPasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=6, max_length=128, description="New password")
 
 
+class ValidatePasswordRequest(BaseModel):
+    """Schema for password strength validation (Issue 3: replaces raw dict endpoint)."""
+    password: str = Field(..., min_length=1, max_length=128, description="Password to validate")
+    email: Optional[str] = Field(None, description="Optional email for context-aware validation")
+
+
 # --- Response Schemas ---
 
 class UserResponse(BaseModel):
