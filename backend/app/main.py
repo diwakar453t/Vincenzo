@@ -54,37 +54,22 @@ app = FastAPI(
     license_info={"name": "MIT"},
 )
 
-# Add middleware (order matters!)
-# 1. Exception handler (first to catch all exceptions)
+# Add middleware (order matters — LAST added runs FIRST in request pipeline!)
+# 1. Exception handler (catches all exceptions)
 app.add_middleware(ExceptionHandlerMiddleware)
 
-# 2. CORS middleware (restrictive in production)
-cors_origins = (
-    settings.CORS_ORIGINS if settings.APP_ENV == "development"
-    else settings.CORS_PRODUCTION_ORIGINS
-)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
-    allow_methods=settings.CORS_ALLOW_METHODS,
-    allow_headers=settings.CORS_ALLOW_HEADERS,
-    max_age=settings.CORS_MAX_AGE,
-)
-
-# 3. Trusted host middleware (security)
+# 2. Trusted host middleware (security)
 # Issue 7: Use settings.ALLOWED_HOSTS which includes production domains.
-# Previously hardcoded to localhost-only, breaking all production traffic.
 if not settings.DEBUG:
     app.add_middleware(
         TrustedHostMiddleware,
         allowed_hosts=settings.ALLOWED_HOSTS,
     )
 
-# 4. Tenant middleware
+# 3. Tenant middleware
 app.add_middleware(TenantMiddleware)
 
-# 5. Logging middleware (last to log everything)
+# 4. Logging middleware
 app.add_middleware(LoggingMiddleware)
 
 # Include API routers
@@ -99,6 +84,21 @@ if settings.OTEL_ENABLED:
 
 # Initialize security middleware (rate limiting, CSRF, headers, input validation)
 setup_security(app)
+
+# CORS middleware — must be added LAST so it runs FIRST in request pipeline
+# This ensures OPTIONS preflight requests are handled before any other middleware
+cors_origins = (
+    settings.CORS_ORIGINS if settings.APP_ENV == "development"
+    else settings.CORS_PRODUCTION_ORIGINS
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+    allow_methods=settings.CORS_ALLOW_METHODS,
+    allow_headers=settings.CORS_ALLOW_HEADERS,
+    max_age=settings.CORS_MAX_AGE,
+)
 
 # Mount uploads directory for serving syllabus documents
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
