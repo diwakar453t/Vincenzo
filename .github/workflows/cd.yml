@@ -60,11 +60,9 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Dependencies & Package
+      - name: Package Backend Source
         working-directory: backend
         run: |
-          # Install dependencies directly into the root so they are packaged in the zip
-          pip install -r requirements.txt -t .
           zip -r ../deploy.zip . -x "__pycache__/*" ".pytest_cache/*"
 
       - name: Deploy to Azure Web App
