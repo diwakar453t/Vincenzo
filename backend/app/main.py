@@ -47,6 +47,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
+    # Disable auto-redirect /path → /path/ (307 redirect drops custom headers
+    # like X-Tenant-ID and Authorization, causing 403 errors)
+    redirect_slashes=False,
     contact={
         "name": "PreSkool Support",
         "email": "support@preskool.com",
