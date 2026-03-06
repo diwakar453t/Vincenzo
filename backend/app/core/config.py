@@ -53,6 +53,8 @@ class Settings(BaseSettings):
         "*.railway.app",
         "*.up.railway.app",
         "*.vercel.app",
+        "*.azurewebsites.net",
+        "preskool-api-backend.azurewebsites.net",
     ]
 
     def validate_jwt_secret(self) -> None:
@@ -90,6 +92,8 @@ class Settings(BaseSettings):
         "https://*.railway.app",       # Railway backend URL
         "https://*.up.railway.app",
         "https://*.vercel.app",        # Vercel frontend
+        "https://*.azurewebsites.net", # Azure App Service
+        "https://preskool-api-backend.azurewebsites.net",
     ]
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: list = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]

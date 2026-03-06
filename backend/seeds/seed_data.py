@@ -50,7 +50,10 @@ from app.models.guardian import Guardian
 
 
 DATABASE_URL = os.environ["DATABASE_URL"]
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+engine_kwargs = {}
+if DATABASE_URL.startswith("sqlite"):
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+engine = create_engine(DATABASE_URL, **engine_kwargs)
 Base.metadata.create_all(bind=engine)
 Session = sessionmaker(bind=engine)
 db = Session()

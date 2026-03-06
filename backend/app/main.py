@@ -43,10 +43,10 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description="PreSkool ERP - Comprehensive School/College Management System",
-    # Disable Swagger UI and OpenAPI schema in production
-    docs_url="/docs" if _is_dev else None,
-    redoc_url="/redoc" if _is_dev else None,
-    openapi_url="/openapi.json" if _is_dev else None,
+    # Enable Swagger docs in all environments for API verification
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
     contact={
         "name": "PreSkool Support",
         "email": "support@preskool.com",
