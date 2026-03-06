@@ -10,7 +10,6 @@ Production-grade security hardening:
 6. Security Headers (HSTS, CSP, X-Frame-Options, etc.)
 7. Request Validation & Threat Detection
 """
-import os
 import re
 import time
 import html
@@ -240,8 +239,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         )
 
         # Remove server info
-        response.headers.pop("Server", None)
-        response.headers.pop("X-Powered-By", None)
+        if "Server" in response.headers:
+            del response.headers["Server"]
+        if "X-Powered-By" in response.headers:
+            del response.headers["X-Powered-By"]
 
         return response
 
@@ -698,27 +699,14 @@ account_lockout = AccountLockout()
 class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
     """
     Redirect HTTP → HTTPS in production.
-    Only active when APP_ENV != development AND not behind a proxy that
-    already handles TLS termination (Railway, Render, etc.).
-
-    Railway and Render terminate TLS at their load balancer and forward
-    HTTP internally — the middleware must NOT redirect in those environments
-    or it will cause an infinite redirect loop making the API unreachable.
+    Only active when APP_ENV != development.
     """
-
-    # Env vars that indicate we are behind a PaaS TLS-terminating proxy
-    _PROXY_ENV_VARS = ("RAILWAY_STATIC_URL", "RAILWAY_PUBLIC_DOMAIN", "RENDER")
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         if settings.APP_ENV == "development":
             return await call_next(request)
 
-        # Skip redirect when behind Railway / Render — they enforce HTTPS at
-        # the load balancer level; redirecting here causes infinite loops.
-        if any(os.environ.get(v) for v in self._PROXY_ENV_VARS):
-            return await call_next(request)
-
-        # Check X-Forwarded-Proto (behind other load balancers)
+        # Check X-Forwarded-Proto (behind load balancer)
         proto = request.headers.get("x-forwarded-proto", "")
         if proto == "http":
             url = request.url.replace(scheme="https")

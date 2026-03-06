@@ -133,6 +133,11 @@ class TenantMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         path = request.url.path
 
+        # Skip tenant check for OPTIONS requests (CORS preflight)
+        if request.method == "OPTIONS":
+            request.state.tenant_id = None
+            return await call_next(request)
+
         # Skip tenant check for public paths
         if _is_public_path(path):
             request.state.tenant_id = None

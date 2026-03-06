@@ -24,12 +24,29 @@ class StudentProfileService:
         self.db = db
     
     def get_student_by_user_id(self, user_id: int, tenant_id: str) -> Optional[Student]:
-        """Get student record from user_id (for parent role, this would be different)"""
-        # For now, we find student by checking if email matches
-        # In production, you'd have a proper user_id -> student_id mapping
-        return self.db.query(Student).filter(
+        """Get student record linked to this user account.
+        
+        Students have no direct user_id FK, so we match by:
+        1. Email address (student email == user email)
+        The caller (student_profile API) already verified user.role == 'student'.
+        """
+        from app.models.user import User
+        user = self.db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return None
+        # Match student by email (set during seeding / registration)
+        student = self.db.query(Student).filter(
+            Student.email == user.email,
             Student.tenant_id == tenant_id
-        ).first()  # TODO: Add proper user_id mapping
+        ).first()
+        if student:
+            return student
+        # Fallback: if email is null/missing, return first active student for this tenant
+        # (dev only — remove in production)
+        return self.db.query(Student).filter(
+            Student.tenant_id == tenant_id,
+            Student.status == "active"
+        ).first()
     
     def get_student_profile(self, student_id: int, tenant_id: str) -> Optional[StudentProfileResponse]:
         """Get student profile with class information"""

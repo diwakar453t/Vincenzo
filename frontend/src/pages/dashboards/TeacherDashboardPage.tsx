@@ -1,42 +1,37 @@
-import { useState } from 'react';
-import { useSelector } from 'react-redux';
-import type { RootState } from '../../store/store';
+import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import type { RootState, AppDispatch } from '../../store/store';
+import {
+    fetchTeacherProfile,
+    fetchTeacherClasses,
+    fetchTeacherStudents,
+} from '../../store/slices/teacherDashboardSlice';
 import {
     Box, Typography, Grid, Card, CardContent, Chip, Tab, Tabs,
     Button, Table, TableBody, TableCell, TableHead, TableRow,
     TableContainer, Paper, Avatar, LinearProgress, Badge,
     IconButton, List, ListItem, ListItemText, ListItemAvatar, Divider,
+    CircularProgress, Alert,
 } from '@mui/material';
 import {
     Schedule, People, Assignment, CheckCircle, TrendingUp,
     Notifications, Message, Upload, Grade, Assessment,
     Class, AttachFile, BarChart, CalendarToday, Star, Warning,
-    Add, Edit, Visibility,
+    Add, Edit, Visibility, Refresh,
 } from '@mui/icons-material';
 
-// ─── Mock Data ───────────────────────────────────────────────────────────────
-const mockClasses = [
-    { id: 1, name: 'Class 10-A', subject: 'Mathematics', students: 32, time: '09:00–10:00', room: 'A101' },
-    { id: 2, name: 'Class 10-B', subject: 'Mathematics', students: 30, time: '11:00–12:00', room: 'A103' },
-    { id: 3, name: 'Class 9-A', subject: 'Mathematics', students: 28, time: '02:00–03:00', room: 'B201' },
-];
-const mockStudentsInClass = [
-    { id: 1, name: 'Rahul Sharma', rollNo: 'STU001', attendance: 92, avgGrade: 'A', status: 'present' },
-    { id: 2, name: 'Priya Patel', rollNo: 'STU002', attendance: 78, avgGrade: 'B+', status: 'present' },
-    { id: 3, name: 'Amit Kumar', rollNo: 'STU003', attendance: 65, avgGrade: 'B', status: 'absent' },
-    { id: 4, name: 'Sneha Gupta', rollNo: 'STU004', attendance: 95, avgGrade: 'A+', status: 'present' },
-    { id: 5, name: 'Karan Singh', rollNo: 'STU005', attendance: 55, avgGrade: 'C', status: 'present' },
-];
+// Static mock data for items not yet wired to API (assignments, marks, announcements)
+// These will be replaced as those endpoints are built out.
 const mockAssignments = [
     { id: 1, title: 'Algebra Problem Set', class: 'Class 10-A', dueDate: '2026-03-05', submitted: 28, total: 32 },
     { id: 2, title: 'Calculus Practice', class: 'Class 10-B', dueDate: '2026-03-07', submitted: 20, total: 30 },
     { id: 3, title: 'Statistics Project', class: 'Class 9-A', dueDate: '2026-03-10', submitted: 15, total: 28 },
 ];
 const mockInternalMarks = [
-    { id: 1, student: 'Rahul Sharma', marks: 87, total: 100, grade: 'A' },
-    { id: 2, student: 'Priya Patel', marks: 74, total: 100, grade: 'B+' },
-    { id: 3, student: 'Amit Kumar', marks: 65, total: 100, grade: 'B' },
-    { id: 4, student: 'Sneha Gupta', marks: 95, total: 100, grade: 'A+' },
+    { id: 1, student: 'Student 1', marks: 87, total: 100, grade: 'A' },
+    { id: 2, student: 'Student 2', marks: 74, total: 100, grade: 'B+' },
+    { id: 3, student: 'Student 3', marks: 65, total: 100, grade: 'B' },
+    { id: 4, student: 'Student 4', marks: 95, total: 100, grade: 'A+' },
 ];
 const mockAnnouncements = [
     { id: 1, title: 'Extra class for Class 10-A', date: '2026-02-27', audience: 'Class 10-A' },
@@ -64,16 +59,39 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
 
 export default function TeacherDashboardPage() {
     const [tab, setTab] = useState(0);
-    const [attendanceData, setAttendanceData] = useState<Record<number, string>>(
-        Object.fromEntries(mockStudentsInClass.map(s => [s.id, s.status]))
-    );
+    const [attendanceData, setAttendanceData] = useState<Record<number, string>>({});
+    const dispatch = useDispatch<AppDispatch>();
     const user = useSelector((state: RootState) => state.auth.user);
+    const { profile, classes, students, loading, error } = useSelector((state: RootState) => state.teacherDashboard);
 
-    const presentCount = Object.values(attendanceData).filter(v => v === 'present').length;
+    useEffect(() => {
+        dispatch(fetchTeacherProfile());
+        dispatch(fetchTeacherClasses());
+        dispatch(fetchTeacherStudents());
+    }, [dispatch]);
+
+    useEffect(() => {
+        // Initialize attendance state from live student data
+        if (students.length > 0) {
+            const init = Object.fromEntries(students.map(s => [s.id, 'present']));
+            setAttendanceData(init);
+        }
+    }, [students]);
 
     const handleAttendance = (id: number, status: string) => {
         setAttendanceData(prev => ({ ...prev, [id]: status }));
     };
+
+    const presentCount = Object.values(attendanceData).filter(v => v === 'present').length;
+    const totalStudents = classes.reduce((a, c) => a + (c.student_count ?? 0), 0);
+
+    if (loading && !profile) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
 
     return (
         <Box>
@@ -81,14 +99,19 @@ export default function TeacherDashboardPage() {
             <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Avatar sx={{ width: 60, height: 60, background: 'linear-gradient(135deg,#28A745,#51CF66)', fontSize: '1.5rem', fontWeight: 700, boxShadow: '0 4px 14px rgba(40,167,69,0.35)' }}>
-                        {user?.full_name?.charAt(0) || 'T'}
+                        {(profile?.full_name || user?.full_name)?.charAt(0) || 'T'}
                     </Avatar>
                     <Box>
-                        <Typography variant="h4" fontWeight={700}>Welcome, {user?.full_name?.split(' ')[0] || 'Teacher'}! 👩🏫</Typography>
-                        <Typography variant="body2" color="text.secondary">Here's your teaching overview for today</Typography>
+                        <Typography variant="h4" fontWeight={700}>Welcome, {(profile?.full_name || user?.full_name)?.split(' ')[0] || 'Teacher'}! 👩🏫</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            {profile?.specialization || 'Teacher'} · Employee ID: {profile?.employee_id || '—'}
+                        </Typography>
                     </Box>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 1 }}>
+                    <IconButton onClick={() => { dispatch(fetchTeacherProfile()); dispatch(fetchTeacherClasses()); dispatch(fetchTeacherStudents()); }} title="Refresh">
+                        <Refresh />
+                    </IconButton>
                     <Badge badgeContent={2} color="error">
                         <IconButton sx={{ bgcolor: 'white', boxShadow: 1 }}><Notifications /></IconButton>
                     </Badge>
@@ -96,13 +119,19 @@ export default function TeacherDashboardPage() {
                 </Box>
             </Box>
 
+            {error && (
+                <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                    {error} — Showing available data. Connect the backend to view live records.
+                </Alert>
+            )}
+
             {/* Stats */}
             <Grid container spacing={2} sx={{ mb: 4 }}>
                 {[
-                    { icon: <Class />, label: 'Assigned Classes', value: mockClasses.length, color: 'blue' as const },
-                    { icon: <People />, label: 'Total Students', value: mockClasses.reduce((a, c) => a + c.students, 0), color: 'green' as const },
+                    { icon: <Class />, label: 'Assigned Classes', value: classes.length || '—', color: 'blue' as const },
+                    { icon: <People />, label: 'Total Students', value: totalStudents || students.length || '—', color: 'green' as const },
                     { icon: <Assignment />, label: 'Active Assignments', value: mockAssignments.length, color: 'amber' as const },
-                    { icon: <CheckCircle />, label: "Today's Attendance", value: `${presentCount}/${mockStudentsInClass.length}`, color: 'purple' as const },
+                    { icon: <CheckCircle />, label: "Today's Attendance", value: students.length > 0 ? `${presentCount}/${students.length}` : '—', color: 'purple' as const },
                 ].map(s => (
                     <Grid size={{ xs: 6, sm: 6, md: 3 }} key={s.label}>
                         <StatCard {...s} />
@@ -123,109 +152,122 @@ export default function TeacherDashboardPage() {
                 </Tabs>
 
                 <Box sx={{ p: 3 }}>
-                    {/* 0: My Classes */}
+                    {/* 0: My Classes — LIVE DATA */}
                     {tab === 0 && (
                         <Box>
                             <Typography variant="h6" fontWeight={700} mb={2}>📅 Assigned Classes & Timetable</Typography>
-                            <Grid container spacing={2}>
-                                {mockClasses.map(cls => (
-                                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={cls.id}>
-                                        <Card variant="outlined" sx={{ borderRadius: 2, '&:hover': { borderColor: '#28A745', boxShadow: '0 2px 10px rgba(40,167,69,0.15)' }, transition: 'all .2s' }}>
-                                            <CardContent>
-                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                                    <Chip label={cls.name} sx={{ bgcolor: 'rgba(40,167,69,0.1)', color: '#28A745', fontWeight: 700 }} />
-                                                    <Chip label={cls.time} size="small" variant="outlined" />
-                                                </Box>
-                                                <Typography variant="h6" fontWeight={700} mt={1}>{cls.subject}</Typography>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
-                                                    <People sx={{ fontSize: 16, color: 'text.disabled' }} />
-                                                    <Typography variant="caption" color="text.secondary">{cls.students} students</Typography>
-                                                    <Box sx={{ flex: 1 }} />
-                                                    <Typography variant="caption" color="text.secondary">Room {cls.room}</Typography>
-                                                </Box>
-                                                <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                                                    <Button size="small" startIcon={<Visibility />} sx={{ borderRadius: 2 }}>View Students</Button>
-                                                    <Button size="small" startIcon={<Upload />} variant="outlined" sx={{ borderRadius: 2 }}>Upload Material</Button>
-                                                </Box>
-                                            </CardContent>
-                                        </Card>
-                                    </Grid>
-                                ))}
-                            </Grid>
-
-                            <Typography variant="h6" fontWeight={700} mt={4} mb={2}>👥 Student List – Class 10-A</Typography>
-                            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-                                <Table size="small">
-                                    <TableHead>
-                                        <TableRow sx={{ bgcolor: 'rgba(40,167,69,0.05)' }}>
-                                            {['Roll No', 'Student', 'Attendance', 'Avg Grade', 'Status'].map(h => <TableCell key={h} sx={{ fontWeight: 700 }}>{h}</TableCell>)}
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {mockStudentsInClass.map(s => (
-                                            <TableRow key={s.id} sx={{ '&:hover': { bgcolor: 'rgba(40,167,69,0.03)' } }}>
-                                                <TableCell><Typography variant="body2" color="text.secondary">{s.rollNo}</Typography></TableCell>
-                                                <TableCell><Typography fontWeight={600}>{s.name}</Typography></TableCell>
-                                                <TableCell>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                        <LinearProgress variant="determinate" value={s.attendance} sx={{ flex: 1, height: 6, borderRadius: 3, '& .MuiLinearProgress-bar': { bgcolor: s.attendance >= 75 ? '#28A745' : '#DC3545', borderRadius: 3 } }} />
-                                                        <Typography variant="caption">{s.attendance}%</Typography>
+                            {loading ? (
+                                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
+                            ) : classes.length === 0 ? (
+                                <Alert severity="info" sx={{ borderRadius: 2 }}>No classes assigned yet. Ask your admin to assign you to classes.</Alert>
+                            ) : (
+                                <Grid container spacing={2}>
+                                    {classes.map(cls => (
+                                        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={cls.id}>
+                                            <Card variant="outlined" sx={{ borderRadius: 2, '&:hover': { borderColor: '#28A745', boxShadow: '0 2px 10px rgba(40,167,69,0.15)' }, transition: 'all .2s' }}>
+                                                <CardContent>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                                        <Chip label={`${cls.name}${cls.section ? ` - ${cls.section}` : ''}`} sx={{ bgcolor: 'rgba(40,167,69,0.1)', color: '#28A745', fontWeight: 700 }} />
+                                                        <Chip label={`Grade ${cls.grade_level}`} size="small" variant="outlined" />
                                                     </Box>
-                                                </TableCell>
-                                                <TableCell><Chip label={s.avgGrade} size="small" color={s.avgGrade.startsWith('A') ? 'success' : 'primary'} /></TableCell>
-                                                <TableCell><Chip label={s.status} size="small" color={s.status === 'present' ? 'success' : 'error'} /></TableCell>
+                                                    <Typography variant="h6" fontWeight={700} mt={1}>{cls.subject}</Typography>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                                                        <People sx={{ fontSize: 16, color: 'text.disabled' }} />
+                                                        <Typography variant="caption" color="text.secondary">{cls.student_count} students</Typography>
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                                                        <Button size="small" startIcon={<Visibility />} sx={{ borderRadius: 2 }}>View Students</Button>
+                                                        <Button size="small" startIcon={<Upload />} variant="outlined" sx={{ borderRadius: 2 }}>Upload Material</Button>
+                                                    </Box>
+                                                </CardContent>
+                                            </Card>
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                            )}
+
+                            <Typography variant="h6" fontWeight={700} mt={4} mb={2}>👥 Student List (Live)</Typography>
+                            {students.length === 0 ? (
+                                <Alert severity="info" sx={{ borderRadius: 2 }}>No students found for your classes.</Alert>
+                            ) : (
+                                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                                    <Table size="small">
+                                        <TableHead>
+                                            <TableRow sx={{ bgcolor: 'rgba(40,167,69,0.05)' }}>
+                                                {['Student ID', 'Student', 'Class', 'Grade', 'Attendance'].map(h => <TableCell key={h} sx={{ fontWeight: 700 }}>{h}</TableCell>)}
                                             </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </TableContainer>
+                                        </TableHead>
+                                        <TableBody>
+                                            {students.map(s => (
+                                                <TableRow key={s.id} sx={{ '&:hover': { bgcolor: 'rgba(40,167,69,0.03)' } }}>
+                                                    <TableCell><Typography variant="body2" color="text.secondary">{s.student_id}</Typography></TableCell>
+                                                    <TableCell><Typography fontWeight={600}>{s.full_name}</Typography></TableCell>
+                                                    <TableCell><Typography variant="body2">{s.class_name}</Typography></TableCell>
+                                                    <TableCell><Chip label={s.grade || '—'} size="small" color={s.grade?.startsWith('A') ? 'success' : 'primary'} /></TableCell>
+                                                    <TableCell>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                            <LinearProgress variant="determinate" value={s.attendance_percentage || 0}
+                                                                sx={{ flex: 1, height: 6, borderRadius: 3, '& .MuiLinearProgress-bar': { bgcolor: (s.attendance_percentage || 0) >= 75 ? '#28A745' : '#DC3545', borderRadius: 3 } }} />
+                                                            <Typography variant="caption">{s.attendance_percentage || 0}%</Typography>
+                                                        </Box>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                            )}
                         </Box>
                     )}
 
-                    {/* 1: Mark Attendance */}
+                    {/* 1: Mark Attendance — uses live student list */}
                     {tab === 1 && (
                         <Box>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                <Typography variant="h6" fontWeight={700}>✅ Mark Attendance – Class 10-A</Typography>
+                                <Typography variant="h6" fontWeight={700}>✅ Mark Attendance</Typography>
                                 <Box sx={{ display: 'flex', gap: 1 }}>
                                     <Chip label={`Present: ${presentCount}`} color="success" />
-                                    <Chip label={`Absent: ${mockStudentsInClass.length - presentCount}`} color="error" />
+                                    <Chip label={`Absent: ${students.length - presentCount}`} color="error" />
                                 </Box>
                             </Box>
-                            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-                                <Table>
-                                    <TableHead>
-                                        <TableRow sx={{ bgcolor: 'rgba(61,94,225,0.05)' }}>
-                                            {['Student', 'Roll No', 'Mark Attendance'].map(h => <TableCell key={h} sx={{ fontWeight: 700 }}>{h}</TableCell>)}
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {mockStudentsInClass.map(s => (
-                                            <TableRow key={s.id}>
-                                                <TableCell>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                        <Avatar sx={{ width: 32, height: 32, bgcolor: '#3D5EE1', fontSize: '0.75rem' }}>{s.name.charAt(0)}</Avatar>
-                                                        <Typography fontWeight={600}>{s.name}</Typography>
-                                                    </Box>
-                                                </TableCell>
-                                                <TableCell><Typography color="text.secondary">{s.rollNo}</Typography></TableCell>
-                                                <TableCell>
-                                                    <Box sx={{ display: 'flex', gap: 1 }}>
-                                                        {['present', 'absent', 'leave'].map(v => (
-                                                            <Button key={v} size="small" variant={attendanceData[s.id] === v ? 'contained' : 'outlined'}
-                                                                color={v === 'present' ? 'success' : v === 'absent' ? 'error' : 'warning'}
-                                                                onClick={() => handleAttendance(s.id, v)}
-                                                                sx={{ textTransform: 'capitalize', borderRadius: 2, minWidth: 80 }}>
-                                                                {v}
-                                                            </Button>
-                                                        ))}
-                                                    </Box>
-                                                </TableCell>
+                            {students.length === 0 ? (
+                                <Alert severity="info" sx={{ borderRadius: 2 }}>No students loaded. Please check the My Classes tab first.</Alert>
+                            ) : (
+                                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                                    <Table>
+                                        <TableHead>
+                                            <TableRow sx={{ bgcolor: 'rgba(61,94,225,0.05)' }}>
+                                                {['Student', 'Student ID', 'Mark Attendance'].map(h => <TableCell key={h} sx={{ fontWeight: 700 }}>{h}</TableCell>)}
                                             </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </TableContainer>
+                                        </TableHead>
+                                        <TableBody>
+                                            {students.map(s => (
+                                                <TableRow key={s.id}>
+                                                    <TableCell>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                            <Avatar sx={{ width: 32, height: 32, bgcolor: '#3D5EE1', fontSize: '0.75rem' }}>{s.full_name.charAt(0)}</Avatar>
+                                                            <Typography fontWeight={600}>{s.full_name}</Typography>
+                                                        </Box>
+                                                    </TableCell>
+                                                    <TableCell><Typography color="text.secondary">{s.student_id}</Typography></TableCell>
+                                                    <TableCell>
+                                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                                            {['present', 'absent', 'leave'].map(v => (
+                                                                <Button key={v} size="small" variant={attendanceData[s.id] === v ? 'contained' : 'outlined'}
+                                                                    color={v === 'present' ? 'success' : v === 'absent' ? 'error' : 'warning'}
+                                                                    onClick={() => handleAttendance(s.id, v)}
+                                                                    sx={{ textTransform: 'capitalize', borderRadius: 2, minWidth: 80 }}>
+                                                                    {v}
+                                                                </Button>
+                                                            ))}
+                                                        </Box>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                            )}
                             <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
                                 <Button variant="contained" color="success" sx={{ borderRadius: 2 }}>Save Attendance</Button>
                                 <Button variant="outlined" sx={{ borderRadius: 2 }}>Bulk Upload CSV</Button>
@@ -282,7 +324,7 @@ export default function TeacherDashboardPage() {
                         <Box>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                 <Typography variant="h6" fontWeight={700}>📊 Enter Internal Marks</Typography>
-                                <Chip label="Class 10-A – Mid Term" color="primary" />
+                                <Chip label="Mid Term" color="primary" />
                             </Box>
                             <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
                                 <Table>
@@ -319,43 +361,21 @@ export default function TeacherDashboardPage() {
                                 <Grid size={{ xs: 12, sm: 6 }}>
                                     <Card variant="outlined" sx={{ borderRadius: 2 }}>
                                         <CardContent>
-                                            <Typography fontWeight={700} mb={2}>📊 Average Score by Subject</Typography>
-                                            {[
-                                                { subject: 'Mathematics (Class 10-A)', avg: 78 },
-                                                { subject: 'Mathematics (Class 10-B)', avg: 72 },
-                                                { subject: 'Mathematics (Class 9-A)', avg: 68 },
-                                            ].map(s => (
-                                                <Box key={s.subject} sx={{ mb: 2 }}>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                                        <Typography variant="body2">{s.subject}</Typography>
-                                                        <Typography variant="body2" fontWeight={700}>{s.avg}%</Typography>
+                                            <Typography fontWeight={700} mb={2}>🚨 At-Risk Students (Attendance &lt; 75%)</Typography>
+                                            {students.filter(s => (s.attendance_percentage || 0) < 75).length === 0 ? (
+                                                <Typography variant="body2" color="text.secondary">✅ No at-risk students currently.</Typography>
+                                            ) : (
+                                                students.filter(s => (s.attendance_percentage || 0) < 75).map(s => (
+                                                    <Box key={s.id} sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                                                        <Typography variant="body2" fontWeight={600}>{s.full_name}</Typography>
+                                                        <Chip label={`${s.attendance_percentage}% attendance`} size="small" color="error" />
                                                     </Box>
-                                                    <LinearProgress variant="determinate" value={s.avg}
-                                                        sx={{ height: 8, borderRadius: 4, '& .MuiLinearProgress-bar': { borderRadius: 4, bgcolor: s.avg >= 75 ? '#28A745' : '#FFC107' } }} />
-                                                </Box>
-                                            ))}
+                                                ))
+                                            )}
                                         </CardContent>
                                     </Card>
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 6 }}>
-                                    <Card variant="outlined" sx={{ borderRadius: 2 }}>
-                                        <CardContent>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                                                <Warning sx={{ color: '#DC3545' }} />
-                                                <Typography fontWeight={700}>🚨 At-Risk Students</Typography>
-                                            </Box>
-                                            {mockStudentsInClass.filter(s => s.attendance < 75).map(s => (
-                                                <Box key={s.id} sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                                                    <Typography variant="body2" fontWeight={600}>{s.name}</Typography>
-                                                    <Chip label={`${s.attendance}% attendance`} size="small" color="error" />
-                                                </Box>
-                                            ))}
-                                            {mockStudentsInClass.filter(s => s.attendance < 75).length === 0 &&
-                                                <Typography variant="body2" color="text.secondary">✅ No at-risk students</Typography>}
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
-                                <Grid size={{ xs: 12 }}>
                                     <Card sx={{ borderRadius: 2, background: 'linear-gradient(135deg,#28A745,#51CF66)', color: 'white' }}>
                                         <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 3 }}>
                                             <Star sx={{ fontSize: 48, opacity: 0.85 }} />

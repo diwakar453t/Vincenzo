@@ -1,12 +1,16 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Provider, useSelector } from 'react-redux';
+import { Provider, useSelector, useDispatch } from 'react-redux';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { store } from './store/store';
 import type { RootState } from './store/store';
 import theme from './theme/theme';
 import PageLoadingFallback from './components/ui/PageLoadingFallback';
+import api from './services/api';
+import type { AppDispatch } from './store/store';
+import { setUser } from './store/slices/authSlice';
+import RoleProtectedRoute from './components/auth/RoleProtectedRoute';
 
 // ── Auth pages (small – load immediately on /login) ─────────────────────────
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -91,7 +95,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
     if (role === 'student') return <Navigate to="/student-dashboard" replace />;
     if (role === 'teacher') return <Navigate to="/teacher-dashboard" replace />;
     if (role === 'parent') return <Navigate to="/parent-dashboard" replace />;
-    if (role === 'super_admin') return <Navigate to="/super-admin-dashboard" replace />;
+    if (role === 'super_admin' || role === 'superadmin') return <Navigate to="/super-admin-dashboard" replace />;
     return <Navigate to="/admin-dashboard" replace />;
   }
   return <>{children}</>;
@@ -106,17 +110,40 @@ function ComingSoon({ title }: { title: string }) {
   );
 }
 
+function NotFound() {
+  return (
+    <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+      <h1 style={{ fontSize: '5rem', margin: 0 }}>404</h1>
+      <h2>Page Not Found</h2>
+      <p style={{ color: '#666' }}>The page you are looking for does not exist.</p>
+      <a href="/" style={{ color: '#3D5EE1', textDecoration: 'none', fontWeight: 600 }}>Go Home</a>
+    </div>
+  );
+}
+
 function RoleRedirect() {
   const user = useSelector((state: RootState) => state.auth.user);
   const role = user?.role;
   if (role === 'student') return <Navigate to="/student-dashboard" replace />;
   if (role === 'teacher') return <Navigate to="/teacher-dashboard" replace />;
   if (role === 'parent') return <Navigate to="/parent-dashboard" replace />;
-  if (role === 'super_admin') return <Navigate to="/super-admin-dashboard" replace />;
+  if (role === 'super_admin' || role === 'superadmin') return <Navigate to="/super-admin-dashboard" replace />;
   return <Navigate to="/admin-dashboard" replace />;
 }
 
 function AppRoutes() {
+  const dispatch = useDispatch<AppDispatch>();
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+
+  // On startup, silently refresh user profile from the API so role/user data
+  // stays in sync even if localStorage has stale data.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    api.get('/auth/profile')
+      .then((res) => { dispatch(setUser(res.data)); })
+      .catch(() => { /* token may have expired — the 401 interceptor handles logout */ });
+  }, [dispatch, isAuthenticated]);
+
   return (
     <Suspense fallback={<PageLoadingFallback />}>
       <Routes>
@@ -149,7 +176,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route index element={<RoleRedirect />} />
           <Route path="dashboard" element={<DashboardPage />} />
 
           {/* Student Management */}
@@ -167,12 +194,12 @@ function AppRoutes() {
           <Route path="classes" element={<ClassesListPage />} />
           <Route path="subjects" element={<SubjectsListPage />} />
 
-          {/* Role-specific Dashboards */}
-          <Route path="student-dashboard" element={<StudentDashboardPage />} />
-          <Route path="teacher-dashboard" element={<TeacherDashboardPage />} />
-          <Route path="parent-dashboard" element={<ParentDashboardPage />} />
-          <Route path="admin-dashboard" element={<AdminDashboardPage />} />
-          <Route path="super-admin-dashboard" element={<SuperAdminDashboardPage />} />
+          {/* Role-specific Dashboards — guarded by RoleProtectedRoute */}
+          <Route path="student-dashboard" element={<RoleProtectedRoute allowedRoles={['student']}><StudentDashboardPage /></RoleProtectedRoute>} />
+          <Route path="teacher-dashboard" element={<RoleProtectedRoute allowedRoles={['teacher']}><TeacherDashboardPage /></RoleProtectedRoute>} />
+          <Route path="parent-dashboard" element={<RoleProtectedRoute allowedRoles={['parent']}><ParentDashboardPage /></RoleProtectedRoute>} />
+          <Route path="admin-dashboard" element={<RoleProtectedRoute allowedRoles={['admin']}><AdminDashboardPage /></RoleProtectedRoute>} />
+          <Route path="super-admin-dashboard" element={<RoleProtectedRoute allowedRoles={['super_admin', 'superadmin']}><SuperAdminDashboardPage /></RoleProtectedRoute>} />
 
           {/* Profile */}
           <Route path="profile" element={<ProfilePage />} />
@@ -224,8 +251,8 @@ function AppRoutes() {
           <Route path="help" element={<FAQPage />} />
         </Route>
 
-        {/* Catch-all */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* Catch-all — show 404 for authenticated users, redirect to login otherwise */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
   );

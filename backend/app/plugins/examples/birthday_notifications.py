@@ -97,13 +97,17 @@ class BirthdayNotificationsPlugin(PluginBase):
 
             if birthdays:
                 wish = ctx.get_config("birthday_notifications", "wish_message", "🎉 Happy Birthday, {name}!")
-                for b in birthdays:
-                    message = wish.format(name=b["name"])
-                    logger.info(f"🎂 {message} ({b['type']} #{b['id']})")
+                logger.info(
+                    "Birthday notification sent",
+                    extra={"entity_type": b["type"], "entity_id": b["id"], "event": "birthday_notification"},
+                )
 
-                logger.info(f"🎂 Found {len(birthdays)} birthday(s) today!")
+                logger.info(
+                    "Birthday check complete",
+                    extra={"count": len(birthdays), "event": "birthday_check"},
+                )
 
             db.close()
 
-        except Exception as e:
-            logger.error(f"Birthday check error: {e}")
+        except Exception:
+            logger.error("Birthday check failed", exc_info=False)

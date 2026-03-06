@@ -35,7 +35,10 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await api.post('/auth/login', { email, password });
+      // Include tenant_id in login payload so the backend can scope the user correctly.
+      // In production this comes from subdomain detection or a tenant selector UI.
+      const tenantId = import.meta.env.VITE_TENANT_ID || 'demo-school';
+      const response = await api.post('/auth/login', { email, password, tenant_id: tenantId });
       const { access_token, refresh_token, user } = response.data;
 
       localStorage.setItem('access_token', access_token);
@@ -43,12 +46,12 @@ export default function LoginPage() {
 
       dispatch(loginSuccess({ user, token: access_token }));
 
-      // Role-based redirect
+      // Role-based redirect — handle both super_admin and superadmin formats
       const role = user?.role;
       if (role === 'student') navigate('/student-dashboard');
       else if (role === 'teacher') navigate('/teacher-dashboard');
       else if (role === 'parent') navigate('/parent-dashboard');
-      else if (role === 'super_admin') navigate('/super-admin-dashboard');
+      else if (role === 'super_admin' || role === 'superadmin') navigate('/super-admin-dashboard');
       else navigate('/admin-dashboard'); // admin default
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Login failed. Please try again.');

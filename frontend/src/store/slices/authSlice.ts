@@ -30,9 +30,9 @@ function readStoredToken(): string | null {
   // A JWT must have exactly 2 dots (header.payload.signature)
   const parts = raw.split('.');
   if (parts.length !== 3) {
-    // Malformed — clear it and treat as unauthenticated
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('auth_user');
     sessionStorage.removeItem('access_token');
     sessionStorage.removeItem('refresh_token');
     return null;
@@ -40,10 +40,30 @@ function readStoredToken(): string | null {
   return raw;
 }
 
+/**
+ * Restore the persisted user object from localStorage.
+ * This ensures user.role is available on page refresh so
+ * role-based routing and sidebar menus work correctly.
+ */
+function readStoredUser(): User | null {
+  try {
+    const raw = localStorage.getItem('auth_user');
+    if (!raw) return null;
+    return JSON.parse(raw) as User;
+  } catch {
+    localStorage.removeItem('auth_user');
+    return null;
+  }
+}
+
+const storedToken = readStoredToken();
+
 const initialState: AuthState = {
-  user: null,
-  token: readStoredToken(),   // Issue 10: validated on read
-  isAuthenticated: !!readStoredToken(),
+  // Restore user from localStorage so role survives page refresh.
+  // Only restore if we also have a valid token (prevents stale user data).
+  user: storedToken ? readStoredUser() : null,
+  token: storedToken,
+  isAuthenticated: !!storedToken,
   loading: false,
 };
 
@@ -55,19 +75,22 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.isAuthenticated = true;
+      // Persist user so role survives page refresh
+      localStorage.setItem('auth_user', JSON.stringify(action.payload.user));
     },
     logout: (state) => {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
-      // Issue 11: Clear both storage types to ensure complete logout
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
+      localStorage.removeItem('auth_user');
       sessionStorage.removeItem('access_token');
       sessionStorage.removeItem('refresh_token');
     },
     setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
+      localStorage.setItem('auth_user', JSON.stringify(action.payload));
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;

@@ -37,9 +37,6 @@ COPY --from=builder /install /usr/local
 # Copy application source
 COPY . .
 
-# Copy startup script and make executable (must be done as root before USER switch)
-RUN chmod +x /app/start.sh
-
 # Create data directories
 RUN mkdir -p /app/data /app/uploads /app/logs && \
     chown -R preskool:preskool /app
@@ -58,6 +55,11 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
 
 EXPOSE ${PORT}
 
-# start.sh uses 'set -f' (noglob) before calling uvicorn so the '*' in
-# --forwarded-allow-ips is never shell-expanded to filenames.
-CMD ["/app/start.sh"]
+# Uvicorn — shell form so $PORT is expanded by the shell at runtime
+CMD sh -c "exec uvicorn app.main:app \
+    --host 0.0.0.0 \
+    --port ${PORT:-8000} \
+    --workers 2 \
+    --proxy-headers \
+    --forwarded-allow-ips '*' \
+    --access-log"

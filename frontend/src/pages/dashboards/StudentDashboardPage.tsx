@@ -1,50 +1,32 @@
 import { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
-import type { RootState } from '../../store/store';
+import { useSelector, useDispatch } from 'react-redux';
+import type { RootState, AppDispatch } from '../../store/store';
+import {
+    fetchStudentProfile,
+    fetchStudentSchedule,
+    fetchStudentResults,
+    fetchStudentAssignments,
+    fetchStudentAttendance,
+} from '../../store/slices/studentDashboardSlice';
 import {
     Box, Typography, Grid, Card, CardContent, Avatar, Chip, LinearProgress,
     Tab, Tabs, Button, Table, TableBody, TableCell, TableHead, TableRow,
     TableContainer, Paper, List, ListItem, ListItemText, ListItemIcon,
-    Divider, Badge, IconButton, Tooltip,
+    Divider, Badge, IconButton, Tooltip, CircularProgress, Alert,
 } from '@mui/material';
 import {
     School, Schedule, Assignment, CheckCircle, TrendingUp,
-    CalendarMonth, MenuBook, Person, Payment, Notifications,
+    CalendarMonth, Person, Payment, Notifications,
     Message, EventNote, Download, Star, Warning, AutoGraph,
-    Book, EmojiEvents, QuizOutlined, LibraryBooks, CreditCard,
+    Book, EmojiEvents, QuizOutlined, LibraryBooks, CreditCard, Refresh,
 } from '@mui/icons-material';
 
-// ─── Mock data ──────────────────────────────────────────────────────────────
-const mockSchedule = [
-    { id: 1, subject: 'Mathematics', teacher: 'Mr. Sharma', startTime: '09:00', endTime: '10:00', room: 'A101' },
-    { id: 2, subject: 'Physics', teacher: 'Ms. Patel', startTime: '10:00', endTime: '11:00', room: 'B202' },
-    { id: 3, subject: 'English', teacher: 'Mrs. Singh', startTime: '11:15', endTime: '12:15', room: 'A103' },
-    { id: 4, subject: 'Chemistry', teacher: 'Mr. Kumar', startTime: '12:15', endTime: '01:15', room: 'Lab-1' },
-    { id: 5, subject: 'Computer Science', teacher: 'Ms. Gupta', startTime: '02:00', endTime: '03:00', room: 'Lab-2' },
-    { id: 6, subject: 'History', teacher: 'Mr. Mehta', startTime: '03:00', endTime: '04:00', room: 'A201' },
-];
-const mockResults = [
-    { id: 1, subject: 'Mathematics', examType: 'Mid Term', marks: 87, total: 100, grade: 'A' },
-    { id: 2, subject: 'Physics', examType: 'Mid Term', marks: 74, total: 100, grade: 'B+' },
-    { id: 3, subject: 'English', examType: 'Mid Term', marks: 91, total: 100, grade: 'A+' },
-    { id: 4, subject: 'Chemistry', examType: 'Mid Term', marks: 65, total: 100, grade: 'B' },
-    { id: 5, subject: 'Computer Science', examType: 'Mid Term', marks: 95, total: 100, grade: 'A+' },
-];
-const mockAssignments = [
-    { id: 1, title: 'Calculus Problem Set', subject: 'Mathematics', dueDate: '2026-03-05', status: 'pending' },
-    { id: 2, title: 'Essay on Shakespeare', subject: 'English', dueDate: '2026-03-02', status: 'submitted' },
-    { id: 3, title: 'Titration Lab Report', subject: 'Chemistry', dueDate: '2026-03-08', status: 'pending' },
-    { id: 4, title: 'Binary Tree Implementation', subject: 'Computer Science', dueDate: '2026-02-28', status: 'graded' },
-];
+// Static mock data for sections not yet covered by studentDashboardSlice
+// (exams schedule, fee history, announcements — to be wired when those APIs are ready)
 const mockExams = [
     { id: 1, subject: 'Mathematics', date: '2026-03-15', time: '10:00 AM', room: 'Hall A', type: 'Final' },
     { id: 2, subject: 'Physics', date: '2026-03-17', time: '10:00 AM', room: 'Hall B', type: 'Final' },
     { id: 3, subject: 'English', date: '2026-03-19', time: '10:00 AM', room: 'Hall A', type: 'Final' },
-];
-const mockAnnouncements = [
-    { id: 1, title: 'Annual Sports Day Registration', date: '2026-02-25', priority: 'high' },
-    { id: 2, title: 'Library Book Return Deadline', date: '2026-02-28', priority: 'medium' },
-    { id: 3, title: 'Parent-Teacher Meeting – March 10', date: '2026-03-01', priority: 'high' },
 ];
 const mockFees = {
     total: 85000,
@@ -57,6 +39,11 @@ const mockFees = {
         { id: 3, desc: 'Term 3 Tuition', amount: 25000, date: '2026-03-31', status: 'pending' },
     ],
 };
+const mockAnnouncements = [
+    { id: 1, title: 'Annual Sports Day Registration', date: '2026-02-25', priority: 'high' },
+    { id: 2, title: 'Library Book Return Deadline', date: '2026-02-28', priority: 'medium' },
+    { id: 3, title: 'Parent-Teacher Meeting – March 10', date: '2026-03-01', priority: 'high' },
+];
 
 const STAT_COLORS = {
     green: { bg: 'rgba(40,167,69,0.1)', fg: '#28A745' },
@@ -84,26 +71,66 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
 
 export default function StudentDashboardPage() {
     const [tab, setTab] = useState(0);
+    const dispatch = useDispatch<AppDispatch>();
     const user = useSelector((state: RootState) => state.auth.user);
+    const {
+        profile, schedule, results, assignments, attendancePercentage, loading, error,
+    } = useSelector((state: RootState) => state.studentDashboard);
 
-    const avgScore = Math.round(mockResults.reduce((a, r) => a + (r.marks / r.total) * 100, 0) / mockResults.length);
-    const attendancePct = 88;
-    const pendingTasks = mockAssignments.filter(a => a.status === 'pending').length;
+    useEffect(() => {
+        dispatch(fetchStudentProfile());
+        dispatch(fetchStudentSchedule());
+        dispatch(fetchStudentResults());
+        dispatch(fetchStudentAssignments());
+        dispatch(fetchStudentAttendance());
+    }, [dispatch]);
+
+    const pendingTasks = assignments.filter(a => a.status === 'pending').length;
+    const avgScore = results.length > 0
+        ? Math.round(results.reduce((a, r) => a + (r.marks_obtained / r.total_marks) * 100, 0) / results.length)
+        : 0;
+    const attPct = attendancePercentage || 0;
+
+    // Top subject by score
+    const topSubject = results.length > 0
+        ? results.reduce((best, r) => (r.marks_obtained / r.total_marks) > (best.marks_obtained / best.total_marks) ? r : best, results[0])
+        : null;
+
+    if (loading && !profile) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
 
     return (
         <Box>
-            {/* ── Header ─────────────────────────────────────────── */}
+            {/* ── Header ──── */}
             <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Avatar sx={{ width: 60, height: 60, bgcolor: 'linear-gradient(135deg,#3D5EE1,#6366f1)', background: 'linear-gradient(135deg,#3D5EE1,#6366f1)', fontSize: '1.5rem', fontWeight: 700, boxShadow: '0 4px 14px rgba(61,94,225,0.35)' }}>
-                        {user?.full_name?.charAt(0) || 'S'}
+                    <Avatar sx={{ width: 60, height: 60, background: 'linear-gradient(135deg,#3D5EE1,#6366f1)', fontSize: '1.5rem', fontWeight: 700, boxShadow: '0 4px 14px rgba(61,94,225,0.35)' }}>
+                        {(profile?.full_name || user?.full_name)?.charAt(0) || 'S'}
                     </Avatar>
                     <Box>
-                        <Typography variant="h4" fontWeight={700}>Welcome back, {user?.full_name?.split(' ')[0] || 'Student'}! 👋</Typography>
-                        <Typography variant="body2" color="text.secondary">🎓 Your academic overview for today</Typography>
+                        <Typography variant="h4" fontWeight={700}>
+                            Welcome back, {(profile?.full_name || user?.full_name)?.split(' ')[0] || 'Student'}! 👋
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            🎓 {profile?.class_name ? `${profile.class_name}${profile.section ? ` - ${profile.section}` : ''}` : 'Student'} · ID: {profile?.student_id || '—'}
+                        </Typography>
                     </Box>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 1 }}>
+                    <IconButton onClick={() => {
+                        dispatch(fetchStudentProfile());
+                        dispatch(fetchStudentSchedule());
+                        dispatch(fetchStudentResults());
+                        dispatch(fetchStudentAssignments());
+                        dispatch(fetchStudentAttendance());
+                    }} title="Refresh">
+                        <Refresh />
+                    </IconButton>
                     <Badge badgeContent={3} color="error">
                         <IconButton sx={{ bgcolor: 'white', boxShadow: 1 }}><Notifications /></IconButton>
                     </Badge>
@@ -111,15 +138,21 @@ export default function StudentDashboardPage() {
                 </Box>
             </Box>
 
-            {/* ── Quick Stats ────────────────────────────────────── */}
+            {error && (
+                <Alert severity="warning" sx={{ mb: 3, borderRadius: 2 }}>
+                    {error} — Some data may not be available yet. Please ensure your profile is set up by the school admin.
+                </Alert>
+            )}
+
+            {/* ── Quick Stats ── */}
             <Grid container spacing={2} sx={{ mb: 4 }}>
                 {[
-                    { icon: <CheckCircle />, label: 'Attendance', value: `${attendancePct}%`, color: 'green' as const },
-                    { icon: <TrendingUp />, label: 'Average Score', value: `${avgScore}%`, color: 'blue' as const },
+                    { icon: <CheckCircle />, label: 'Attendance', value: attPct > 0 ? `${attPct}%` : '—', color: 'green' as const },
+                    { icon: <TrendingUp />, label: 'Average Score', value: avgScore > 0 ? `${avgScore}%` : '—', color: 'blue' as const },
                     { icon: <Assignment />, label: 'Pending Tasks', value: pendingTasks, color: 'amber' as const },
-                    { icon: <Schedule />, label: "Today's Classes", value: mockSchedule.length, color: 'purple' as const },
+                    { icon: <Schedule />, label: "Today's Classes", value: schedule.length || '—', color: 'purple' as const },
                     { icon: <Payment />, label: 'Fee Due', value: '₹25,000', color: 'red' as const },
-                    { icon: <EmojiEvents />, label: 'Top Subject', value: 'CS – 95%', color: 'cyan' as const },
+                    { icon: <EmojiEvents />, label: 'Top Subject', value: topSubject ? `${topSubject.subject.substring(0, 6)}… – ${Math.round((topSubject.marks_obtained / topSubject.total_marks) * 100)}%` : '—', color: 'cyan' as const },
                 ].map(s => (
                     <Grid size={{ xs: 6, sm: 4, md: 2 }} key={s.label}>
                         <StatCard {...s} />
@@ -127,7 +160,7 @@ export default function StudentDashboardPage() {
                 ))}
             </Grid>
 
-            {/* ── Tabs ───────────────────────────────────────────── */}
+            {/* ── Tabs ── */}
             <Paper sx={{ borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.07)', mb: 3, overflow: 'hidden' }}>
                 <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
                     sx={{ borderBottom: '1px solid rgba(0,0,0,0.08)', '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', minHeight: 52 } }}>
@@ -141,101 +174,120 @@ export default function StudentDashboardPage() {
                 </Tabs>
 
                 <Box sx={{ p: 3 }}>
-                    {/* ── 0: Timetable ── */}
+                    {/* ── 0: Timetable — LIVE DATA ── */}
                     {tab === 0 && (
                         <Box>
                             <Typography variant="h6" fontWeight={700} mb={2}>📅 Today's Class Schedule</Typography>
-                            <TableContainer>
-                                <Table>
-                                    <TableHead>
-                                        <TableRow sx={{ bgcolor: 'rgba(61,94,225,0.05)' }}>
-                                            {['Time', 'Subject', 'Teacher', 'Room'].map(h => (
-                                                <TableCell key={h} sx={{ fontWeight: 700 }}>{h}</TableCell>
-                                            ))}
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {mockSchedule.map(cls => (
-                                            <TableRow key={cls.id} sx={{ '&:hover': { bgcolor: 'rgba(61,94,225,0.03)' } }}>
-                                                <TableCell><Chip label={`${cls.startTime}–${cls.endTime}`} size="small" variant="outlined" /></TableCell>
-                                                <TableCell><Typography fontWeight={600}>{cls.subject}</Typography></TableCell>
-                                                <TableCell><Typography color="text.secondary">{cls.teacher}</Typography></TableCell>
-                                                <TableCell><Chip label={cls.room} size="small" sx={{ bgcolor: 'rgba(132,94,247,0.1)', color: '#845EF7' }} /></TableCell>
+                            {loading ? (
+                                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
+                            ) : schedule.length === 0 ? (
+                                <Alert severity="info" sx={{ borderRadius: 2 }}>No schedule found. Your timetable will appear here once assigned by the admin.</Alert>
+                            ) : (
+                                <TableContainer>
+                                    <Table>
+                                        <TableHead>
+                                            <TableRow sx={{ bgcolor: 'rgba(61,94,225,0.05)' }}>
+                                                {['Time', 'Subject', 'Teacher', 'Room'].map(h => (
+                                                    <TableCell key={h} sx={{ fontWeight: 700 }}>{h}</TableCell>
+                                                ))}
                                             </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </TableContainer>
+                                        </TableHead>
+                                        <TableBody>
+                                            {schedule.map(cls => (
+                                                <TableRow key={cls.id} sx={{ '&:hover': { bgcolor: 'rgba(61,94,225,0.03)' } }}>
+                                                    <TableCell><Chip label={`${cls.start_time}–${cls.end_time}`} size="small" variant="outlined" /></TableCell>
+                                                    <TableCell><Typography fontWeight={600}>{cls.subject}</Typography></TableCell>
+                                                    <TableCell><Typography color="text.secondary">{cls.teacher}</Typography></TableCell>
+                                                    <TableCell><Chip label={cls.room} size="small" sx={{ bgcolor: 'rgba(132,94,247,0.1)', color: '#845EF7' }} /></TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                            )}
                         </Box>
                     )}
 
-                    {/* ── 1: Assignments ── */}
+                    {/* ── 1: Assignments — LIVE DATA ── */}
                     {tab === 1 && (
                         <Box>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                 <Typography variant="h6" fontWeight={700}>📝 Assignments & Submissions</Typography>
                                 <Chip label={`${pendingTasks} Pending`} color="warning" />
                             </Box>
-                            <Grid container spacing={2}>
-                                {mockAssignments.map(a => (
-                                    <Grid size={{ xs: 12, sm: 6 }} key={a.id}>
-                                        <Card variant="outlined" sx={{ borderRadius: 2, borderColor: a.status === 'pending' ? '#FFC107' : a.status === 'graded' ? '#28A745' : 'rgba(0,0,0,0.12)' }}>
-                                            <CardContent>
-                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                                    <Typography fontWeight={700}>{a.title}</Typography>
-                                                    <Chip label={a.status} size="small"
-                                                        color={a.status === 'graded' ? 'success' : a.status === 'submitted' ? 'primary' : 'warning'} />
-                                                </Box>
-                                                <Typography variant="caption" color="text.secondary">{a.subject}</Typography>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
-                                                    <CalendarMonth sx={{ fontSize: 14, color: 'text.disabled' }} />
-                                                    <Typography variant="caption" color="text.secondary">Due: {a.dueDate}</Typography>
-                                                </Box>
-                                                {a.status === 'pending' && (
-                                                    <Button size="small" variant="contained" sx={{ mt: 1.5, borderRadius: 2 }}>Submit</Button>
-                                                )}
-                                            </CardContent>
-                                        </Card>
-                                    </Grid>
-                                ))}
-                            </Grid>
-                        </Box>
-                    )}
-
-                    {/* ── 2: Results ── */}
-                    {tab === 2 && (
-                        <Box>
-                            <Typography variant="h6" fontWeight={700} mb={2}>🎯 Internal Marks & Results</Typography>
-                            <Grid container spacing={2} sx={{ mb: 3 }}>
-                                {mockResults.map(r => {
-                                    const pct = Math.round((r.marks / r.total) * 100);
-                                    return (
-                                        <Grid size={{ xs: 12, sm: 6 }} key={r.id}>
-                                            <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                            {loading ? (
+                                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
+                            ) : assignments.length === 0 ? (
+                                <Alert severity="info" sx={{ borderRadius: 2 }}>No assignments yet. Check back after your teachers post them.</Alert>
+                            ) : (
+                                <Grid container spacing={2}>
+                                    {assignments.map(a => (
+                                        <Grid size={{ xs: 12, sm: 6 }} key={a.id}>
+                                            <Card variant="outlined" sx={{ borderRadius: 2, borderColor: a.status === 'pending' ? '#FFC107' : a.status === 'graded' ? '#28A745' : 'rgba(0,0,0,0.12)' }}>
                                                 <CardContent>
                                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                                        <Typography fontWeight={700}>{r.subject}</Typography>
-                                                        <Chip label={r.grade} size="small" color={r.grade.startsWith('A') ? 'success' : 'primary'} />
+                                                        <Typography fontWeight={700}>{a.title}</Typography>
+                                                        <Chip label={a.status} size="small"
+                                                            color={a.status === 'graded' ? 'success' : a.status === 'submitted' ? 'primary' : 'warning'} />
                                                     </Box>
-                                                    <Typography variant="caption" color="text.secondary">{r.examType}</Typography>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, mb: 0.5 }}>
-                                                        <Typography variant="body2">{r.marks}/{r.total}</Typography>
-                                                        <Typography variant="body2" fontWeight={700}>{pct}%</Typography>
+                                                    <Typography variant="caption" color="text.secondary">{a.subject}</Typography>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
+                                                        <CalendarMonth sx={{ fontSize: 14, color: 'text.disabled' }} />
+                                                        <Typography variant="caption" color="text.secondary">Due: {a.due_date}</Typography>
                                                     </Box>
-                                                    <LinearProgress variant="determinate" value={pct} sx={{ height: 8, borderRadius: 4, bgcolor: 'rgba(0,0,0,0.06)', '& .MuiLinearProgress-bar': { borderRadius: 4, bgcolor: pct >= 80 ? '#28A745' : pct >= 60 ? '#3D5EE1' : '#FFC107' } }} />
+                                                    {a.status === 'pending' && (
+                                                        <Button size="small" variant="contained" sx={{ mt: 1.5, borderRadius: 2 }}>Submit</Button>
+                                                    )}
                                                 </CardContent>
                                             </Card>
                                         </Grid>
-                                    );
-                                })}
-                            </Grid>
+                                    ))}
+                                </Grid>
+                            )}
+                        </Box>
+                    )}
+
+                    {/* ── 2: Results — LIVE DATA ── */}
+                    {tab === 2 && (
+                        <Box>
+                            <Typography variant="h6" fontWeight={700} mb={2}>🎯 Internal Marks & Results</Typography>
+                            {loading ? (
+                                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
+                            ) : results.length === 0 ? (
+                                <Alert severity="info" sx={{ borderRadius: 2 }}>No results available yet. They will appear after your exams are graded.</Alert>
+                            ) : (
+                                <Grid container spacing={2} sx={{ mb: 3 }}>
+                                    {results.map(r => {
+                                        const pct = Math.round((r.marks_obtained / r.total_marks) * 100);
+                                        return (
+                                            <Grid size={{ xs: 12, sm: 6 }} key={r.id}>
+                                                <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                                                    <CardContent>
+                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                                            <Typography fontWeight={700}>{r.subject}</Typography>
+                                                            <Chip label={r.grade} size="small" color={r.grade.startsWith('A') ? 'success' : 'primary'} />
+                                                        </Box>
+                                                        <Typography variant="caption" color="text.secondary">{r.exam_type}</Typography>
+                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, mb: 0.5 }}>
+                                                            <Typography variant="body2">{r.marks_obtained}/{r.total_marks}</Typography>
+                                                            <Typography variant="body2" fontWeight={700}>{pct}%</Typography>
+                                                        </Box>
+                                                        <LinearProgress variant="determinate" value={pct}
+                                                            sx={{ height: 8, borderRadius: 4, bgcolor: 'rgba(0,0,0,0.06)', '& .MuiLinearProgress-bar': { borderRadius: 4, bgcolor: pct >= 80 ? '#28A745' : pct >= 60 ? '#3D5EE1' : '#FFC107' } }} />
+                                                    </CardContent>
+                                                </Card>
+                                            </Grid>
+                                        );
+                                    })}
+                                </Grid>
+                            )}
                             <Box sx={{ display: 'flex', gap: 2 }}>
                                 <Button variant="outlined" startIcon={<Download />} sx={{ borderRadius: 2 }}>Download Report Card</Button>
                             </Box>
                         </Box>
                     )}
 
-                    {/* ── 3: Exam Schedule ── */}
+                    {/* ── 3: Exam Schedule (static until exam API is wired) ── */}
                     {tab === 3 && (
                         <Box>
                             <Typography variant="h6" fontWeight={700} mb={2}>🧪 Upcoming Exams</Typography>
@@ -258,7 +310,7 @@ export default function StudentDashboardPage() {
                         </Box>
                     )}
 
-                    {/* ── 4: Fees ── */}
+                    {/* ── 4: Fees (static until fees API is wired to studentDashboardSlice) ── */}
                     {tab === 4 && (
                         <Box>
                             <Typography variant="h6" fontWeight={700} mb={2}>💳 Fee Status & Payments</Typography>
@@ -296,7 +348,13 @@ export default function StudentDashboardPage() {
                             <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
                                 <Table size="small">
                                     <TableHead>
-                                        <TableRow><TableCell sx={{ fontWeight: 700 }}>Description</TableCell><TableCell sx={{ fontWeight: 700 }}>Amount</TableCell><TableCell sx={{ fontWeight: 700 }}>Date</TableCell><TableCell sx={{ fontWeight: 700 }}>Status</TableCell><TableCell /></TableRow>
+                                        <TableRow>
+                                            <TableCell sx={{ fontWeight: 700 }}>Description</TableCell>
+                                            <TableCell sx={{ fontWeight: 700 }}>Amount</TableCell>
+                                            <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                                            <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                                            <TableCell />
+                                        </TableRow>
                                     </TableHead>
                                     <TableBody>
                                         {mockFees.history.map(h => (
@@ -341,11 +399,11 @@ export default function StudentDashboardPage() {
                         </Box>
                     )}
 
-                    {/* ── 6: Analytics ── */}
+                    {/* ── 6: Analytics — uses LIVE results & attendance ── */}
                     {tab === 6 && (
                         <Box>
                             <Typography variant="h6" fontWeight={700} mb={1}>📈 Performance Analytics</Typography>
-                            <Typography variant="body2" color="text.secondary" mb={3}>AI-powered insights based on your academic data</Typography>
+                            <Typography variant="body2" color="text.secondary" mb={3}>Insights based on your academic data</Typography>
                             <Grid container spacing={2}>
                                 <Grid size={{ xs: 12, sm: 6 }}>
                                     <Card variant="outlined" sx={{ borderRadius: 2 }}>
@@ -354,12 +412,18 @@ export default function StudentDashboardPage() {
                                                 <Warning sx={{ color: '#FFC107' }} />
                                                 <Typography fontWeight={700}>⚠️ Weak Subjects</Typography>
                                             </Box>
-                                            {mockResults.filter(r => (r.marks / r.total) < 0.75).map(r => (
-                                                <Box key={r.id} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
-                                                    <Typography variant="body2">{r.subject}</Typography>
-                                                    <Chip label={`${Math.round((r.marks / r.total) * 100)}%`} size="small" color="warning" />
-                                                </Box>
-                                            ))}
+                                            {results.length === 0 ? (
+                                                <Typography variant="body2" color="text.secondary">No results available yet.</Typography>
+                                            ) : results.filter(r => (r.marks_obtained / r.total_marks) < 0.75).length === 0 ? (
+                                                <Typography variant="body2" color="success.main">✅ Performing well in all subjects!</Typography>
+                                            ) : (
+                                                results.filter(r => (r.marks_obtained / r.total_marks) < 0.75).map(r => (
+                                                    <Box key={r.id} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                                                        <Typography variant="body2">{r.subject}</Typography>
+                                                        <Chip label={`${Math.round((r.marks_obtained / r.total_marks) * 100)}%`} size="small" color="warning" />
+                                                    </Box>
+                                                ))
+                                            )}
                                         </CardContent>
                                     </Card>
                                 </Grid>
@@ -368,11 +432,22 @@ export default function StudentDashboardPage() {
                                         <CardContent>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                                                 <AutoGraph sx={{ color: '#28A745' }} />
-                                                <Typography fontWeight={700}>📊 Attendance Prediction</Typography>
+                                                <Typography fontWeight={700}>📊 Attendance Status</Typography>
                                             </Box>
-                                            <Typography variant="body2" color="text.secondary" mb={1}>Current Attendance: <strong>88%</strong></Typography>
-                                            <LinearProgress variant="determinate" value={88} sx={{ height: 10, borderRadius: 5, mb: 1, '& .MuiLinearProgress-bar': { bgcolor: '#28A745', borderRadius: 5 } }} />
-                                            <Chip label="✅ Safe – Above 75% threshold" color="success" size="small" />
+                                            <Typography variant="body2" color="text.secondary" mb={1}>
+                                                Current Attendance: <strong>{attPct > 0 ? `${attPct}%` : 'Not available yet'}</strong>
+                                            </Typography>
+                                            {attPct > 0 && (
+                                                <>
+                                                    <LinearProgress variant="determinate" value={attPct}
+                                                        sx={{ height: 10, borderRadius: 5, mb: 1, '& .MuiLinearProgress-bar': { bgcolor: attPct >= 75 ? '#28A745' : '#DC3545', borderRadius: 5 } }} />
+                                                    <Chip
+                                                        label={attPct >= 75 ? '✅ Safe – Above 75% threshold' : `⚠️ Low – Below 75% threshold`}
+                                                        color={attPct >= 75 ? 'success' : 'error'}
+                                                        size="small"
+                                                    />
+                                                </>
+                                            )}
                                         </CardContent>
                                     </Card>
                                 </Grid>
@@ -396,7 +471,7 @@ export default function StudentDashboardPage() {
                 </Box>
             </Paper>
 
-            {/* ── Quick Actions Row ───────────────────────────────── */}
+            {/* ── Quick Actions ── */}
             <Typography variant="h6" fontWeight={700} mb={2}>Quick Actions</Typography>
             <Grid container spacing={2}>
                 {[

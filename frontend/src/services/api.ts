@@ -15,13 +15,26 @@ const api = axios.create({
 // Prevents duplicate parallel requests for the same resource.
 const pendingRequests = new Map<string, Promise<unknown>>();
 
-// ── Request interceptor — attach token ────────────────────────────────────────
+// ── Request interceptor — attach token + tenant ───────────────────────────────
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Inject X-Tenant-ID from Redux store so backend TenantMiddleware can
+    // identify the tenant without requiring a subdomain or query param.
+    try {
+      const state = store.getState();
+      const tenantId = state.auth.user?.tenant_id;
+      if (tenantId) {
+        config.headers['X-Tenant-ID'] = tenantId;
+      }
+    } catch {
+      // Store not yet initialized — skip tenant header
+    }
+
     return config;
   },
   (error) => Promise.reject(error),

@@ -42,11 +42,12 @@ from app.models.subject import Subject
 from app.models.department import Department
 from app.models.attendance import StudentAttendance, StaffAttendance
 from app.models.grade import Grade
-from app.models.fee import FeeGroup, FeeType, FeeAssignment, FeeCollection
+from app.models.exam import Exam
+from app.models.fee import FeeGroup, FeeType, StudentFeeAssignment, FeeCollection
 from app.models.notification import Notification
 from app.models.timetable import Timetable
 from app.models.guardian import Guardian
-from app.models.leave import Leave
+
 
 DATABASE_URL = os.environ["DATABASE_URL"]
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
@@ -109,15 +110,15 @@ db.commit()
 t1_user = user_objs["teacher1@demo.preskool.local"]
 t2_user = user_objs["teacher2@demo.preskool.local"]
 
-teacher1, created = get_or_create(Teacher, email="teacher1@demo.preskool.local", tenant_id=TENANT_ID,
+teacher1, created = get_or_create(Teacher, user_id=t1_user.id, tenant_id=TENANT_ID,
     defaults={"employee_id": "TCH001", "first_name": "Priya", "last_name": "Sharma",
-              "full_name": "Priya Sharma", "department_id": dept.id,
+              "date_of_birth": date(1985, 1, 1), "gender": "Female",
               "specialization": "Mathematics", "hire_date": date(2020, 6, 1),
               "status": "active", "phone": "9876543210"})
 if created: print("  ✅ Teacher 1 profile")
-teacher2, _ = get_or_create(Teacher, email="teacher2@demo.preskool.local", tenant_id=TENANT_ID,
+teacher2, _ = get_or_create(Teacher, user_id=t2_user.id, tenant_id=TENANT_ID,
     defaults={"employee_id": "TCH002", "first_name": "Arun", "last_name": "Patel",
-              "full_name": "Arun Patel", "department_id": dept.id,
+              "date_of_birth": date(1988, 5, 10), "gender": "Male",
               "specialization": "Physics", "hire_date": date(2019, 7, 15),
               "status": "active", "phone": "9876543211"})
 dept.head_teacher_id = teacher1.id
@@ -146,8 +147,7 @@ subjects_data = [
 subject_objs = {}
 for name, code, color in subjects_data:
     s, created = get_or_create(Subject, code=code, tenant_id=TENANT_ID,
-        defaults={"name": name, "description": f"{name} curriculum", "class_id": class10a.id,
-                  "teacher_id": teacher1.id, "credits": 3})
+        defaults={"name": name, "description": f"{name} curriculum", "credits": 3})
     if created: print(f"  ✅ Subject: {name}")
     subject_objs[code] = s
 db.commit()
@@ -162,7 +162,7 @@ students_raw = [
 student_objs = []
 for email, sid, fn, ln, gender, cls_id in students_raw:
     s, created = get_or_create(Student, student_id=sid, tenant_id=TENANT_ID,
-        defaults={"first_name": fn, "last_name": ln, "full_name": f"{fn} {ln}",
+        defaults={"first_name": fn, "last_name": ln, 
                   "date_of_birth": date(2008, 3, 15), "gender": gender,
                   "email": email, "phone": "9800000001",
                   "enrollment_date": date(2023, 6, 1),
@@ -174,26 +174,32 @@ db.commit()
 
 
 # ─── 8. Grades ───────────────────────────────────────────────────────────────
+# First create a dummy exam
+exam, _ = get_or_create(Exam, name="Mid Term 2025", tenant_id=TENANT_ID,
+                        defaults={"academic_year": "2025-26", "class_id": class10a.id})
+db.commit()
+
 grade_data = [
-    (student_objs[0], subject_objs["MATH101"], 87, 100, "A",  "Mid Term"),
-    (student_objs[0], subject_objs["PHY101"],  74, 100, "B+", "Mid Term"),
-    (student_objs[0], subject_objs["ENG101"],  91, 100, "A+", "Mid Term"),
-    (student_objs[0], subject_objs["CHEM101"], 65, 100, "B",  "Mid Term"),
-    (student_objs[0], subject_objs["CS101"],   95, 100, "A+", "Mid Term"),
-    (student_objs[1], subject_objs["MATH101"], 78, 100, "B+", "Mid Term"),
-    (student_objs[1], subject_objs["PHY101"],  82, 100, "A",  "Mid Term"),
-    (student_objs[1], subject_objs["ENG101"],  89, 100, "A",  "Mid Term"),
-    (student_objs[2], subject_objs["MATH101"], 62, 100, "C+", "Mid Term"),
-    (student_objs[2], subject_objs["PHY101"],  55, 100, "C",  "Mid Term"),
+    (student_objs[0], subject_objs["MATH101"], 87, 100, "A"),
+    (student_objs[0], subject_objs["PHY101"],  74, 100, "B+"),
+    (student_objs[0], subject_objs["ENG101"],  91, 100, "A+"),
+    (student_objs[0], subject_objs["CHEM101"], 65, 100, "B"),
+    (student_objs[0], subject_objs["CS101"],   95, 100, "A+"),
+    (student_objs[1], subject_objs["MATH101"], 78, 100, "B+"),
+    (student_objs[1], subject_objs["PHY101"],  82, 100, "A"),
+    (student_objs[1], subject_objs["ENG101"],  89, 100, "A"),
+    (student_objs[2], subject_objs["MATH101"], 62, 100, "C+"),
+    (student_objs[2], subject_objs["PHY101"],  55, 100, "C"),
 ]
-for stu, sub, marks, total, grade_letter, term in grade_data:
+for stu, sub, marks, total, grade_letter in grade_data:
     exists = db.query(Grade).filter_by(
-        student_id=stu.id, subject_id=sub.id, term=term, tenant_id=TENANT_ID
+        student_id=stu.id, subject_id=sub.id, exam_id=exam.id, tenant_id=TENANT_ID
     ).first()
     if not exists:
-        g = Grade(student_id=stu.id, subject_id=sub.id,
-                  marks_obtained=marks, total_marks=total, grade=grade_letter,
-                  term=term, tenant_id=TENANT_ID, exam_date=date.today() - timedelta(days=30))
+        g = Grade(student_id=stu.id, subject_id=sub.id, exam_id=exam.id,
+                  marks_obtained=marks, max_marks=total, grade_name=grade_letter,
+                  class_id=stu.class_id, academic_year="2025-26",
+                  tenant_id=TENANT_ID)
         db.add(g)
         print(f"  ✅ Grade: {stu.first_name} - {sub.name} = {grade_letter}")
 db.commit()
@@ -214,7 +220,7 @@ for i in range(10):
             db.add(StudentAttendance(
                 student_id=stu.id, date=att_date,
                 status=att_status, class_id=stu.class_id,
-                marked_by_id=teacher1.id, tenant_id=TENANT_ID
+                tenant_id=TENANT_ID
             ))
 db.commit()
 print("  ✅ 10-day attendance records created")
@@ -222,24 +228,23 @@ print("  ✅ 10-day attendance records created")
 
 # ─── 10. Fees ────────────────────────────────────────────────────────────────
 fee_group, _ = get_or_create(FeeGroup, name="Annual Tuition 2025-26", tenant_id=TENANT_ID,
-    defaults={"description": "Annual school fees", "academic_year": "2025-26", "is_active": True})
+    defaults={"description": "Annual school fees", "is_active": True})
 fee_type, _ = get_or_create(FeeType, name="Tuition Fee", tenant_id=TENANT_ID,
     defaults={"fee_group_id": fee_group.id, "amount": 30000,
               "due_date": date(2026, 3, 31), "class_id": class10a.id,
-              "is_mandatory": True, "academic_year": "2025-26"})
+              "academic_year": "2025-26"})
 # Assign fee to students
 for stu in student_objs:
-    exists = db.query(FeeAssignment).filter_by(student_id=stu.id, fee_type_id=fee_type.id).first()
+    exists = db.query(StudentFeeAssignment).filter_by(student_id=stu.id, fee_type_id=fee_type.id).first()
     if not exists:
-        db.add(FeeAssignment(student_id=stu.id, fee_type_id=fee_type.id,
-                             status="pending", tenant_id=TENANT_ID))
+        db.add(StudentFeeAssignment(student_id=stu.id, fee_type_id=fee_type.id,
+                             status="unpaid", tenant_id=TENANT_ID))
 # Fee collection for student 1 (paid)
 if not db.query(FeeCollection).filter_by(student_id=student_objs[0].id, tenant_id=TENANT_ID).first():
     db.add(FeeCollection(
         student_id=student_objs[0].id, fee_type_id=fee_type.id,
-        amount_paid=30000, payment_date=date(2026, 1, 10),
-        payment_method="online", receipt_number="REC001",
-        collected_by_id=user_objs["admin@demo.preskool.local"].id,
+        amount=30000, payment_date=date(2026, 1, 10),
+        payment_method="online", transaction_id="REC001",
         tenant_id=TENANT_ID
     ))
 db.commit()
@@ -256,7 +261,7 @@ notifs = [
 for title, msg in notifs:
     if not db.query(Notification).filter_by(title=title, tenant_id=TENANT_ID).first():
         db.add(Notification(
-            title=title, message=msg, recipient_type="all",
+            title=title, message=msg, user_id=t1_user.id,
             sender_id=user_objs["admin@demo.preskool.local"].id,
             tenant_id=TENANT_ID, is_read=False
         ))
@@ -266,8 +271,8 @@ print("  ✅ 4 notifications created")
 
 # ─── 12. Guardian ────────────────────────────────────────────────────────────
 g, created = get_or_create(Guardian, email="parent@demo.preskool.local", tenant_id=TENANT_ID,
-    defaults={"first_name": "Rajesh", "last_name": "Kumar", "full_name": "Rajesh Kumar",
-              "phone": "9800000099", "relation": "father",
+    defaults={"first_name": "Rajesh", "last_name": "Kumar",
+              "phone": "9800000099", "relationship_type": "father",
               "address": "123 Demo Street, Mumbai"})
 if created:
     # Link to student 1
