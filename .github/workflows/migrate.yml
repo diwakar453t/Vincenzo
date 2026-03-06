@@ -1,0 +1,20 @@
+name: One-Time DB Migration
+on:
+  workflow_dispatch:
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install and Run Migration
+        working-directory: backend
+        env:
+          DATABASE_URL: "postgresql://preskooladmin:P%40ssw0rdERP!!2026@preskool-db-in.postgres.database.azure.com:5432/preskool?sslmode=require"
+          ENVIRONMENT: "production"
+        run: |
+          pip install -r requirements.txt
+          alembic upgrade head
+          python seeds/seed_data.py
