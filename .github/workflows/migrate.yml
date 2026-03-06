@@ -9,12 +9,18 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - name: Install and Run Migration
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+      - name: Run Alembic Migrations
         working-directory: backend
         env:
           DATABASE_URL: "postgresql://preskooladmin:P%40ssw0rdERP!!2026@preskool-db-in.postgres.database.azure.com:5432/preskool?sslmode=require"
           ENVIRONMENT: "production"
-        run: |
-          pip install -r requirements.txt
-          alembic upgrade head
-          python seeds/seed_data.py
+        run: alembic upgrade head
+      - name: Seed Database
+        working-directory: backend
+        env:
+          DATABASE_URL: "postgresql://preskooladmin:P%40ssw0rdERP!!2026@preskool-db-in.postgres.database.azure.com:5432/preskool?sslmode=require"
+          ENVIRONMENT: "production"
+        run: python seeds/seed_data.py
