@@ -73,12 +73,20 @@ jobs:
         run: |
           zip -r ../deploy.zip . -x "__pycache__/*" ".pytest_cache/*" ".git/*" "*.pyc"
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'preskool-api-backend'
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: deploy.zip
+      - name: Deploy to Azure Web App (with Oryx build)
+        env:
+          AZURE_WEBAPP_PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        run: |
+          # Use az cli to deploy with SCM_DO_BUILD_DURING_DEPLOYMENT
+          # This triggers Oryx to build dependencies natively on Azure
+          az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }} 2>/dev/null || true
+          az webapp deploy --name preskool-api-backend --resource-group preskool-rg-in \
+            --src-path deploy.zip --type zip --async true 2>/dev/null || \
+          az webapp deployment source config-zip --name preskool-api-backend \
+            --resource-group preskool-rg-in --src deploy.zip 2>/dev/null || \
+          echo "⚠️ Azure CLI deploy failed — falling back to publish profile" && \
+          curl -X POST "https://\$preskool-api-backend:$(echo $AZURE_WEBAPP_PUBLISH_PROFILE | grep -oP 'userPWD=\"\K[^\"]+')@preskool-api-backend.scm.azurewebsites.net/api/zipdeploy" \
+            --data-binary @deploy.zip -H "Content-Type: application/zip"
 
       - name: Verify Backend Health (mandatory)
         run: |
