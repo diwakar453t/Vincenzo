@@ -91,7 +91,8 @@ class Settings(BaseSettings):
         "https://*.erp.preskool.com",  # Tenant subdomains
         "https://*.railway.app",       # Railway backend URL
         "https://*.up.railway.app",
-        "https://*.vercel.app",        # Vercel frontend
+        "https://*.vercel.app",        # Vercel frontend (wildcard)
+        "https://frontend-three-rho-19.vercel.app",  # Exact Vercel URL
         "https://*.azurewebsites.net", # Azure App Service
         "https://preskool-api-backend.azurewebsites.net",
     ]
