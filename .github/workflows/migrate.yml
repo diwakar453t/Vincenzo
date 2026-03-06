@@ -17,7 +17,7 @@ jobs:
         env:
           DATABASE_URL: "postgresql://preskooladmin:P%40ssw0rdERP!!2026@preskool-db-in.postgres.database.azure.com:5432/preskool?sslmode=require"
           ENVIRONMENT: "production"
-        run: alembic upgrade head
+        run: alembic stamp head
       - name: Seed Database
         working-directory: backend
         env:
