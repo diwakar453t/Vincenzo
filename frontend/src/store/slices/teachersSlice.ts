@@ -1,7 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+import api from '../../services/api';
 
 // Types
 export interface Teacher {
@@ -58,11 +56,7 @@ export const fetchTeachers = createAsyncThunk(
     'teachers/fetchTeachers',
     async (params: { skip?: number; limit?: number; search?: string; status?: string; specialization?: string }, { rejectWithValue }) => {
         try {
-            const token = localStorage.getItem('access_token');
-            const response = await axios.get(`${API_URL}/teachers`, {
-                headers: { Authorization: `Bearer ${token}` },
-                params,
-            });
+            const response = await api.get('/teachers/', { params });
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to fetch teachers');
@@ -74,10 +68,7 @@ export const fetchTeacherById = createAsyncThunk(
     'teachers/fetchTeacherById',
     async (id: number, { rejectWithValue }) => {
         try {
-            const token = localStorage.getItem('access_token');
-            const response = await axios.get(`${API_URL}/teachers/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const response = await api.get(`/teachers/${id}`);
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to fetch teacher');
@@ -89,10 +80,7 @@ export const createTeacher = createAsyncThunk(
     'teachers/createTeacher',
     async (teacherData: Partial<Teacher>, { rejectWithValue }) => {
         try {
-            const token = localStorage.getItem('access_token');
-            const response = await axios.post(`${API_URL}/teachers`, teacherData, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const response = await api.post('/teachers/', teacherData);
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to create teacher');
@@ -104,10 +92,7 @@ export const updateTeacher = createAsyncThunk(
     'teachers/updateTeacher',
     async ({ id, data }: { id: number; data: Partial<Teacher> }, { rejectWithValue }) => {
         try {
-            const token = localStorage.getItem('access_token');
-            const response = await axios.put(`${API_URL}/teachers/${id}`, data, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const response = await api.put(`/teachers/${id}`, data);
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to update teacher');
@@ -119,10 +104,7 @@ export const deleteTeacher = createAsyncThunk(
     'teachers/deleteTeacher',
     async (id: number, { rejectWithValue }) => {
         try {
-            const token = localStorage.getItem('access_token');
-            await axios.delete(`${API_URL}/teachers/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            await api.delete(`/teachers/${id}`);
             return id;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to delete teacher');

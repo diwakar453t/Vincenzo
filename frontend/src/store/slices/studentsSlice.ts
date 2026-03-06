@@ -1,7 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+import api from '../../services/api';
 
 // Types
 export interface Student {
@@ -64,11 +62,7 @@ export const fetchStudents = createAsyncThunk(
     'students/fetchStudents',
     async (params: { skip?: number; limit?: number; search?: string; class_id?: number; status?: string }, { rejectWithValue }) => {
         try {
-            const token = localStorage.getItem('access_token');
-            const response = await axios.get(`${API_URL}/students`, {
-                headers: { Authorization: `Bearer ${token}` },
-                params,
-            });
+            const response = await api.get('/students/', { params });
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to fetch students');
@@ -80,10 +74,7 @@ export const fetchStudentById = createAsyncThunk(
     'students/fetchStudentById',
     async (id: number, { rejectWithValue }) => {
         try {
-            const token = localStorage.getItem('access_token');
-            const response = await axios.get(`${API_URL}/students/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const response = await api.get(`/students/${id}`);
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to fetch student');
@@ -95,10 +86,7 @@ export const createStudent = createAsyncThunk(
     'students/createStudent',
     async (studentData: Partial<Student>, { rejectWithValue }) => {
         try {
-            const token = localStorage.getItem('access_token');
-            const response = await axios.post(`${API_URL}/students`, studentData, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const response = await api.post('/students/', studentData);
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to create student');
@@ -110,10 +98,7 @@ export const updateStudent = createAsyncThunk(
     'students/updateStudent',
     async ({ id, data }: { id: number; data: Partial<Student> }, { rejectWithValue }) => {
         try {
-            const token = localStorage.getItem('access_token');
-            const response = await axios.put(`${API_URL}/students/${id}`, data, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const response = await api.put(`/students/${id}`, data);
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to update student');
@@ -125,10 +110,7 @@ export const deleteStudent = createAsyncThunk(
     'students/deleteStudent',
     async (id: number, { rejectWithValue }) => {
         try {
-            const token = localStorage.getItem('access_token');
-            await axios.delete(`${API_URL}/students/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            await api.delete(`/students/${id}`);
             return id;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to delete student');
@@ -140,12 +122,8 @@ export const bulkImportStudents = createAsyncThunk(
     'students/bulkImport',
     async (csvContent: string, { rejectWithValue }) => {
         try {
-            const token = localStorage.getItem('access_token');
-            const response = await axios.post(`${API_URL}/students/bulk`, csvContent, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'text/plain',
-                },
+            const response = await api.post('/students/bulk', csvContent, {
+                headers: { 'Content-Type': 'text/plain' },
             });
             return response.data;
         } catch (error: any) {

@@ -5,7 +5,7 @@ API v1 router configuration
 from fastapi import APIRouter
 from app.api.v1 import health, auth, dashboard, students, teachers, classes, subjects, student_profile, teacher_profile, parent_profile, guardians, rooms, syllabus, timetable, exams, grades, departments, attendance, leaves, payroll, fees, library, hostel, transport, sports, reports, notifications, search, files, settings, payments, plugins, webhooks, gdpr, super_admin, feature_flags
 
-api_router = APIRouter()
+api_router = APIRouter(redirect_slashes=False)
 
 # Public endpoints
 api_router.include_router(health.router, tags=["health"])
