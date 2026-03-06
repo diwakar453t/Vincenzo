@@ -63,13 +63,9 @@ jobs:
       - name: Install Dependencies & Package
         working-directory: backend
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install -r requirements.txt
-          # Create a deployment zip including venv (optional, but AppService handles better without venv if Oryx builds it)
-          # Actually, Azure App Service (Linux Python) uses Oryx to build automatically from source.
-          # We just need to zip the source.
-          zip -r ../deploy.zip . -x "venv/*" "__pycache__/*" ".pytest_cache/*"
+          # Install dependencies directly into the root so they are packaged in the zip
+          pip install -r requirements.txt -t .
+          zip -r ../deploy.zip . -x "__pycache__/*" ".pytest_cache/*"
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
