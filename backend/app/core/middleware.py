@@ -235,7 +235,7 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
                 status_code=500,
                 content={
                     "error": "Internal server error",
-                    "details": str(exc) if settings.DEBUG else None,
+                    "details": str(exc),
                     "status_code": 500,
                 },
             )
