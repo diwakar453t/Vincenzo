@@ -52,7 +52,7 @@ export const fetchGuardians = createAsyncThunk(
     'guardians/fetchGuardians',
     async (params: { skip?: number; limit?: number; search?: string; status?: string; relationship_type?: string }, { rejectWithValue }) => {
         try {
-            const response = await api.get('/guardians', { params });
+            const response = await api.get('/guardians/', { params });
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to fetch guardians');
@@ -76,7 +76,7 @@ export const createGuardian = createAsyncThunk(
     'guardians/createGuardian',
     async (data: any, { rejectWithValue }) => {
         try {
-            const response = await api.post('/guardians', data);
+            const response = await api.post('/guardians/', data);
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to create guardian');
