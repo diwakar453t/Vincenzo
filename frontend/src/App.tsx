@@ -14,7 +14,7 @@ import RoleProtectedRoute from './components/auth/RoleProtectedRoute';
 
 // ── Auth pages (small – load immediately on /login) ─────────────────────────
 const LoginPage = lazy(() => import('./pages/LoginPage'));
-const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+// RegisterPage removed — self-registration is disabled (login-only system)
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 
@@ -156,14 +156,8 @@ function AppRoutes() {
             </PublicRoute>
           }
         />
-        <Route
-          path="/register"
-          element={
-            <PublicRoute>
-              <RegisterPage />
-            </PublicRoute>
-          }
-        />
+        {/* Register route removed — login-only system */}
+        <Route path="/register" element={<Navigate to="/login" replace />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 

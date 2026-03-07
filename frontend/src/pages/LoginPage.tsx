@@ -168,13 +168,8 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <Divider sx={{ my: 3 }}>or</Divider>
-
-            <Typography variant="body2" align="center" color="text.secondary">
-              Don't have an account?{' '}
-              <Link href="/register" underline="hover" sx={{ fontWeight: 600 }}>
-                Sign Up
-              </Link>
+            <Typography variant="body2" align="center" color="text.secondary" sx={{ mt: 2 }}>
+              Contact your administrator to create an account.
             </Typography>
           </CardContent>
         </Card>

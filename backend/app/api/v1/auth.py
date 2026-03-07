@@ -38,77 +38,17 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", status_code=status.HTTP_403_FORBIDDEN)
 def register(request: UserRegisterRequest, req: Request, db: Session = Depends(get_db)):
-    """Register a new user account with password policy enforcement."""
-    ip = req.client.host if req.client else "unknown"
+    """Self-registration is disabled. Users are created by authorized admins only.
 
-    # Sanitize inputs
-    email = InputSanitizer.sanitize_input(request.email).lower().strip()
-    full_name = InputSanitizer.sanitize_input(request.full_name)
-
-    # Validate password against policy
-    policy_result = PasswordPolicy.validate(request.password, email)
-    if not policy_result["valid"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "error": "Password does not meet security requirements",
-                "policy_errors": policy_result["errors"],
-                "strength": policy_result["strength"],
-            }
-        )
-
-    existing_user = db.query(User).filter(User.email == email).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="An account with this email already exists"  # Don't reveal the email
-        )
-
-    tenant = db.query(Tenant).filter(Tenant.id == request.tenant_id).first()
-    if not tenant:
-        tenant = Tenant(
-            id=request.tenant_id,
-            name=request.tenant_id.replace("-", " ").title(),
-            domain=f"{request.tenant_id}.preskool.local",
-            is_active=True
-        )
-        db.add(tenant)
-        db.flush()
-
-    valid_roles = [r.value for r in UserRole]
-    if request.role not in valid_roles:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid role. Must be one of: {valid_roles}"
-        )
-
-    user = User(
-        email=email,
-        hashed_password=get_password_hash(request.password),
-        full_name=full_name,
-        role=request.role,
-        tenant_id=request.tenant_id,
-        is_active=True,
-        is_verified=False,
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-
-    audit.log_login_success(email, ip, request.tenant_id)
-
-    token_data = {"sub": str(user.id), "email": user.email, "role": user.role, "tenant_id": user.tenant_id}
-    access_token = create_access_token(data=token_data)
-    refresh_token = create_refresh_token(data=token_data)
-
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        token_type="bearer",
-        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        user=UserResponse.model_validate(user)
+    Creation hierarchy:
+        Super Admin → creates Admin
+        Admin → creates Teachers, Students, Parents
+    """
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Self-registration is disabled. Contact your administrator to create an account."
     )
 
 
