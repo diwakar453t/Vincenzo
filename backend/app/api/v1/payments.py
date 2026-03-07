@@ -17,7 +17,7 @@ router = APIRouter()
 
 
 def _get_user(current_user: dict, db: Session) -> User:
-    user = db.query(User).filter(User.id == int(current_user.get("sub"))).first()
+    user = db.query(User).filter(User.id == current_user["user_id"]).first()
     if not user:
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="User not found")
