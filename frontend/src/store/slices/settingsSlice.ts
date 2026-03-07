@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const authHeader = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
@@ -41,43 +41,43 @@ const initialState: SettingsState = {
 
 export const fetchSchoolSettings = createAsyncThunk('settings/fetchSchool',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/settings/school`, authHeader())).data; }
+        try { return (await api.get(`/settings/school`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateSchoolSettings = createAsyncThunk('settings/updateSchool',
     async (data: Partial<SchoolSettingsData>, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/settings/school`, data, authHeader())).data; }
+        try { return (await api.put(`/settings/school`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchAcademicYears = createAsyncThunk('settings/fetchYears',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/settings/academic-years`, authHeader())).data; }
+        try { return (await api.get(`/settings/academic-years`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchCurrentYear = createAsyncThunk('settings/fetchCurrentYear',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/settings/academic-years/current`, authHeader())).data; }
+        try { return (await api.get(`/settings/academic-years/current`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const createAcademicYear = createAsyncThunk('settings/createYear',
     async (data: { name: string; start_date: string; end_date: string; is_current?: boolean }, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/settings/academic-years`, data, authHeader())).data; }
+        try { return (await api.post(`/settings/academic-years`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateAcademicYear = createAsyncThunk('settings/updateYear',
     async ({ id, ...data }: { id: number; name?: string; start_date?: string; end_date?: string; is_current?: boolean }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/settings/academic-years/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/settings/academic-years/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteAcademicYear = createAsyncThunk('settings/deleteYear',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/settings/academic-years/${id}`, authHeader()); return id; }
+        try { await api.delete(`/settings/academic-years/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -85,19 +85,19 @@ export const fetchPreferences = createAsyncThunk('settings/fetchPrefs',
     async (category?: string, { rejectWithValue }: any = {}) => {
         try {
             const params = category ? { category } : {};
-            return (await axios.get(`${API_URL}/settings/preferences`, { ...authHeader(), params })).data;
+            return (await api.get(`/settings/preferences`, { ...authHeader(), params })).data;
         } catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const upsertPreference = createAsyncThunk('settings/upsertPref',
     async (data: { key: string; value: string; category?: string; description?: string; value_type?: string }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/settings/preferences`, data, authHeader())).data; }
+        try { return (await api.put(`/settings/preferences`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const bulkUpdatePreferences = createAsyncThunk('settings/bulkPrefs',
     async (preferences: Array<{ key: string; value: string; category?: string }>, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/settings/preferences/bulk`, { preferences }, authHeader())).data; }
+        try { return (await api.put(`/settings/preferences/bulk`, { preferences }, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 

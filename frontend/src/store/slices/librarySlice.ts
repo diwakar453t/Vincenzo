@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -74,25 +74,25 @@ const authHeader = () => ({
 
 export const fetchBooks = createAsyncThunk('library/fetchBooks',
     async (params: { category?: string; search?: string; status?: string; is_active?: boolean } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/library/books`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/library/books`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const createBook = createAsyncThunk('library/createBook',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/library/books`, data, authHeader())).data; }
+        try { return (await api.post(`/library/books`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateBook = createAsyncThunk('library/updateBook',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/library/books/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/library/books/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteBook = createAsyncThunk('library/deleteBook',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/library/books/${id}`, authHeader()); return id; }
+        try { await api.delete(`/library/books/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -100,25 +100,25 @@ export const deleteBook = createAsyncThunk('library/deleteBook',
 
 export const fetchMembers = createAsyncThunk('library/fetchMembers',
     async (params: { member_type?: string; status?: string; search?: string } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/library/members`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/library/members`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const createMember = createAsyncThunk('library/createMember',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/library/members`, data, authHeader())).data; }
+        try { return (await api.post(`/library/members`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateMember = createAsyncThunk('library/updateMember',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/library/members/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/library/members/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteMember = createAsyncThunk('library/deleteMember',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/library/members/${id}`, authHeader()); return id; }
+        try { await api.delete(`/library/members/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -126,19 +126,19 @@ export const deleteMember = createAsyncThunk('library/deleteMember',
 
 export const issueBook = createAsyncThunk('library/issueBook',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/library/issue`, data, authHeader())).data; }
+        try { return (await api.post(`/library/issue`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const returnBook = createAsyncThunk('library/returnBook',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/library/return/${id}`, data, authHeader())).data; }
+        try { return (await api.post(`/library/return/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchIssues = createAsyncThunk('library/fetchIssues',
     async (params: { member_id?: number; book_id?: number; status?: string } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/library/issues`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/library/issues`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -146,19 +146,19 @@ export const fetchIssues = createAsyncThunk('library/fetchIssues',
 
 export const fetchOverdue = createAsyncThunk('library/fetchOverdue',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/library/overdue`, authHeader())).data; }
+        try { return (await api.get(`/library/overdue`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const calculateFine = createAsyncThunk('library/calculateFine',
     async (issueId: number, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/library/fine/${issueId}`, authHeader())).data; }
+        try { return (await api.get(`/library/fine/${issueId}`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const payFine = createAsyncThunk('library/payFine',
     async (issueId: number, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/library/fine/${issueId}/pay`, {}, authHeader())).data; }
+        try { return (await api.post(`/library/fine/${issueId}/pay`, {}, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -166,7 +166,7 @@ export const payFine = createAsyncThunk('library/payFine',
 
 export const fetchLibraryStats = createAsyncThunk('library/fetchStats',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/library/stats`, authHeader())).data; }
+        try { return (await api.get(`/library/stats`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 

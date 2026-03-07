@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const authHeader = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
@@ -31,7 +31,7 @@ const initialState: FilesState = {
 
 export const fetchFiles = createAsyncThunk('files/fetchAll',
     async (params: { category?: string; entity_type?: string; entity_id?: number; limit?: number; offset?: number } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/files/`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/files/`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -44,7 +44,7 @@ export const uploadFile = createAsyncThunk('files/upload',
             if (data.entity_type) formData.append('entity_type', data.entity_type);
             if (data.entity_id) formData.append('entity_id', String(data.entity_id));
             formData.append('visibility', data.visibility || 'private');
-            return (await axios.post(`${API_URL}/files/upload`, formData, {
+            return (await api.post(`/files/upload`, formData, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'multipart/form-data' },
             })).data;
         } catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Upload failed'); }
@@ -52,32 +52,32 @@ export const uploadFile = createAsyncThunk('files/upload',
 
 export const deleteFile = createAsyncThunk('files/delete',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/files/${id}`, authHeader()); return id; }
+        try { await api.delete(`/files/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchFileStats = createAsyncThunk('files/stats',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/files/stats`, authHeader())).data; }
+        try { return (await api.get(`/files/stats`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchSharedFiles = createAsyncThunk('files/shared',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/files/shared`, authHeader())).data; }
+        try { return (await api.get(`/files/shared`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const shareFile = createAsyncThunk('files/share',
     async (data: { file_id: number; shared_with_user_id: number; can_edit?: boolean }, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/files/share`, data, authHeader())).data; }
+        try { return (await api.post(`/files/share`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const downloadFile = createAsyncThunk('files/download',
     async (id: number, { rejectWithValue }) => {
         try {
-            const resp = await axios.get(`${API_URL}/files/${id}/download`, { ...authHeader(), responseType: 'blob' });
+            const resp = await api.get(`/files/${id}/download`, { ...authHeader(), responseType: 'blob' });
             const url = window.URL.createObjectURL(new Blob([resp.data]));
             const link = document.createElement('a');
             const disposition = resp.headers['content-disposition'];

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const authHeader = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
@@ -67,85 +67,85 @@ const initialState: HostelState = {
 
 export const fetchHostels = createAsyncThunk('hostel/fetchHostels',
     async (params: { hostel_type?: string; is_active?: boolean } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/hostel/`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/hostel/`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const createHostel = createAsyncThunk('hostel/createHostel',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/hostel/`, data, authHeader())).data; }
+        try { return (await api.post(`/hostel/`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateHostel = createAsyncThunk('hostel/updateHostel',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/hostel/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/hostel/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteHostel = createAsyncThunk('hostel/deleteHostel',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/hostel/${id}`, authHeader()); return id; }
+        try { await api.delete(`/hostel/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchRooms = createAsyncThunk('hostel/fetchRooms',
     async (params: { hostel_id?: number; status?: string; room_type?: string } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/hostel/rooms`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/hostel/rooms`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const createRoom = createAsyncThunk('hostel/createRoom',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/hostel/rooms`, data, authHeader())).data; }
+        try { return (await api.post(`/hostel/rooms`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateRoom = createAsyncThunk('hostel/updateRoom',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/hostel/rooms/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/hostel/rooms/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteRoom = createAsyncThunk('hostel/deleteRoom',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/hostel/rooms/${id}`, authHeader()); return id; }
+        try { await api.delete(`/hostel/rooms/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const allocateRoom = createAsyncThunk('hostel/allocateRoom',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/hostel/allocate`, data, authHeader())).data; }
+        try { return (await api.post(`/hostel/allocate`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const vacateRoom = createAsyncThunk('hostel/vacateRoom',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/hostel/vacate/${id}`, data, authHeader())).data; }
+        try { return (await api.post(`/hostel/vacate/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchAllocations = createAsyncThunk('hostel/fetchAllocations',
     async (params: { hostel_id?: number; room_id?: number; student_id?: number; status?: string } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/hostel/allocations`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/hostel/allocations`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchResidents = createAsyncThunk('hostel/fetchResidents',
     async (params: { hostel_id?: number } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/hostel/residents`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/hostel/residents`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchAvailability = createAsyncThunk('hostel/fetchAvailability',
     async (params: { hostel_id?: number } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/hostel/availability`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/hostel/availability`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchHostelStats = createAsyncThunk('hostel/fetchStats',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/hostel/stats`, authHeader())).data; }
+        try { return (await api.get(`/hostel/stats`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 

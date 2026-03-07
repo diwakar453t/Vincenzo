@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -82,7 +82,7 @@ export const fetchSubjects = createAsyncThunk(
     'subjects/fetchSubjects',
     async (params: { skip?: number; limit?: number; search?: string; subject_type?: string; group_id?: number } = {}, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`${API_URL}/subjects`, { ...authHeader(), params });
+            const response = await api.get(`/subjects`, { ...authHeader(), params });
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to fetch subjects');
@@ -94,7 +94,7 @@ export const fetchSubjectById = createAsyncThunk(
     'subjects/fetchSubjectById',
     async (id: number, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`${API_URL}/subjects/${id}`, authHeader());
+            const response = await api.get(`/subjects/${id}`, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to fetch subject');
@@ -106,7 +106,7 @@ export const createSubject = createAsyncThunk(
     'subjects/createSubject',
     async (subjectData: Partial<Subject>, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`${API_URL}/subjects`, subjectData, authHeader());
+            const response = await api.post(`/subjects`, subjectData, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to create subject');
@@ -118,7 +118,7 @@ export const updateSubject = createAsyncThunk(
     'subjects/updateSubject',
     async ({ id, data }: { id: number; data: Partial<Subject> }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`${API_URL}/subjects/${id}`, data, authHeader());
+            const response = await api.put(`/subjects/${id}`, data, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to update subject');
@@ -130,7 +130,7 @@ export const deleteSubject = createAsyncThunk(
     'subjects/deleteSubject',
     async (id: number, { rejectWithValue }) => {
         try {
-            await axios.delete(`${API_URL}/subjects/${id}`, authHeader());
+            await api.delete(`/subjects/${id}`, authHeader());
             return id;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to delete subject');
@@ -144,7 +144,7 @@ export const fetchSubjectGroups = createAsyncThunk(
     'subjects/fetchSubjectGroups',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`${API_URL}/subjects/groups/list`, authHeader());
+            const response = await api.get(`/subjects/groups/list`, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to fetch subject groups');
@@ -156,7 +156,7 @@ export const createSubjectGroup = createAsyncThunk(
     'subjects/createSubjectGroup',
     async (data: { name: string; description?: string }, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`${API_URL}/subjects/groups`, data, authHeader());
+            const response = await api.post(`/subjects/groups`, data, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to create subject group');
@@ -168,7 +168,7 @@ export const updateSubjectGroup = createAsyncThunk(
     'subjects/updateSubjectGroup',
     async ({ id, data }: { id: number; data: { name?: string; description?: string } }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`${API_URL}/subjects/groups/${id}`, data, authHeader());
+            const response = await api.put(`/subjects/groups/${id}`, data, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to update subject group');
@@ -180,7 +180,7 @@ export const deleteSubjectGroup = createAsyncThunk(
     'subjects/deleteSubjectGroup',
     async (id: number, { rejectWithValue }) => {
         try {
-            await axios.delete(`${API_URL}/subjects/groups/${id}`, authHeader());
+            await api.delete(`/subjects/groups/${id}`, authHeader());
             return id;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to delete subject group');
@@ -194,7 +194,7 @@ export const fetchClassSubjects = createAsyncThunk(
     'subjects/fetchClassSubjects',
     async (classId: number, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`${API_URL}/subjects/class/${classId}/subjects`, authHeader());
+            const response = await api.get(`/subjects/class/${classId}/subjects`, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to fetch class subjects');
@@ -206,7 +206,7 @@ export const assignSubjectToClass = createAsyncThunk(
     'subjects/assignSubjectToClass',
     async ({ subjectId, classId, teacherId }: { subjectId: number; classId: number; teacherId?: number }, { rejectWithValue }) => {
         try {
-            const response = await axios.post(
+            const response = await api.post(
                 `${API_URL}/subjects/${subjectId}/assign/${classId}`,
                 { teacher_id: teacherId || null },
                 authHeader()
@@ -222,7 +222,7 @@ export const unassignSubjectFromClass = createAsyncThunk(
     'subjects/unassignSubjectFromClass',
     async ({ subjectId, classId }: { subjectId: number; classId: number }, { rejectWithValue }) => {
         try {
-            const response = await axios.delete(`${API_URL}/subjects/${subjectId}/unassign/${classId}`, authHeader());
+            const response = await api.delete(`/subjects/${subjectId}/unassign/${classId}`, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to unassign subject');

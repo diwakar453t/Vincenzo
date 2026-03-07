@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const authHeader = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
@@ -48,37 +48,37 @@ const initialState: PaymentsState = {
 
 export const fetchPayments = createAsyncThunk('payments/fetchAll',
     async (params: { status?: string; student_id?: number; purpose?: string; limit?: number; offset?: number } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/payments/`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/payments/`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchPaymentStats = createAsyncThunk('payments/stats',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/payments/stats`, authHeader())).data; }
+        try { return (await api.get(`/payments/stats`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const initiatePayment = createAsyncThunk('payments/initiate',
     async (data: { amount: number; purpose?: string; description?: string; student_id?: number; fee_assignment_id?: number; payer_name?: string; payer_email?: string; payer_phone?: string; payment_method?: string }, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/payments/initiate`, data, authHeader())).data; }
+        try { return (await api.post(`/payments/initiate`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const verifyPayment = createAsyncThunk('payments/verify',
     async (data: { order_id: string; payment_id: string; signature: string }, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/payments/verify`, data, authHeader())).data; }
+        try { return (await api.post(`/payments/verify`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchReceipt = createAsyncThunk('payments/receipt',
     async (txnId: number, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/payments/${txnId}/receipt`, authHeader())).data; }
+        try { return (await api.get(`/payments/${txnId}/receipt`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const initiateRefund = createAsyncThunk('payments/refund',
     async (data: { transaction_id: number; amount?: number; reason?: string }, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/payments/refund`, data, authHeader())).data; }
+        try { return (await api.post(`/payments/refund`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 

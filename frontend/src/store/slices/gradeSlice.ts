@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -67,75 +67,75 @@ const authHeader = () => ({
 // Categories
 export const fetchCategories = createAsyncThunk('grades/fetchCategories',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/grades/categories`, authHeader())).data; }
+        try { return (await api.get(`/grades/categories`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed to fetch categories'); }
     });
 
 export const createCategory = createAsyncThunk('grades/createCategory',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/grades/categories`, data, authHeader())).data; }
+        try { return (await api.post(`/grades/categories`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateCategory = createAsyncThunk('grades/updateCategory',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/grades/categories/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/grades/categories/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteCategory = createAsyncThunk('grades/deleteCategory',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/grades/categories/${id}`, authHeader()); return id; }
+        try { await api.delete(`/grades/categories/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const seedCategories = createAsyncThunk('grades/seedCategories',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/grades/categories/seed`, {}, authHeader())).data; }
+        try { return (await api.post(`/grades/categories/seed`, {}, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 // Grades
 export const fetchGrades = createAsyncThunk('grades/fetchGrades',
     async (params: { exam_id?: number; class_id?: number; student_id?: number; subject_id?: number } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/grades`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/grades`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const createGrade = createAsyncThunk('grades/createGrade',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/grades`, data, authHeader())).data; }
+        try { return (await api.post(`/grades`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const bulkCreateGrades = createAsyncThunk('grades/bulkCreateGrades',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/grades/bulk`, data, authHeader())).data; }
+        try { return (await api.post(`/grades/bulk`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateGrade = createAsyncThunk('grades/updateGrade',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/grades/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/grades/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteGrade = createAsyncThunk('grades/deleteGrade',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/grades/${id}`, authHeader()); return id; }
+        try { await api.delete(`/grades/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 // GPA & Report Card
 export const fetchStudentGPA = createAsyncThunk('grades/fetchStudentGPA',
     async ({ studentId, examId }: { studentId: number; examId: number }, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/grades/gpa/${studentId}/${examId}`, authHeader())).data; }
+        try { return (await api.get(`/grades/gpa/${studentId}/${examId}`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchReportCard = createAsyncThunk('grades/fetchReportCard',
     async ({ studentId, academicYear }: { studentId: number; academicYear: string }, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/grades/report-card/${studentId}`, { ...authHeader(), params: { academic_year: academicYear } })).data; }
+        try { return (await api.get(`/grades/report-card/${studentId}`, { ...authHeader(), params: { academic_year: academicYear } })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 

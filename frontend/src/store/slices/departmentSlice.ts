@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -51,31 +51,31 @@ const authHeader = () => ({
 
 export const fetchDepartments = createAsyncThunk('departments/fetchDepartments',
     async (params: { search?: string; is_active?: boolean } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/departments`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/departments`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchDepartmentTree = createAsyncThunk('departments/fetchTree',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/departments/tree`, authHeader())).data; }
+        try { return (await api.get(`/departments/tree`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const createDepartment = createAsyncThunk('departments/createDepartment',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/departments`, data, authHeader())).data; }
+        try { return (await api.post(`/departments`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateDepartment = createAsyncThunk('departments/updateDepartment',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/departments/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/departments/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteDepartment = createAsyncThunk('departments/deleteDepartment',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/departments/${id}`, authHeader()); return id; }
+        try { await api.delete(`/departments/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -83,25 +83,25 @@ export const deleteDepartment = createAsyncThunk('departments/deleteDepartment',
 
 export const fetchDesignations = createAsyncThunk('departments/fetchDesignations',
     async (params: { department_id?: number; search?: string } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/departments/designations/all`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/departments/designations/all`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const createDesignation = createAsyncThunk('departments/createDesignation',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/departments/designations`, data, authHeader())).data; }
+        try { return (await api.post(`/departments/designations`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateDesignation = createAsyncThunk('departments/updateDesignation',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/departments/designations/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/departments/designations/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteDesignation = createAsyncThunk('departments/deleteDesignation',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/departments/designations/${id}`, authHeader()); return id; }
+        try { await api.delete(`/departments/designations/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 

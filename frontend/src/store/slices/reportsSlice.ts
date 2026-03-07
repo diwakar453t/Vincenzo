@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const authHeader = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
@@ -43,38 +43,38 @@ const initialState: ReportsState = {
 
 export const fetchReportDashboard = createAsyncThunk('reports/fetchDashboard',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/reports/dashboard`, authHeader())).data; }
+        try { return (await api.get(`/reports/dashboard`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const generateReport = createAsyncThunk('reports/generate',
     async (params: { report_type: string; start_date?: string; end_date?: string; class_id?: number; student_id?: number; teacher_id?: number }, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/reports/generate`, params, authHeader())).data; }
+        try { return (await api.post(`/reports/generate`, params, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchSavedReports = createAsyncThunk('reports/fetchSaved',
     async (params: { report_type?: string } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/reports/saved`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/reports/saved`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const saveReport = createAsyncThunk('reports/save',
     async (params: { report_type: string; start_date?: string; end_date?: string; class_id?: number; student_id?: number; format?: string }, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/reports/save`, params, authHeader())).data; }
+        try { return (await api.post(`/reports/save`, params, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteSavedReport = createAsyncThunk('reports/deleteSaved',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/reports/saved/${id}`, authHeader()); return id; }
+        try { await api.delete(`/reports/saved/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const exportReportCSV = createAsyncThunk('reports/exportCSV',
     async (params: { report_type: string; start_date?: string; end_date?: string; class_id?: number; student_id?: number; teacher_id?: number }, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`${API_URL}/reports/export/csv`, params, {
+            const response = await api.post(`/reports/export/csv`, params, {
                 ...authHeader(), responseType: 'blob',
             });
             const url = window.URL.createObjectURL(new Blob([response.data]));

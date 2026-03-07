@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -85,7 +85,7 @@ export const fetchTimetables = createAsyncThunk(
     'timetable/fetchTimetables',
     async (params: { class_id?: number; status?: string } = {}, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`${API_URL}/timetable`, { ...authHeader(), params });
+            const response = await api.get(`/timetable`, { ...authHeader(), params });
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to fetch timetables');
@@ -97,7 +97,7 @@ export const fetchTimetableById = createAsyncThunk(
     'timetable/fetchTimetableById',
     async (id: number, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`${API_URL}/timetable/${id}`, authHeader());
+            const response = await api.get(`/timetable/${id}`, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to fetch timetable');
@@ -109,7 +109,7 @@ export const createTimetable = createAsyncThunk(
     'timetable/createTimetable',
     async (data: any, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`${API_URL}/timetable`, data, authHeader());
+            const response = await api.post(`/timetable`, data, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to create timetable');
@@ -121,7 +121,7 @@ export const updateTimetable = createAsyncThunk(
     'timetable/updateTimetable',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`${API_URL}/timetable/${id}`, data, authHeader());
+            const response = await api.put(`/timetable/${id}`, data, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to update timetable');
@@ -133,7 +133,7 @@ export const deleteTimetable = createAsyncThunk(
     'timetable/deleteTimetable',
     async (id: number, { rejectWithValue }) => {
         try {
-            await axios.delete(`${API_URL}/timetable/${id}`, authHeader());
+            await api.delete(`/timetable/${id}`, authHeader());
             return id;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to delete timetable');
@@ -146,7 +146,7 @@ export const addPeriod = createAsyncThunk(
     'timetable/addPeriod',
     async ({ timetableId, data }: { timetableId: number; data: any }, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`${API_URL}/timetable/${timetableId}/periods`, data, authHeader());
+            const response = await api.post(`/timetable/${timetableId}/periods`, data, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to add period');
@@ -158,7 +158,7 @@ export const updatePeriod = createAsyncThunk(
     'timetable/updatePeriod',
     async ({ periodId, data }: { periodId: number; data: any }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`${API_URL}/timetable/periods/${periodId}`, data, authHeader());
+            const response = await api.put(`/timetable/periods/${periodId}`, data, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to update period');
@@ -170,7 +170,7 @@ export const deletePeriod = createAsyncThunk(
     'timetable/deletePeriod',
     async (periodId: number, { rejectWithValue }) => {
         try {
-            await axios.delete(`${API_URL}/timetable/periods/${periodId}`, authHeader());
+            await api.delete(`/timetable/periods/${periodId}`, authHeader());
             return periodId;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to delete period');
@@ -182,7 +182,7 @@ export const checkConflicts = createAsyncThunk(
     'timetable/checkConflicts',
     async (timetableId: number, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`${API_URL}/timetable/${timetableId}/conflicts`, authHeader());
+            const response = await api.get(`/timetable/${timetableId}/conflicts`, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to check conflicts');

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const authHeader = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
@@ -69,73 +69,73 @@ const initialState: TransportState = {
 
 export const fetchRoutes = createAsyncThunk('transport/fetchRoutes',
     async (params: { status?: string; is_active?: boolean } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/transport/routes`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/transport/routes`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const createRoute = createAsyncThunk('transport/createRoute',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/transport/routes`, data, authHeader())).data; }
+        try { return (await api.post(`/transport/routes`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateRoute = createAsyncThunk('transport/updateRoute',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/transport/routes/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/transport/routes/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteRoute = createAsyncThunk('transport/deleteRoute',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/transport/routes/${id}`, authHeader()); return id; }
+        try { await api.delete(`/transport/routes/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchVehicles = createAsyncThunk('transport/fetchVehicles',
     async (params: { vehicle_type?: string; status?: string } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/transport/vehicles`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/transport/vehicles`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const createVehicle = createAsyncThunk('transport/createVehicle',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/transport/vehicles`, data, authHeader())).data; }
+        try { return (await api.post(`/transport/vehicles`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateVehicle = createAsyncThunk('transport/updateVehicle',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/transport/vehicles/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/transport/vehicles/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteVehicle = createAsyncThunk('transport/deleteVehicle',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/transport/vehicles/${id}`, authHeader()); return id; }
+        try { await api.delete(`/transport/vehicles/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const assignStudent = createAsyncThunk('transport/assign',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/transport/assign`, data, authHeader())).data; }
+        try { return (await api.post(`/transport/assign`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const cancelAssignment = createAsyncThunk('transport/cancel',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/transport/cancel/${id}`, data, authHeader())).data; }
+        try { return (await api.post(`/transport/cancel/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchAssignments = createAsyncThunk('transport/fetchAssignments',
     async (params: { route_id?: number; student_id?: number; status?: string } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/transport/assignments`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/transport/assignments`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchTransportStats = createAsyncThunk('transport/fetchStats',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/transport/stats`, authHeader())).data; }
+        try { return (await api.get(`/transport/stats`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 

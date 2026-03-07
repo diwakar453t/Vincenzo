@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const authHeader = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
@@ -62,79 +62,79 @@ const initialState: SportsState = {
 
 export const fetchSports = createAsyncThunk('sports/fetchSports',
     async (params: { category?: string; status?: string } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/sports/`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/sports/`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const createSport = createAsyncThunk('sports/createSport',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/sports/`, data, authHeader())).data; }
+        try { return (await api.post(`/sports/`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateSport = createAsyncThunk('sports/updateSport',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/sports/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/sports/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteSport = createAsyncThunk('sports/deleteSport',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/sports/${id}`, authHeader()); return id; }
+        try { await api.delete(`/sports/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const registerStudent = createAsyncThunk('sports/register',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/sports/register`, data, authHeader())).data; }
+        try { return (await api.post(`/sports/register`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchParticipations = createAsyncThunk('sports/fetchParticipations',
     async (params: { sport_id?: number; student_id?: number; status?: string } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/sports/participations`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/sports/participations`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateParticipation = createAsyncThunk('sports/updateParticipation',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/sports/participations/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/sports/participations/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteParticipation = createAsyncThunk('sports/deleteParticipation',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/sports/participations/${id}`, authHeader()); return id; }
+        try { await api.delete(`/sports/participations/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const createAchievement = createAsyncThunk('sports/createAchievement',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/sports/achievements`, data, authHeader())).data; }
+        try { return (await api.post(`/sports/achievements`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchAchievements = createAsyncThunk('sports/fetchAchievements',
     async (params: { sport_id?: number; student_id?: number; level?: string } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/sports/achievements`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/sports/achievements`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateAchievement = createAsyncThunk('sports/updateAchievement',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/sports/achievements/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/sports/achievements/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteAchievement = createAsyncThunk('sports/deleteAchievement',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/sports/achievements/${id}`, authHeader()); return id; }
+        try { await api.delete(`/sports/achievements/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchSportsStats = createAsyncThunk('sports/fetchStats',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/sports/stats`, authHeader())).data; }
+        try { return (await api.get(`/sports/stats`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 

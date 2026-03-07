@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -75,25 +75,25 @@ const authHeader = () => ({
 
 export const fetchComponents = createAsyncThunk('payroll/fetchComps',
     async (params: { component_type?: string; is_active?: boolean } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/payroll/components`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/payroll/components`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const createComponent = createAsyncThunk('payroll/createComp',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/payroll/components`, data, authHeader())).data; }
+        try { return (await api.post(`/payroll/components`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateComponent = createAsyncThunk('payroll/updateComp',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/payroll/components/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/payroll/components/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteComponent = createAsyncThunk('payroll/deleteComp',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/payroll/components/${id}`, authHeader()); return id; }
+        try { await api.delete(`/payroll/components/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -101,19 +101,19 @@ export const deleteComponent = createAsyncThunk('payroll/deleteComp',
 
 export const fetchStructures = createAsyncThunk('payroll/fetchStructs',
     async (params: { teacher_id?: number } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/payroll/structures`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/payroll/structures`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const saveStructure = createAsyncThunk('payroll/saveStruct',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/payroll/structures`, data, authHeader())).data; }
+        try { return (await api.post(`/payroll/structures`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteStructure = createAsyncThunk('payroll/deleteStruct',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/payroll/structures/${id}`, authHeader()); return id; }
+        try { await api.delete(`/payroll/structures/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -121,31 +121,31 @@ export const deleteStructure = createAsyncThunk('payroll/deleteStruct',
 
 export const processPayroll = createAsyncThunk('payroll/process',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/payroll/process`, data, authHeader())).data; }
+        try { return (await api.post(`/payroll/process`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchPayrolls = createAsyncThunk('payroll/fetchPayrolls',
     async (params: { month?: number; year?: number; teacher_id?: number; status_filter?: string } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/payroll/payrolls`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/payroll/payrolls`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchPayroll = createAsyncThunk('payroll/fetchOne',
     async (id: number, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/payroll/payrolls/${id}`, authHeader())).data; }
+        try { return (await api.get(`/payroll/payrolls/${id}`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const actionPayroll = createAsyncThunk('payroll/action',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/payroll/payrolls/${id}/action`, data, authHeader())).data; }
+        try { return (await api.put(`/payroll/payrolls/${id}/action`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deletePayroll = createAsyncThunk('payroll/delete',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/payroll/payrolls/${id}`, authHeader()); return id; }
+        try { await api.delete(`/payroll/payrolls/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -153,13 +153,13 @@ export const deletePayroll = createAsyncThunk('payroll/delete',
 
 export const fetchSummary = createAsyncThunk('payroll/summary',
     async ({ month, year }: { month: number; year: number }, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/payroll/summary`, { ...authHeader(), params: { month, year } })).data; }
+        try { return (await api.get(`/payroll/summary`, { ...authHeader(), params: { month, year } })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchSalaryHistory = createAsyncThunk('payroll/history',
     async (teacherId: number, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/payroll/history/${teacherId}`, authHeader())).data; }
+        try { return (await api.get(`/payroll/history/${teacherId}`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 

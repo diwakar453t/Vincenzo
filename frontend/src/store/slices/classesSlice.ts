@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -54,7 +54,7 @@ export const fetchClasses = createAsyncThunk(
     async (params: { skip?: number; limit?: number; academic_year?: string; grade_level?: number }, { rejectWithValue }) => {
         try {
             const token = localStorage.getItem('access_token');
-            const response = await axios.get(`${API_URL}/classes`, {
+            const response = await api.get(`/classes`, {
                 headers: { Authorization: `Bearer ${token}` },
                 params,
             });
@@ -70,7 +70,7 @@ export const fetchClassById = createAsyncThunk(
     async (id: number, { rejectWithValue }) => {
         try {
             const token = localStorage.getItem('access_token');
-            const response = await axios.get(`${API_URL}/classes/${id}`, {
+            const response = await api.get(`/classes/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             return response.data;
@@ -85,7 +85,7 @@ export const createClass = createAsyncThunk(
     async (classData: Partial<Class>, { rejectWithValue }) => {
         try {
             const token = localStorage.getItem('access_token');
-            const response = await axios.post(`${API_URL}/classes`, classData, {
+            const response = await api.post(`/classes`, classData, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             return response.data;
@@ -100,7 +100,7 @@ export const updateClass = createAsyncThunk(
     async ({ id, data }: { id: number; data: Partial<Class> }, { rejectWithValue }) => {
         try {
             const token = localStorage.getItem('access_token');
-            const response = await axios.put(`${API_URL}/classes/${id}`, data, {
+            const response = await api.put(`/classes/${id}`, data, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             return response.data;
@@ -115,7 +115,7 @@ export const deleteClass = createAsyncThunk(
     async (id: number, { rejectWithValue }) => {
         try {
             const token = localStorage.getItem('access_token');
-            await axios.delete(`${API_URL}/classes/${id}`, {
+            await api.delete(`/classes/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             return id;

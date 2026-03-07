@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -58,56 +58,56 @@ const authHeader = () => ({
 
 export const fetchExams = createAsyncThunk('exams/fetchExams',
     async (params: { class_id?: number; status_filter?: string; exam_type?: string; search?: string } = {}, { rejectWithValue }) => {
-        try { const r = await axios.get(`${API_URL}/exams`, { ...authHeader(), params }); return r.data; }
+        try { const r = await api.get(`/exams`, { ...authHeader(), params }); return r.data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed to fetch exams'); }
     });
 
 export const fetchExamById = createAsyncThunk('exams/fetchExamById',
     async (id: number, { rejectWithValue }) => {
-        try { const r = await axios.get(`${API_URL}/exams/${id}`, authHeader()); return r.data; }
+        try { const r = await api.get(`/exams/${id}`, authHeader()); return r.data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed to fetch exam'); }
     });
 
 export const createExam = createAsyncThunk('exams/createExam',
     async (data: any, { rejectWithValue }) => {
-        try { const r = await axios.post(`${API_URL}/exams`, data, authHeader()); return r.data; }
+        try { const r = await api.post(`/exams`, data, authHeader()); return r.data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed to create exam'); }
     });
 
 export const updateExam = createAsyncThunk('exams/updateExam',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { const r = await axios.put(`${API_URL}/exams/${id}`, data, authHeader()); return r.data; }
+        try { const r = await api.put(`/exams/${id}`, data, authHeader()); return r.data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed to update exam'); }
     });
 
 export const deleteExam = createAsyncThunk('exams/deleteExam',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/exams/${id}`, authHeader()); return id; }
+        try { await api.delete(`/exams/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed to delete exam'); }
     });
 
 // Schedule thunks
 export const addSchedule = createAsyncThunk('exams/addSchedule',
     async ({ examId, data }: { examId: number; data: any }, { rejectWithValue }) => {
-        try { const r = await axios.post(`${API_URL}/exams/${examId}/schedules`, data, authHeader()); return r.data; }
+        try { const r = await api.post(`/exams/${examId}/schedules`, data, authHeader()); return r.data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed to add schedule'); }
     });
 
 export const updateSchedule = createAsyncThunk('exams/updateSchedule',
     async ({ scheduleId, data }: { scheduleId: number; data: any }, { rejectWithValue }) => {
-        try { const r = await axios.put(`${API_URL}/exams/schedules/${scheduleId}`, data, authHeader()); return r.data; }
+        try { const r = await api.put(`/exams/schedules/${scheduleId}`, data, authHeader()); return r.data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed to update schedule'); }
     });
 
 export const deleteSchedule = createAsyncThunk('exams/deleteSchedule',
     async (scheduleId: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/exams/schedules/${scheduleId}`, authHeader()); return scheduleId; }
+        try { await api.delete(`/exams/schedules/${scheduleId}`, authHeader()); return scheduleId; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed to delete schedule'); }
     });
 
 export const fetchCalendar = createAsyncThunk('exams/fetchCalendar',
     async (params: { month?: number; year?: number; class_id?: number } = {}, { rejectWithValue }) => {
-        try { const r = await axios.get(`${API_URL}/exams/calendar`, { ...authHeader(), params }); return r.data; }
+        try { const r = await api.get(`/exams/calendar`, { ...authHeader(), params }); return r.data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed to fetch calendar'); }
     });
 

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -61,25 +61,25 @@ const authHeader = () => ({
 
 export const fetchStudentAttendance = createAsyncThunk('attendance/fetchStudentAtt',
     async (params: { class_id?: number; student_id?: number; date?: string; month?: number; year?: number } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/attendance/students`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/attendance/students`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const markStudentAttendance = createAsyncThunk('attendance/markStudent',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/attendance/students`, data, authHeader())).data; }
+        try { return (await api.post(`/attendance/students`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const bulkMarkStudentAttendance = createAsyncThunk('attendance/bulkMarkStudent',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/attendance/students/bulk`, data, authHeader())).data; }
+        try { return (await api.post(`/attendance/students/bulk`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteStudentAttendance = createAsyncThunk('attendance/deleteStudentAtt',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/attendance/students/${id}`, authHeader()); return id; }
+        try { await api.delete(`/attendance/students/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -87,25 +87,25 @@ export const deleteStudentAttendance = createAsyncThunk('attendance/deleteStuden
 
 export const fetchStaffAttendance = createAsyncThunk('attendance/fetchStaffAtt',
     async (params: { teacher_id?: number; date?: string; month?: number; year?: number } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/attendance/staff`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/attendance/staff`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const markStaffAttendance = createAsyncThunk('attendance/markStaff',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/attendance/staff`, data, authHeader())).data; }
+        try { return (await api.post(`/attendance/staff`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const bulkMarkStaffAttendance = createAsyncThunk('attendance/bulkMarkStaff',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/attendance/staff/bulk`, data, authHeader())).data; }
+        try { return (await api.post(`/attendance/staff/bulk`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteStaffAttendance = createAsyncThunk('attendance/deleteStaffAtt',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/attendance/staff/${id}`, authHeader()); return id; }
+        try { await api.delete(`/attendance/staff/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -113,37 +113,37 @@ export const deleteStaffAttendance = createAsyncThunk('attendance/deleteStaffAtt
 
 export const fetchStudentStats = createAsyncThunk('attendance/studentStats',
     async ({ studentId, academicYear }: { studentId: number; academicYear?: string }, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/attendance/students/stats/${studentId}`, { ...authHeader(), params: { academic_year: academicYear } })).data; }
+        try { return (await api.get(`/attendance/students/stats/${studentId}`, { ...authHeader(), params: { academic_year: academicYear } })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchStaffStats = createAsyncThunk('attendance/staffStats',
     async ({ teacherId, month, year }: { teacherId: number; month?: number; year?: number }, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/attendance/staff/stats/${teacherId}`, { ...authHeader(), params: { month, year } })).data; }
+        try { return (await api.get(`/attendance/staff/stats/${teacherId}`, { ...authHeader(), params: { month, year } })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchClassReport = createAsyncThunk('attendance/classReport',
     async ({ classId, date }: { classId: number; date: string }, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/attendance/class-report/${classId}`, { ...authHeader(), params: { date } })).data; }
+        try { return (await api.get(`/attendance/class-report/${classId}`, { ...authHeader(), params: { date } })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchStudentMonthly = createAsyncThunk('attendance/studentMonthly',
     async ({ studentId, month, year }: { studentId: number; month: number; year: number }, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/attendance/students/monthly/${studentId}`, { ...authHeader(), params: { month, year } })).data; }
+        try { return (await api.get(`/attendance/students/monthly/${studentId}`, { ...authHeader(), params: { month, year } })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchStaffMonthly = createAsyncThunk('attendance/staffMonthly',
     async ({ teacherId, month, year }: { teacherId: number; month: number; year: number }, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/attendance/staff/monthly/${teacherId}`, { ...authHeader(), params: { month, year } })).data; }
+        try { return (await api.get(`/attendance/staff/monthly/${teacherId}`, { ...authHeader(), params: { month, year } })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchClassFullReport = createAsyncThunk('attendance/classFullReport',
     async ({ classId, academicYear }: { classId: number; academicYear?: string }, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/attendance/class-report/${classId}/full`, { ...authHeader(), params: { academic_year: academicYear } })).data; }
+        try { return (await api.get(`/attendance/class-report/${classId}/full`, { ...authHeader(), params: { academic_year: academicYear } })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 

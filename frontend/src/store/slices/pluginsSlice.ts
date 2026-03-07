@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const authHeader = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
@@ -29,43 +29,43 @@ const initialState: PluginsState = {
 
 export const fetchPlugins = createAsyncThunk('plugins/fetchAll',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/plugins/`, authHeader())).data; }
+        try { return (await api.get(`/plugins/`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchPluginStats = createAsyncThunk('plugins/stats',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/plugins/stats`, authHeader())).data; }
+        try { return (await api.get(`/plugins/stats`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchHooks = createAsyncThunk('plugins/hooks',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/plugins/hooks`, authHeader())).data; }
+        try { return (await api.get(`/plugins/hooks`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const activatePlugin = createAsyncThunk('plugins/activate',
     async (name: string, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/plugins/${name}/activate`, {}, authHeader())).data; }
+        try { return (await api.post(`/plugins/${name}/activate`, {}, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deactivatePlugin = createAsyncThunk('plugins/deactivate',
     async (name: string, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/plugins/${name}/deactivate`, {}, authHeader())).data; }
+        try { return (await api.post(`/plugins/${name}/deactivate`, {}, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updatePluginConfig = createAsyncThunk('plugins/updateConfig',
     async ({ name, config }: { name: string; config: Record<string, any> }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/plugins/${name}/config`, config, authHeader())).data; }
+        try { return (await api.put(`/plugins/${name}/config`, config, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const uninstallPlugin = createAsyncThunk('plugins/uninstall',
     async (name: string, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/plugins/${name}`, authHeader()); return name; }
+        try { await api.delete(`/plugins/${name}`, authHeader()); return name; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 

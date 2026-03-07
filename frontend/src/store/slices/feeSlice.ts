@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -79,25 +79,25 @@ const authHeader = () => ({
 
 export const fetchFeeGroups = createAsyncThunk('fees/fetchGroups',
     async (params: { is_active?: boolean } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/fees/groups`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/fees/groups`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const createFeeGroup = createAsyncThunk('fees/createGroup',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/fees/groups`, data, authHeader())).data; }
+        try { return (await api.post(`/fees/groups`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateFeeGroup = createAsyncThunk('fees/updateGroup',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/fees/groups/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/fees/groups/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteFeeGroup = createAsyncThunk('fees/deleteGroup',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/fees/groups/${id}`, authHeader()); return id; }
+        try { await api.delete(`/fees/groups/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -105,25 +105,25 @@ export const deleteFeeGroup = createAsyncThunk('fees/deleteGroup',
 
 export const fetchFeeTypes = createAsyncThunk('fees/fetchTypes',
     async (params: { fee_group_id?: number; class_id?: number; is_active?: boolean } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/fees/types`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/fees/types`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const createFeeType = createAsyncThunk('fees/createType',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/fees/types`, data, authHeader())).data; }
+        try { return (await api.post(`/fees/types`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateFeeType = createAsyncThunk('fees/updateType',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/fees/types/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/fees/types/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteFeeType = createAsyncThunk('fees/deleteType',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/fees/types/${id}`, authHeader()); return id; }
+        try { await api.delete(`/fees/types/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -131,13 +131,13 @@ export const deleteFeeType = createAsyncThunk('fees/deleteType',
 
 export const assignFees = createAsyncThunk('fees/assign',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/fees/assignments`, data, authHeader())).data; }
+        try { return (await api.post(`/fees/assignments`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchAssignments = createAsyncThunk('fees/fetchAssignments',
     async (params: { student_id?: number; fee_type_id?: number; status_filter?: string } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/fees/assignments`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/fees/assignments`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -145,19 +145,19 @@ export const fetchAssignments = createAsyncThunk('fees/fetchAssignments',
 
 export const collectFee = createAsyncThunk('fees/collect',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/fees/collections`, data, authHeader())).data; }
+        try { return (await api.post(`/fees/collections`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchCollections = createAsyncThunk('fees/fetchCollections',
     async (params: { student_id?: number; fee_type_id?: number; from_date?: string; to_date?: string } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/fees/collections`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/fees/collections`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteCollection = createAsyncThunk('fees/deleteCollection',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/fees/collections/${id}`, authHeader()); return id; }
+        try { await api.delete(`/fees/collections/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -165,7 +165,7 @@ export const deleteCollection = createAsyncThunk('fees/deleteCollection',
 
 export const fetchReceipt = createAsyncThunk('fees/fetchReceipt',
     async (id: number, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/fees/receipts/${id}`, authHeader())).data; }
+        try { return (await api.get(`/fees/receipts/${id}`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -173,13 +173,13 @@ export const fetchReceipt = createAsyncThunk('fees/fetchReceipt',
 
 export const fetchDefaulters = createAsyncThunk('fees/fetchDefaulters',
     async (params: { class_id?: number } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/fees/defaulters`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/fees/defaulters`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchFinancialSummary = createAsyncThunk('fees/fetchSummary',
     async (params: { academic_year?: string } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/fees/summary`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/fees/summary`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 

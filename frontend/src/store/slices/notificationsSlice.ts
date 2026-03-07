@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const authHeader = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
@@ -51,67 +51,67 @@ const initialState: NotificationsState = {
 
 export const fetchNotifications = createAsyncThunk('notifications/fetchAll',
     async (params: { is_read?: boolean; notification_type?: string; limit?: number; offset?: number } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/notifications/`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/notifications/`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchUnreadCount = createAsyncThunk('notifications/unreadCount',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/notifications/unread-count`, authHeader())).data; }
+        try { return (await api.get(`/notifications/unread-count`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchNotificationStats = createAsyncThunk('notifications/stats',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/notifications/stats`, authHeader())).data; }
+        try { return (await api.get(`/notifications/stats`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const sendNotification = createAsyncThunk('notifications/send',
     async (data: { user_id: number; title: string; message: string; notification_type?: string; priority?: string; channel?: string; link?: string }, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/notifications/send`, data, authHeader())).data; }
+        try { return (await api.post(`/notifications/send`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const broadcastNotification = createAsyncThunk('notifications/broadcast',
     async (data: { title: string; message: string; notification_type?: string; priority?: string }, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/notifications/broadcast`, data, authHeader())).data; }
+        try { return (await api.post(`/notifications/broadcast`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const markAsRead = createAsyncThunk('notifications/markRead',
     async (id: number, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/notifications/${id}/read`, {}, authHeader())).data; }
+        try { return (await api.put(`/notifications/${id}/read`, {}, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const markAllRead = createAsyncThunk('notifications/markAllRead',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/notifications/read-all`, {}, authHeader())).data; }
+        try { return (await api.put(`/notifications/read-all`, {}, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteNotification = createAsyncThunk('notifications/delete',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/notifications/${id}`, authHeader()); return id; }
+        try { await api.delete(`/notifications/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const clearAllNotifications = createAsyncThunk('notifications/clearAll',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.delete(`${API_URL}/notifications/clear-all`, authHeader())).data; }
+        try { return (await api.delete(`/notifications/clear-all`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchPreferences = createAsyncThunk('notifications/fetchPrefs',
     async (_, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/notifications/preferences`, authHeader())).data; }
+        try { return (await api.get(`/notifications/preferences`, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updatePreferences = createAsyncThunk('notifications/updatePrefs',
     async (data: Partial<NotificationPrefs>, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/notifications/preferences`, data, authHeader())).data; }
+        try { return (await api.put(`/notifications/preferences`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 

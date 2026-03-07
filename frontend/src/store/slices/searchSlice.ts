@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const authHeader = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
@@ -27,19 +27,19 @@ const initialState: SearchState = {
 
 export const globalSearch = createAsyncThunk('search/global',
     async (params: { q: string; modules?: string; limit?: number; offset?: number }, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/search/`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/search/`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Search failed'); }
     });
 
 export const autocomplete = createAsyncThunk('search/autocomplete',
     async (q: string, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/search/autocomplete`, { ...authHeader(), params: { q } })).data; }
+        try { return (await api.get(`/search/autocomplete`, { ...authHeader(), params: { q } })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const facetedSearch = createAsyncThunk('search/facets',
     async (q: string, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/search/facets`, { ...authHeader(), params: { q } })).data; }
+        try { return (await api.get(`/search/facets`, { ...authHeader(), params: { q } })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -80,7 +80,7 @@ export const fetchSyllabi = createAsyncThunk(
     'syllabus/fetchSyllabi',
     async (params: { subject_id?: number; class_id?: number; status?: string; search?: string } = {}, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`${API_URL}/syllabus`, { ...authHeader(), params });
+            const response = await api.get(`/syllabus`, { ...authHeader(), params });
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to fetch syllabi');
@@ -92,7 +92,7 @@ export const fetchSyllabusById = createAsyncThunk(
     'syllabus/fetchSyllabusById',
     async (id: number, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`${API_URL}/syllabus/${id}`, authHeader());
+            const response = await api.get(`/syllabus/${id}`, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to fetch syllabus');
@@ -104,7 +104,7 @@ export const createSyllabus = createAsyncThunk(
     'syllabus/createSyllabus',
     async (data: any, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`${API_URL}/syllabus`, data, authHeader());
+            const response = await api.post(`/syllabus`, data, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to create syllabus');
@@ -116,7 +116,7 @@ export const updateSyllabus = createAsyncThunk(
     'syllabus/updateSyllabus',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`${API_URL}/syllabus/${id}`, data, authHeader());
+            const response = await api.put(`/syllabus/${id}`, data, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to update syllabus');
@@ -128,7 +128,7 @@ export const deleteSyllabus = createAsyncThunk(
     'syllabus/deleteSyllabus',
     async (id: number, { rejectWithValue }) => {
         try {
-            await axios.delete(`${API_URL}/syllabus/${id}`, authHeader());
+            await api.delete(`/syllabus/${id}`, authHeader());
             return id;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to delete syllabus');
@@ -142,7 +142,7 @@ export const addTopic = createAsyncThunk(
     'syllabus/addTopic',
     async ({ syllabusId, data }: { syllabusId: number; data: any }, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`${API_URL}/syllabus/${syllabusId}/topics`, data, authHeader());
+            const response = await api.post(`/syllabus/${syllabusId}/topics`, data, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to add topic');
@@ -154,7 +154,7 @@ export const updateTopic = createAsyncThunk(
     'syllabus/updateTopic',
     async ({ topicId, data }: { topicId: number; data: any }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`${API_URL}/syllabus/topics/${topicId}`, data, authHeader());
+            const response = await api.put(`/syllabus/topics/${topicId}`, data, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to update topic');
@@ -166,7 +166,7 @@ export const deleteTopic = createAsyncThunk(
     'syllabus/deleteTopic',
     async (topicId: number, { rejectWithValue }) => {
         try {
-            await axios.delete(`${API_URL}/syllabus/topics/${topicId}`, authHeader());
+            await api.delete(`/syllabus/topics/${topicId}`, authHeader());
             return topicId;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to delete topic');
@@ -178,7 +178,7 @@ export const toggleTopicCompletion = createAsyncThunk(
     'syllabus/toggleTopicCompletion',
     async (topicId: number, { rejectWithValue }) => {
         try {
-            const response = await axios.patch(`${API_URL}/syllabus/topics/${topicId}/toggle`, {}, authHeader());
+            const response = await api.patch(`/syllabus/topics/${topicId}/toggle`, {}, authHeader());
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to toggle topic');
@@ -192,7 +192,7 @@ export const uploadTopicDocument = createAsyncThunk(
         try {
             const formData = new FormData();
             formData.append('file', file);
-            const response = await axios.post(`${API_URL}/syllabus/topics/${topicId}/upload`, formData, {
+            const response = await api.post(`/syllabus/topics/${topicId}/upload`, formData, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}`, 'Content-Type': 'multipart/form-data' },
             });
             return response.data;
@@ -206,7 +206,7 @@ export const deleteTopicDocument = createAsyncThunk(
     'syllabus/deleteTopicDocument',
     async (topicId: number, { rejectWithValue }) => {
         try {
-            await axios.delete(`${API_URL}/syllabus/topics/${topicId}/document`, authHeader());
+            await api.delete(`/syllabus/topics/${topicId}/document`, authHeader());
             return topicId;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to delete document');

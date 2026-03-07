@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -61,25 +61,25 @@ const authHeader = () => ({
 
 export const fetchLeaveTypes = createAsyncThunk('leaves/fetchTypes',
     async (params: { applies_to?: string; is_active?: boolean } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/leaves/types`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/leaves/types`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const createLeaveType = createAsyncThunk('leaves/createType',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/leaves/types`, data, authHeader())).data; }
+        try { return (await api.post(`/leaves/types`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const updateLeaveType = createAsyncThunk('leaves/updateType',
     async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/leaves/types/${id}`, data, authHeader())).data; }
+        try { return (await api.put(`/leaves/types/${id}`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteLeaveType = createAsyncThunk('leaves/deleteType',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/leaves/types/${id}`, authHeader()); return id; }
+        try { await api.delete(`/leaves/types/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -87,31 +87,31 @@ export const deleteLeaveType = createAsyncThunk('leaves/deleteType',
 
 export const fetchApplications = createAsyncThunk('leaves/fetchApps',
     async (params: { applicant_type?: string; teacher_id?: number; student_id?: number; status_filter?: string; month?: number; year?: number } = {}, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/leaves/applications`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/leaves/applications`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const applyLeave = createAsyncThunk('leaves/apply',
     async (data: any, { rejectWithValue }) => {
-        try { return (await axios.post(`${API_URL}/leaves/applications`, data, authHeader())).data; }
+        try { return (await api.post(`/leaves/applications`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const actionLeave = createAsyncThunk('leaves/action',
     async ({ id, data }: { id: number; data: { status: string; admin_remarks?: string } }, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/leaves/applications/${id}/action`, data, authHeader())).data; }
+        try { return (await api.put(`/leaves/applications/${id}/action`, data, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const cancelLeave = createAsyncThunk('leaves/cancel',
     async (id: number, { rejectWithValue }) => {
-        try { return (await axios.put(`${API_URL}/leaves/applications/${id}/cancel`, {}, authHeader())).data; }
+        try { return (await api.put(`/leaves/applications/${id}/cancel`, {}, authHeader())).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const deleteApplication = createAsyncThunk('leaves/deleteApp',
     async (id: number, { rejectWithValue }) => {
-        try { await axios.delete(`${API_URL}/leaves/applications/${id}`, authHeader()); return id; }
+        try { await api.delete(`/leaves/applications/${id}`, authHeader()); return id; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
@@ -119,13 +119,13 @@ export const deleteApplication = createAsyncThunk('leaves/deleteApp',
 
 export const fetchBalance = createAsyncThunk('leaves/balance',
     async ({ applicantType, applicantId, academicYear }: { applicantType: string; applicantId: number; academicYear?: string }, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/leaves/balance/${applicantType}/${applicantId}`, { ...authHeader(), params: { academic_year: academicYear } })).data; }
+        try { return (await api.get(`/leaves/balance/${applicantType}/${applicantId}`, { ...authHeader(), params: { academic_year: academicYear } })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
 export const fetchCalendar = createAsyncThunk('leaves/calendar',
     async ({ month, year, applicantType }: { month: number; year: number; applicantType?: string }, { rejectWithValue }) => {
-        try { return (await axios.get(`${API_URL}/leaves/calendar`, { ...authHeader(), params: { month, year, applicant_type: applicantType } })).data; }
+        try { return (await api.get(`/leaves/calendar`, { ...authHeader(), params: { month, year, applicant_type: applicantType } })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 
