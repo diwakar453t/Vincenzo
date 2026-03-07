@@ -1,6 +1,7 @@
 """
 Plugin Service — manages plugins via API with DB persistence
 """
+
 import logging
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
@@ -21,13 +22,22 @@ class PluginService:
 
         # Sync registry → DB
         for rp in registry_plugins:
-            record = self.db.query(PluginRecord).filter(PluginRecord.name == rp["name"]).first()
+            record = (
+                self.db.query(PluginRecord)
+                .filter(PluginRecord.name == rp["name"])
+                .first()
+            )
             if not record:
                 record = PluginRecord(
-                    tenant_id=tenant_id, name=rp["name"], version=rp["version"],
-                    description=rp["description"], author=rp["author"],
-                    category=rp["category"], icon=rp["icon"],
-                    status=rp["status"], config=rp.get("config"),
+                    tenant_id=tenant_id,
+                    name=rp["name"],
+                    version=rp["version"],
+                    description=rp["description"],
+                    author=rp["author"],
+                    category=rp["category"],
+                    icon=rp["icon"],
+                    status=rp["status"],
+                    config=rp.get("config"),
                     is_builtin=rp.get("is_builtin", False),
                     error_message=rp.get("error"),
                 )
@@ -54,14 +64,18 @@ class PluginService:
 
     def deactivate_plugin(self, name: str, tenant_id: str) -> dict:
         if not self.registry.deactivate(name):
-            raise HTTPException(status_code=400, detail=f"Failed to deactivate '{name}'")
+            raise HTTPException(
+                status_code=400, detail=f"Failed to deactivate '{name}'"
+            )
         self._sync_status(name, tenant_id)
         return self.get_plugin(name)
 
     def uninstall_plugin(self, name: str, tenant_id: str):
         info = self.registry.get_plugin(name)
         if info and info.get("is_builtin"):
-            raise HTTPException(status_code=400, detail="Cannot uninstall built-in plugins")
+            raise HTTPException(
+                status_code=400, detail="Cannot uninstall built-in plugins"
+            )
         self.registry.unregister(name)
         record = self.db.query(PluginRecord).filter(PluginRecord.name == name).first()
         if record:
@@ -90,6 +104,7 @@ class PluginService:
 
     def get_available_hooks(self) -> list:
         from app.plugins import HookType
+
         return [{"name": h.value, "key": h.name} for h in HookType]
 
     def emit_hook(self, hook_type: str, **kwargs):

@@ -1,5 +1,15 @@
 import enum
-from sqlalchemy import Column, Integer, String, Date, Enum, ForeignKey, Text, Boolean, Float
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Date,
+    Enum,
+    ForeignKey,
+    Text,
+    Boolean,
+    Float,
+)
 from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
 
@@ -27,7 +37,9 @@ class LeaveType(BaseModel):
     max_days_per_year = Column(Integer, default=12, nullable=False)
     is_paid = Column(Boolean, default=True, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
-    applies_to = Column(Enum(ApplicantType), default=ApplicantType.TEACHER, nullable=False)
+    applies_to = Column(
+        Enum(ApplicantType), default=ApplicantType.TEACHER, nullable=False
+    )
     color = Column(String(10), default="#3D5EE1", nullable=False)
 
     # Relationships
@@ -43,23 +55,33 @@ class LeaveApplication(BaseModel):
     __tablename__ = "leave_applications"
 
     applicant_type = Column(Enum(ApplicantType), nullable=False)
-    teacher_id = Column(Integer, ForeignKey("teachers.id", ondelete="CASCADE"), nullable=True)
-    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=True)
-    leave_type_id = Column(Integer, ForeignKey("leave_types.id", ondelete="CASCADE"), nullable=False)
+    teacher_id = Column(
+        Integer, ForeignKey("teachers.id", ondelete="CASCADE"), nullable=True
+    )
+    student_id = Column(
+        Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=True
+    )
+    leave_type_id = Column(
+        Integer, ForeignKey("leave_types.id", ondelete="CASCADE"), nullable=False
+    )
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     days = Column(Float, default=1, nullable=False)
     reason = Column(Text, nullable=False)
     status = Column(Enum(LeaveStatus), default=LeaveStatus.PENDING, nullable=False)
     admin_remarks = Column(Text, nullable=True)
-    approved_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    approved_by = Column(
+        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
     academic_year = Column(String(20), nullable=False, default="2025-26")
 
     # Relationships
     leave_type = relationship("LeaveType", back_populates="applications")
     teacher = relationship("Teacher", backref="leave_applications")
     student = relationship("Student", backref="leave_applications")
-    approver = relationship("User", backref="approved_leaves", foreign_keys=[approved_by])
+    approver = relationship(
+        "User", backref="approved_leaves", foreign_keys=[approved_by]
+    )
 
     def __repr__(self):
         return f"<LeaveApplication(type={self.applicant_type}, status={self.status})>"

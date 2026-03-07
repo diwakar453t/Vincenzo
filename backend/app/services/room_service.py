@@ -105,15 +105,15 @@ class RoomService:
             .count()
         )
         if assigned_count > 0:
-            raise ValueError("Cannot delete room with assigned classes. Unassign classes first.")
+            raise ValueError(
+                "Cannot delete room with assigned classes. Unassign classes first."
+            )
 
         self.db.delete(room)
         self.db.commit()
         return True
 
-    def assign_room_to_class(
-        self, room_id: int, class_id: int, tenant_id: str
-    ) -> bool:
+    def assign_room_to_class(self, room_id: int, class_id: int, tenant_id: str) -> bool:
         """Assign a room to a class"""
         room = self.get_room(room_id, tenant_id)
         if not room:
@@ -176,7 +176,9 @@ class RoomService:
             "capacity": room.capacity,
             "current_occupancy": occupancy,
             "available_seats": max(0, room.capacity - occupancy),
-            "occupancy_percentage": round((occupancy / room.capacity * 100), 1) if room.capacity > 0 else 0,
+            "occupancy_percentage": round((occupancy / room.capacity * 100), 1)
+            if room.capacity > 0
+            else 0,
             "assigned_classes": len(assigned_classes),
             "is_overcapacity": occupancy > room.capacity,
         }

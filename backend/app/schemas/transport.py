@@ -1,12 +1,14 @@
 """
 Transport Management schemas
 """
+
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 
 
 # ─── Route ───────────────────────────────────────────────────────────────
+
 
 class RouteCreate(BaseModel):
     route_name: str
@@ -70,6 +72,7 @@ class RouteResponse(BaseModel):
 
 
 # ─── Vehicle ────────────────────────────────────────────────────────────
+
 
 class VehicleCreate(BaseModel):
     vehicle_number: str
@@ -141,6 +144,7 @@ class VehicleResponse(BaseModel):
 
 # ─── Assignment ──────────────────────────────────────────────────────────
 
+
 class AssignmentCreate(BaseModel):
     student_id: int
     route_id: int
@@ -182,17 +186,21 @@ class AssignmentResponse(BaseModel):
 
 # ─── Lists & Stats ──────────────────────────────────────────────────────
 
+
 class RouteListResponse(BaseModel):
     routes: List[RouteResponse]
     total: int
+
 
 class VehicleListResponse(BaseModel):
     vehicles: List[VehicleResponse]
     total: int
 
+
 class AssignmentListResponse(BaseModel):
     assignments: List[AssignmentResponse]
     total: int
+
 
 class TransportStatsResponse(BaseModel):
     total_routes: int

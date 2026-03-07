@@ -14,6 +14,7 @@ class AttendanceStatusEnum(str, Enum):
 
 # ─── Student Attendance ─────────────────────────────────────────────────
 
+
 class StudentAttendanceCreate(BaseModel):
     student_id: int
     class_id: int
@@ -25,10 +26,11 @@ class StudentAttendanceCreate(BaseModel):
 
 class StudentAttendanceBulk(BaseModel):
     """Bulk mark attendance for a class on a date."""
+
     class_id: int
     date: date
     academic_year: str = "2025-26"
-    entries: List[dict]   # [{ student_id, status, remarks? }]
+    entries: List[dict]  # [{ student_id, status, remarks? }]
 
 
 class StudentAttendanceUpdate(BaseModel):
@@ -62,6 +64,7 @@ class StudentAttendanceListResponse(BaseModel):
 
 # ─── Staff Attendance ───────────────────────────────────────────────────
 
+
 class StaffAttendanceCreate(BaseModel):
     teacher_id: int
     date: date
@@ -73,8 +76,9 @@ class StaffAttendanceCreate(BaseModel):
 
 class StaffAttendanceBulk(BaseModel):
     """Bulk mark staff attendance for a date."""
+
     date: date
-    entries: List[dict]   # [{ teacher_id, status, check_in?, check_out?, remarks? }]
+    entries: List[dict]  # [{ teacher_id, status, check_in?, check_out?, remarks? }]
 
 
 class StaffAttendanceUpdate(BaseModel):
@@ -107,6 +111,7 @@ class StaffAttendanceListResponse(BaseModel):
 
 
 # ─── Statistics & Reports ───────────────────────────────────────────────
+
 
 class AttendanceStats(BaseModel):
     total_days: int

@@ -5,6 +5,7 @@ from datetime import datetime
 
 # ─── GradeCategory Schemas ─────────────────────────────────────────────
 
+
 class GradeCategoryBase(BaseModel):
     name: str = Field(..., max_length=20)
     min_percentage: float
@@ -45,6 +46,7 @@ class GradeCategoryListResponse(BaseModel):
 
 # ─── Grade Schemas ─────────────────────────────────────────────────────
 
+
 class GradeBase(BaseModel):
     student_id: int
     exam_id: int
@@ -62,6 +64,7 @@ class GradeCreate(GradeBase):
 
 class GradeBulkEntry(BaseModel):
     """Bulk grade entry for one exam + subject (multiple students)."""
+
     exam_id: int
     subject_id: int
     class_id: int
@@ -99,6 +102,7 @@ class GradeListResponse(BaseModel):
 
 
 # ─── GPA / Report Card ────────────────────────────────────────────────
+
 
 class SubjectGrade(BaseModel):
     subject_id: int

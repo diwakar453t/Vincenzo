@@ -4,9 +4,9 @@ from datetime import date, datetime
 from decimal import Decimal
 
 
-
 class TeacherBase(BaseModel):
     """Base schema for Teacher"""
+
     employee_id: str = Field(..., min_length=1, max_length=50)
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
@@ -18,17 +18,21 @@ class TeacherBase(BaseModel):
     qualification: Optional[str] = Field(None, max_length=255)
     specialization: Optional[str] = Field(None, max_length=255)
     salary: Optional[Decimal] = None
-    status: str = Field(default="active", pattern="^(active|inactive|on_leave|resigned)$")
+    status: str = Field(
+        default="active", pattern="^(active|inactive|on_leave|resigned)$"
+    )
     photo_url: Optional[str] = Field(None, max_length=500)
 
 
 class TeacherCreate(TeacherBase):
     """Schema for creating a teacher"""
+
     user_id: int  # Required for creation
 
 
 class TeacherUpdate(BaseModel):
     """Schema for updating a teacher"""
+
     first_name: Optional[str] = Field(None, min_length=1, max_length=100)
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
     date_of_birth: Optional[date] = None
@@ -44,6 +48,7 @@ class TeacherUpdate(BaseModel):
 
 class TeacherResponse(TeacherBase):
     """Schema for teacher response"""
+
     id: int
     user_id: int
     tenant_id: str
@@ -57,6 +62,7 @@ class TeacherResponse(TeacherBase):
 
 class TeacherListItem(BaseModel):
     """Schema for teacher list item (simplified)"""
+
     id: int
     employee_id: str
     first_name: str
@@ -73,6 +79,7 @@ class TeacherListItem(BaseModel):
 
 class TeacherListResponse(BaseModel):
     """Schema for paginated teacher list"""
+
     teachers: list[TeacherListItem]
     total: int
     skip: int

@@ -2,6 +2,7 @@
 Payment Service — Razorpay UPI integration
 Supports: payment initiation, verification, receipts, refunds, stats
 """
+
 import hashlib
 import hmac
 import uuid
@@ -24,7 +25,12 @@ RAZORPAY_ENABLED = os.getenv("RAZORPAY_ENABLED", "false").lower() == "true"
 # Try importing razorpay SDK
 try:
     import razorpay
-    razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if RAZORPAY_ENABLED else None
+
+    razorpay_client = (
+        razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+        if RAZORPAY_ENABLED
+        else None
+    )
 except ImportError:
     razorpay_client = None
     logger.warning("⚠️ razorpay SDK not installed. Payment gateway in DEMO mode.")
@@ -48,25 +54,29 @@ class PaymentService:
         receipt_num = f"{receipt_prefix}{uuid.uuid4().hex[:8].upper()}"
 
         # Create Razorpay order (or mock)
-        amount_paise = int(amount * 100)     # Razorpay uses paise
+        amount_paise = int(amount * 100)  # Razorpay uses paise
         order_data = None
 
         if razorpay_client and RAZORPAY_ENABLED:
             try:
-                order_data = razorpay_client.order.create({
-                    "amount": amount_paise,
-                    "currency": data.get("currency", "INR"),
-                    "receipt": receipt_num,
-                    "notes": {
-                        "tenant_id": tenant_id,
-                        "student_id": str(data.get("student_id", "")),
-                        "purpose": data.get("purpose", "tuition_fee"),
+                order_data = razorpay_client.order.create(
+                    {
+                        "amount": amount_paise,
+                        "currency": data.get("currency", "INR"),
+                        "receipt": receipt_num,
+                        "notes": {
+                            "tenant_id": tenant_id,
+                            "student_id": str(data.get("student_id", "")),
+                            "purpose": data.get("purpose", "tuition_fee"),
+                        },
                     }
-                })
+                )
                 logger.info(f"💳 Razorpay order created: {order_data['id']}")
             except Exception as e:
                 logger.error(f"Razorpay order creation failed: {e}")
-                raise HTTPException(status_code=502, detail=f"Payment gateway error: {str(e)}")
+                raise HTTPException(
+                    status_code=502, detail=f"Payment gateway error: {str(e)}"
+                )
         else:
             # Demo mode — generate mock order
             order_data = {
@@ -113,12 +123,18 @@ class PaymentService:
     # 2. Verify Payment (callback from frontend)
     # ═════════════════════════════════════════════════════════════════════
 
-    def verify_payment(self, tenant_id: str, order_id: str, payment_id: str, signature: str) -> dict:
+    def verify_payment(
+        self, tenant_id: str, order_id: str, payment_id: str, signature: str
+    ) -> dict:
         """Verify Razorpay payment signature and mark as completed."""
-        txn = self.db.query(PaymentTransaction).filter(
-            PaymentTransaction.order_id == order_id,
-            PaymentTransaction.tenant_id == tenant_id,
-        ).first()
+        txn = (
+            self.db.query(PaymentTransaction)
+            .filter(
+                PaymentTransaction.order_id == order_id,
+                PaymentTransaction.tenant_id == tenant_id,
+            )
+            .first()
+        )
         if not txn:
             raise HTTPException(status_code=404, detail="Transaction not found")
 
@@ -129,11 +145,13 @@ class PaymentService:
         is_valid = False
         if razorpay_client and RAZORPAY_ENABLED:
             try:
-                razorpay_client.utility.verify_payment_signature({
-                    "razorpay_order_id": order_id,
-                    "razorpay_payment_id": payment_id,
-                    "razorpay_signature": signature,
-                })
+                razorpay_client.utility.verify_payment_signature(
+                    {
+                        "razorpay_order_id": order_id,
+                        "razorpay_payment_id": payment_id,
+                        "razorpay_signature": signature,
+                    }
+                )
                 is_valid = True
             except Exception:
                 is_valid = False
@@ -142,7 +160,7 @@ class PaymentService:
             expected_sig = hmac.new(
                 RAZORPAY_KEY_SECRET.encode(),
                 f"{order_id}|{payment_id}".encode(),
-                hashlib.sha256
+                hashlib.sha256,
             ).hexdigest()
             is_valid = (signature == expected_sig) or signature.startswith("demo_sig_")
 
@@ -177,9 +195,13 @@ class PaymentService:
         if not order_id:
             return {"status": "ignored", "reason": "no order_id"}
 
-        txn = self.db.query(PaymentTransaction).filter(
-            PaymentTransaction.order_id == order_id,
-        ).first()
+        txn = (
+            self.db.query(PaymentTransaction)
+            .filter(
+                PaymentTransaction.order_id == order_id,
+            )
+            .first()
+        )
         if not txn:
             return {"status": "ignored", "reason": "transaction not found"}
 
@@ -211,17 +233,28 @@ class PaymentService:
 
     def get_receipt(self, txn_id: int, tenant_id: str) -> dict:
         """Generate/get payment receipt."""
-        txn = self.db.query(PaymentTransaction).filter(
-            PaymentTransaction.id == txn_id,
-            PaymentTransaction.tenant_id == tenant_id,
-        ).first()
+        txn = (
+            self.db.query(PaymentTransaction)
+            .filter(
+                PaymentTransaction.id == txn_id,
+                PaymentTransaction.tenant_id == tenant_id,
+            )
+            .first()
+        )
         if not txn:
             raise HTTPException(status_code=404, detail="Transaction not found")
         if txn.status not in [PaymentStatus.completed, PaymentStatus.captured]:
-            raise HTTPException(status_code=400, detail="Receipt only available for completed payments")
+            raise HTTPException(
+                status_code=400, detail="Receipt only available for completed payments"
+            )
 
         from app.models.settings import SchoolSettings
-        school = self.db.query(SchoolSettings).filter(SchoolSettings.tenant_id == tenant_id).first()
+
+        school = (
+            self.db.query(SchoolSettings)
+            .filter(SchoolSettings.tenant_id == tenant_id)
+            .first()
+        )
         school_name = school.school_name if school else "PreSkool"
 
         return {
@@ -231,8 +264,12 @@ class PaymentService:
             "payment_id": txn.payment_id,
             "amount": txn.amount,
             "currency": txn.currency,
-            "status": txn.status.value if hasattr(txn.status, 'value') else str(txn.status),
-            "purpose": txn.purpose.value if hasattr(txn.purpose, 'value') else str(txn.purpose),
+            "status": txn.status.value
+            if hasattr(txn.status, "value")
+            else str(txn.status),
+            "purpose": txn.purpose.value
+            if hasattr(txn.purpose, "value")
+            else str(txn.purpose),
             "payer_name": txn.payer_name,
             "student_id": txn.student_id,
             "paid_at": txn.paid_at,
@@ -243,25 +280,40 @@ class PaymentService:
     # 5. Refunds
     # ═════════════════════════════════════════════════════════════════════
 
-    def initiate_refund(self, txn_id: int, tenant_id: str, amount: float = None, reason: str = "Admin refund") -> dict:
+    def initiate_refund(
+        self,
+        txn_id: int,
+        tenant_id: str,
+        amount: float = None,
+        reason: str = "Admin refund",
+    ) -> dict:
         """Initiate a full or partial refund."""
-        txn = self.db.query(PaymentTransaction).filter(
-            PaymentTransaction.id == txn_id,
-            PaymentTransaction.tenant_id == tenant_id,
-        ).first()
+        txn = (
+            self.db.query(PaymentTransaction)
+            .filter(
+                PaymentTransaction.id == txn_id,
+                PaymentTransaction.tenant_id == tenant_id,
+            )
+            .first()
+        )
         if not txn:
             raise HTTPException(status_code=404, detail="Transaction not found")
         if txn.status not in [PaymentStatus.completed, PaymentStatus.captured]:
-            raise HTTPException(status_code=400, detail="Can only refund completed payments")
+            raise HTTPException(
+                status_code=400, detail="Can only refund completed payments"
+            )
 
         refund_amount = amount or txn.amount
 
         if razorpay_client and RAZORPAY_ENABLED and txn.payment_id:
             try:
-                refund_data = razorpay_client.payment.refund(txn.payment_id, {
-                    "amount": int(refund_amount * 100),
-                    "notes": {"reason": reason},
-                })
+                refund_data = razorpay_client.payment.refund(
+                    txn.payment_id,
+                    {
+                        "amount": int(refund_amount * 100),
+                        "notes": {"reason": reason},
+                    },
+                )
                 txn.refund_id = refund_data.get("id")
                 txn.refund_status = refund_data.get("status", "processed")
                 logger.info(f"💸 Razorpay refund initiated: {refund_data['id']}")
@@ -274,7 +326,11 @@ class PaymentService:
         txn.refund_amount = refund_amount
         txn.refund_reason = reason
         txn.refunded_at = datetime.utcnow()
-        txn.status = PaymentStatus.refunded if refund_amount >= txn.amount else PaymentStatus.partially_refunded
+        txn.status = (
+            PaymentStatus.refunded
+            if refund_amount >= txn.amount
+            else PaymentStatus.partially_refunded
+        )
         self.db.commit()
         self.db.refresh(txn)
         logger.info(f"💸 Refund ₹{refund_amount} for txn #{txn.id}")
@@ -284,8 +340,15 @@ class PaymentService:
     # 6. List & Stats
     # ═════════════════════════════════════════════════════════════════════
 
-    def list_transactions(self, tenant_id: str, status: str = None, student_id: int = None,
-                          purpose: str = None, limit: int = 50, offset: int = 0) -> dict:
+    def list_transactions(
+        self,
+        tenant_id: str,
+        status: str = None,
+        student_id: int = None,
+        purpose: str = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> dict:
         q = self.db.query(PaymentTransaction).filter(
             PaymentTransaction.tenant_id == tenant_id,
             PaymentTransaction.is_active,
@@ -298,14 +361,23 @@ class PaymentService:
             q = q.filter(PaymentTransaction.purpose == purpose)
 
         total = q.count()
-        txns = q.order_by(PaymentTransaction.created_at.desc()).offset(offset).limit(limit).all()
+        txns = (
+            q.order_by(PaymentTransaction.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
         return {"transactions": [self._txn_dict(t) for t in txns], "total": total}
 
     def get_transaction(self, txn_id: int, tenant_id: str) -> dict:
-        txn = self.db.query(PaymentTransaction).filter(
-            PaymentTransaction.id == txn_id,
-            PaymentTransaction.tenant_id == tenant_id,
-        ).first()
+        txn = (
+            self.db.query(PaymentTransaction)
+            .filter(
+                PaymentTransaction.id == txn_id,
+                PaymentTransaction.tenant_id == tenant_id,
+            )
+            .first()
+        )
         if not txn:
             raise HTTPException(status_code=404, detail="Transaction not found")
         return self._txn_dict(txn)
@@ -316,38 +388,86 @@ class PaymentService:
             PaymentTransaction.is_active,
         )
 
-        total_collected = base.filter(
-            PaymentTransaction.status.in_([PaymentStatus.completed, PaymentStatus.captured])
-        ).with_entities(func.coalesce(func.sum(PaymentTransaction.amount), 0)).scalar()
+        total_collected = (
+            base.filter(
+                PaymentTransaction.status.in_(
+                    [PaymentStatus.completed, PaymentStatus.captured]
+                )
+            )
+            .with_entities(func.coalesce(func.sum(PaymentTransaction.amount), 0))
+            .scalar()
+        )
 
-        total_pending = base.filter(
-            PaymentTransaction.status.in_([PaymentStatus.initiated, PaymentStatus.pending])
-        ).with_entities(func.coalesce(func.sum(PaymentTransaction.amount), 0)).scalar()
+        total_pending = (
+            base.filter(
+                PaymentTransaction.status.in_(
+                    [PaymentStatus.initiated, PaymentStatus.pending]
+                )
+            )
+            .with_entities(func.coalesce(func.sum(PaymentTransaction.amount), 0))
+            .scalar()
+        )
 
-        total_refunded = base.filter(
-            PaymentTransaction.status.in_([PaymentStatus.refunded, PaymentStatus.partially_refunded])
-        ).with_entities(func.coalesce(func.sum(PaymentTransaction.refund_amount), 0)).scalar()
+        total_refunded = (
+            base.filter(
+                PaymentTransaction.status.in_(
+                    [PaymentStatus.refunded, PaymentStatus.partially_refunded]
+                )
+            )
+            .with_entities(func.coalesce(func.sum(PaymentTransaction.refund_amount), 0))
+            .scalar()
+        )
 
         total_count = base.count()
-        completed_count = base.filter(PaymentTransaction.status.in_([PaymentStatus.completed, PaymentStatus.captured])).count()
-        failed_count = base.filter(PaymentTransaction.status == PaymentStatus.failed).count()
-        refunded_count = base.filter(PaymentTransaction.status.in_([PaymentStatus.refunded, PaymentStatus.partially_refunded])).count()
+        completed_count = base.filter(
+            PaymentTransaction.status.in_(
+                [PaymentStatus.completed, PaymentStatus.captured]
+            )
+        ).count()
+        failed_count = base.filter(
+            PaymentTransaction.status == PaymentStatus.failed
+        ).count()
+        refunded_count = base.filter(
+            PaymentTransaction.status.in_(
+                [PaymentStatus.refunded, PaymentStatus.partially_refunded]
+            )
+        ).count()
 
         # By method
-        method_stats = self.db.query(
-            PaymentTransaction.payment_method, func.count(), func.coalesce(func.sum(PaymentTransaction.amount), 0)
-        ).filter(
-            PaymentTransaction.tenant_id == tenant_id, PaymentTransaction.is_active,
-            PaymentTransaction.status.in_([PaymentStatus.completed, PaymentStatus.captured])
-        ).group_by(PaymentTransaction.payment_method).all()
+        method_stats = (
+            self.db.query(
+                PaymentTransaction.payment_method,
+                func.count(),
+                func.coalesce(func.sum(PaymentTransaction.amount), 0),
+            )
+            .filter(
+                PaymentTransaction.tenant_id == tenant_id,
+                PaymentTransaction.is_active,
+                PaymentTransaction.status.in_(
+                    [PaymentStatus.completed, PaymentStatus.captured]
+                ),
+            )
+            .group_by(PaymentTransaction.payment_method)
+            .all()
+        )
 
         # By purpose
-        purpose_stats = self.db.query(
-            PaymentTransaction.purpose, func.count(), func.coalesce(func.sum(PaymentTransaction.amount), 0)
-        ).filter(
-            PaymentTransaction.tenant_id == tenant_id, PaymentTransaction.is_active,
-            PaymentTransaction.status.in_([PaymentStatus.completed, PaymentStatus.captured])
-        ).group_by(PaymentTransaction.purpose).all()
+        purpose_stats = (
+            self.db.query(
+                PaymentTransaction.purpose,
+                func.count(),
+                func.coalesce(func.sum(PaymentTransaction.amount), 0),
+            )
+            .filter(
+                PaymentTransaction.tenant_id == tenant_id,
+                PaymentTransaction.is_active,
+                PaymentTransaction.status.in_(
+                    [PaymentStatus.completed, PaymentStatus.captured]
+                ),
+            )
+            .group_by(PaymentTransaction.purpose)
+            .all()
+        )
 
         recent = base.order_by(PaymentTransaction.created_at.desc()).limit(5).all()
 
@@ -359,8 +479,22 @@ class PaymentService:
             "completed_count": completed_count,
             "failed_count": failed_count,
             "refunded_count": refunded_count,
-            "by_method": [{"method": str(m.value) if hasattr(m, 'value') else str(m), "count": c, "amount": float(a)} for m, c, a in method_stats],
-            "by_purpose": [{"purpose": str(p.value) if hasattr(p, 'value') else str(p), "count": c, "amount": float(a)} for p, c, a in purpose_stats],
+            "by_method": [
+                {
+                    "method": str(m.value) if hasattr(m, "value") else str(m),
+                    "count": c,
+                    "amount": float(a),
+                }
+                for m, c, a in method_stats
+            ],
+            "by_purpose": [
+                {
+                    "purpose": str(p.value) if hasattr(p, "value") else str(p),
+                    "count": c,
+                    "amount": float(a),
+                }
+                for p, c, a in purpose_stats
+            ],
             "recent_transactions": [self._txn_dict(t) for t in recent],
         }
 
@@ -372,7 +506,7 @@ class PaymentService:
         d = {}
         for c in t.__table__.columns:
             val = getattr(t, c.name)
-            if hasattr(val, 'value'):
+            if hasattr(val, "value"):
                 val = val.value
             d[c.name] = val
         return d

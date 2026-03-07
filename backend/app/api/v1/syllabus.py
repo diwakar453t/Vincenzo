@@ -1,4 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response, UploadFile, File
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status,
+    Response,
+    UploadFile,
+    File,
+)
 from sqlalchemy.orm import Session
 from typing import Optional
 
@@ -7,9 +15,14 @@ from app.core.auth import get_current_user
 from app.core.config import settings
 from app.services.syllabus_service import SyllabusService
 from app.schemas.syllabus import (
-    SyllabusCreate, SyllabusUpdate, SyllabusResponse,
-    SyllabusListResponse, SyllabusListItem,
-    SyllabusTopicCreate, SyllabusTopicUpdate, SyllabusTopicResponse,
+    SyllabusCreate,
+    SyllabusUpdate,
+    SyllabusResponse,
+    SyllabusListResponse,
+    SyllabusListItem,
+    SyllabusTopicCreate,
+    SyllabusTopicUpdate,
+    SyllabusTopicResponse,
     DocumentUploadResponse,
 )
 from app.models.user import User
@@ -27,12 +40,15 @@ def _get_user(current_user: dict, db: Session) -> User:
 
 def _require_admin(user: User):
     if user.role not in ["admin", "super_admin"]:
-        raise HTTPException(status_code=403, detail="Only admins can perform this action")
+        raise HTTPException(
+            status_code=403, detail="Only admins can perform this action"
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Syllabus endpoints
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 @router.get("/", response_model=SyllabusListResponse)
 def list_syllabi(
@@ -46,7 +62,9 @@ def list_syllabi(
     """List syllabi with optional filters"""
     user = _get_user(current_user, db)
     service = SyllabusService(db)
-    items, total = service.get_syllabi(user.tenant_id, subject_id, class_id, status, search)
+    items, total = service.get_syllabi(
+        user.tenant_id, subject_id, class_id, status, search
+    )
     return SyllabusListResponse(
         syllabi=[SyllabusListItem(**item) for item in items],
         total=total,
@@ -122,7 +140,12 @@ def delete_syllabus(
 # Topic endpoints
 # ═══════════════════════════════════════════════════════════════════════════
 
-@router.post("/{syllabus_id}/topics", response_model=SyllabusTopicResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/{syllabus_id}/topics",
+    response_model=SyllabusTopicResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def add_topic(
     syllabus_id: int,
     data: SyllabusTopicCreate,
@@ -191,6 +214,7 @@ def toggle_topic_completion(
 # Document upload endpoints
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 @router.post("/topics/{topic_id}/upload", response_model=DocumentUploadResponse)
 async def upload_document(
     topic_id: int,
@@ -205,10 +229,15 @@ async def upload_document(
     # Validate file size
     contents = await file.read()
     if len(contents) > settings.MAX_UPLOAD_SIZE:
-        raise HTTPException(status_code=400, detail=f"File too large. Max size is {settings.MAX_UPLOAD_SIZE // (1024*1024)}MB")
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large. Max size is {settings.MAX_UPLOAD_SIZE // (1024 * 1024)}MB",
+        )
 
     service = SyllabusService(db)
-    topic = service.save_topic_document(topic_id, user.tenant_id, contents, file.filename or "document")
+    topic = service.save_topic_document(
+        topic_id, user.tenant_id, contents, file.filename or "document"
+    )
     if not topic:
         raise HTTPException(status_code=404, detail="Topic not found")
 

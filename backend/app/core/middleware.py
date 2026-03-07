@@ -7,6 +7,7 @@ TenantMiddleware:
 - Injects tenant context into request.state for downstream use
 - Rejects unknown tenants with 403
 """
+
 import time
 from typing import Callable, Optional, Dict
 from fastapi import Request, Response
@@ -15,8 +16,11 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.exceptions import PreSkoolException
 from app.core.config import settings
 from app.core.logging_config import (
-    current_tenant_id, current_request_id, current_user_id,
-    generate_request_id, get_logger,
+    current_tenant_id,
+    current_request_id,
+    current_user_id,
+    generate_request_id,
+    get_logger,
 )
 
 logger = get_logger("middleware")
@@ -27,11 +31,19 @@ _tenant_cache: Dict[str, dict] = {}  # {tenant_id: {"valid": bool, "expires": fl
 TENANT_CACHE_TTL = settings.TENANT_CACHE_TTL  # 300s default
 
 # Public paths that don't require tenant context
-PUBLIC_PATHS = frozenset({
-    "/", "/docs", "/redoc", "/openapi.json",
-    "/api/v1/health", "/api/v1/auth/login", "/api/v1/auth/register",
-    "/api/v1/auth/refresh", "/api/v1/auth/forgot-password",
-})
+PUBLIC_PATHS = frozenset(
+    {
+        "/",
+        "/docs",
+        "/redoc",
+        "/openapi.json",
+        "/api/v1/health",
+        "/api/v1/auth/login",
+        "/api/v1/auth/register",
+        "/api/v1/auth/refresh",
+        "/api/v1/auth/forgot-password",
+    }
+)
 
 
 def _is_public_path(path: str) -> bool:
@@ -167,7 +179,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
                 content={
                     "error": "Tenant identification required",
                     "detail": f"Provide {settings.TENANT_HEADER} header, "
-                              "use subdomain, or pass ?tenant_id= parameter",
+                    "use subdomain, or pass ?tenant_id= parameter",
                 },
             )
 
@@ -177,19 +189,24 @@ class TenantMiddleware(BaseHTTPMiddleware):
             return JSONResponse(
                 status_code=403,
                 # Issue 8: Generic message — do NOT reveal tenant ID in errors
-                content={"error": "Access denied", "detail": "Unknown or inactive tenant"},
+                content={
+                    "error": "Access denied",
+                    "detail": "Unknown or inactive tenant",
+                },
             )
 
         if cached is None:
             # Not in cache — validate against DB
             from app.core.database import SessionLocal
             from app.models.user import Tenant
+
             db = SessionLocal()
             try:
-                tenant = db.query(Tenant).filter(
-                    Tenant.id == tenant_id,
-                    Tenant.is_active
-                ).first()
+                tenant = (
+                    db.query(Tenant)
+                    .filter(Tenant.id == tenant_id, Tenant.is_active)
+                    .first()
+                )
                 is_valid = tenant is not None
                 _cache_tenant(tenant_id, is_valid)
 
@@ -197,7 +214,10 @@ class TenantMiddleware(BaseHTTPMiddleware):
                     return JSONResponse(
                         status_code=403,
                         # Issue 8: Generic message — do NOT reveal tenant ID in errors
-                        content={"error": "Access denied", "detail": "Unknown or inactive tenant"},
+                        content={
+                            "error": "Access denied",
+                            "detail": "Unknown or inactive tenant",
+                        },
                     )
             finally:
                 db.close()
@@ -218,7 +238,9 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
             return response
         except PreSkoolException as exc:
             tenant_id = getattr(request.state, "tenant_id", "-")
-            logger.error(f"[{tenant_id}] PreSkool Exception: {exc.message}", exc_info=True)
+            logger.error(
+                f"[{tenant_id}] PreSkool Exception: {exc.message}", exc_info=True
+            )
             return JSONResponse(
                 status_code=exc.status_code,
                 content={
@@ -229,7 +251,9 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
             )
         except Exception as exc:
             tenant_id = getattr(request.state, "tenant_id", "-")
-            logger.error(f"[{tenant_id}] Unhandled Exception: {str(exc)}", exc_info=True)
+            logger.error(
+                f"[{tenant_id}] Unhandled Exception: {str(exc)}", exc_info=True
+            )
             return JSONResponse(
                 status_code=500,
                 content={

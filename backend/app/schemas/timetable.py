@@ -5,6 +5,7 @@ from datetime import datetime
 
 # ─── Period Schemas ────────────────────────────────────────────────────
 
+
 class PeriodBase(BaseModel):
     day_of_week: str = Field(..., max_length=15)
     start_time: str = Field(..., max_length=10)  # HH:MM
@@ -12,7 +13,9 @@ class PeriodBase(BaseModel):
     subject_id: Optional[int] = None
     teacher_id: Optional[int] = None
     room_id: Optional[int] = None
-    period_type: str = Field(default="class", max_length=20)  # class, break, lunch, free
+    period_type: str = Field(
+        default="class", max_length=20
+    )  # class, break, lunch, free
 
 
 class PeriodCreate(PeriodBase):
@@ -43,6 +46,7 @@ class PeriodResponse(PeriodBase):
 
 
 # ─── Timetable Schemas ─────────────────────────────────────────────────
+
 
 class TimetableBase(BaseModel):
     class_id: int
@@ -93,6 +97,7 @@ class TimetableListResponse(BaseModel):
 
 # ─── Conflict Schema ──────────────────────────────────────────────────
 
+
 class ConflictItem(BaseModel):
     type: str  # teacher_conflict, room_conflict
     message: str
@@ -108,6 +113,7 @@ class ConflictCheckResponse(BaseModel):
 
 
 # ─── Bulk Period Creation ──────────────────────────────────────────────
+
 
 class BulkPeriodsCreate(BaseModel):
     periods: List[PeriodCreate]

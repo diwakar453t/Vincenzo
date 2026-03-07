@@ -1,8 +1,19 @@
 """
 Hostel Management models
 """
+
 import enum
-from sqlalchemy import Column, String, Integer, Float, Text, Boolean, Date, Enum, ForeignKey
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    Float,
+    Text,
+    Boolean,
+    Date,
+    Enum,
+    ForeignKey,
+)
 from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
 
@@ -53,7 +64,9 @@ class Hostel(BaseModel):
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
 
-    rooms = relationship("HostelRoom", back_populates="hostel", cascade="all, delete-orphan")
+    rooms = relationship(
+        "HostelRoom", back_populates="hostel", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<Hostel(name={self.name}, type={self.hostel_type})>"
@@ -62,13 +75,19 @@ class Hostel(BaseModel):
 class HostelRoom(BaseModel):
     __tablename__ = "hostel_rooms"
 
-    hostel_id = Column(Integer, ForeignKey("hostels.id", ondelete="CASCADE"), nullable=False)
+    hostel_id = Column(
+        Integer, ForeignKey("hostels.id", ondelete="CASCADE"), nullable=False
+    )
     room_number = Column(String(20), nullable=False)
     floor = Column(Integer, nullable=True, default=0)
-    room_type = Column(Enum(HostelRoomType), nullable=False, default=HostelRoomType.double)
+    room_type = Column(
+        Enum(HostelRoomType), nullable=False, default=HostelRoomType.double
+    )
     capacity = Column(Integer, nullable=False, default=2)
     occupied = Column(Integer, nullable=False, default=0)
-    status = Column(Enum(HostelRoomStatus), nullable=False, default=HostelRoomStatus.available)
+    status = Column(
+        Enum(HostelRoomStatus), nullable=False, default=HostelRoomStatus.available
+    )
     has_attached_bathroom = Column(Boolean, default=False, nullable=False)
     has_ac = Column(Boolean, default=False, nullable=False)
     has_wifi = Column(Boolean, default=False, nullable=False)
@@ -86,14 +105,22 @@ class HostelRoom(BaseModel):
 class RoomAllocation(BaseModel):
     __tablename__ = "room_allocations"
 
-    hostel_id = Column(Integer, ForeignKey("hostels.id", ondelete="CASCADE"), nullable=False)
-    room_id = Column(Integer, ForeignKey("hostel_rooms.id", ondelete="CASCADE"), nullable=False)
-    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    hostel_id = Column(
+        Integer, ForeignKey("hostels.id", ondelete="CASCADE"), nullable=False
+    )
+    room_id = Column(
+        Integer, ForeignKey("hostel_rooms.id", ondelete="CASCADE"), nullable=False
+    )
+    student_id = Column(
+        Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False
+    )
     bed_number = Column(String(10), nullable=True)
     allocation_date = Column(Date, nullable=False)
     vacating_date = Column(Date, nullable=True)
     expected_vacating_date = Column(Date, nullable=True)
-    status = Column(Enum(AllocationStatus), nullable=False, default=AllocationStatus.active)
+    status = Column(
+        Enum(AllocationStatus), nullable=False, default=AllocationStatus.active
+    )
     monthly_fee = Column(Float, nullable=False, default=0)
     fee_paid_till = Column(Date, nullable=True)
     remarks = Column(Text, nullable=True)

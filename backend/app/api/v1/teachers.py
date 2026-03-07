@@ -10,7 +10,7 @@ from app.schemas.teacher import (
     TeacherUpdate,
     TeacherResponse,
     TeacherListResponse,
-    TeacherListItem
+    TeacherListItem,
 )
 from app.models.user import User
 
@@ -25,19 +25,19 @@ def list_teachers(
     status: Optional[str] = None,
     specialization: Optional[str] = None,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """List all teachers with pagination and filtering"""
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
-    
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     # Only admins can view all teachers
     if user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Not authorized")
-    
+
     service = TeacherService(db)
     teachers, total = service.get_teachers(
         tenant_id=user.tenant_id,
@@ -45,9 +45,9 @@ def list_teachers(
         limit=limit,
         search=search,
         status=status,
-        specialization=specialization
+        specialization=specialization,
     )
-    
+
     # Convert to list items
     teacher_items = [
         TeacherListItem(
@@ -59,16 +59,13 @@ def list_teachers(
             phone=t.phone,
             specialization=t.specialization,
             status=t.status,
-            hire_date=t.hire_date
+            hire_date=t.hire_date,
         )
         for t in teachers
     ]
-    
+
     return TeacherListResponse(
-        teachers=teacher_items,
-        total=total,
-        skip=skip,
-        limit=limit
+        teachers=teacher_items, total=total, skip=skip, limit=limit
     )
 
 
@@ -76,17 +73,17 @@ def list_teachers(
 def create_teacher(
     teacher_data: TeacherCreate,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Create a new teacher"""
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
-    
+
     if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can create teachers")
-    
+
     service = TeacherService(db)
-    
+
     try:
         teacher = service.create_teacher(teacher_data, user.tenant_id)
         return TeacherResponse.model_validate(teacher)
@@ -98,21 +95,21 @@ def create_teacher(
 def get_teacher(
     teacher_id: int,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get a single teacher by ID"""
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
-    
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     service = TeacherService(db)
     teacher = service.get_teacher(teacher_id, user.tenant_id)
-    
+
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher not found")
-    
+
     return TeacherResponse.model_validate(teacher)
 
 
@@ -121,21 +118,21 @@ def update_teacher(
     teacher_id: int,
     teacher_data: TeacherUpdate,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Update a teacher"""
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
-    
+
     if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can update teachers")
-    
+
     service = TeacherService(db)
     teacher = service.update_teacher(teacher_id, teacher_data, user.tenant_id)
-    
+
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher not found")
-    
+
     return TeacherResponse.model_validate(teacher)
 
 
@@ -143,21 +140,21 @@ def update_teacher(
 def delete_teacher(
     teacher_id: int,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Delete (soft delete) a teacher"""
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
-    
+
     if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can delete teachers")
-    
+
     service = TeacherService(db)
     success = service.delete_teacher(teacher_id, user.tenant_id)
-    
+
     if not success:
         raise HTTPException(status_code=404, detail="Teacher not found")
-    
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -166,21 +163,23 @@ def assign_class_teacher(
     teacher_id: int,
     class_id: int,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Assign a teacher as class teacher"""
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
-    
+
     if not user or user.role not in ["admin", "super_admin"]:
-        raise HTTPException(status_code=403, detail="Only admins can assign class teachers")
-    
+        raise HTTPException(
+            status_code=403, detail="Only admins can assign class teachers"
+        )
+
     service = TeacherService(db)
     success = service.assign_class_as_teacher(teacher_id, class_id, user.tenant_id)
-    
+
     if not success:
         raise HTTPException(status_code=404, detail="Teacher or class not found")
-    
+
     return {"message": "Teacher assigned as class teacher successfully"}
 
 
@@ -190,19 +189,23 @@ def assign_subject_teacher(
     subject_id: int,
     class_id: int,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Assign a teacher to teach a subject in a class"""
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
-    
+
     if not user or user.role not in ["admin", "super_admin"]:
-        raise HTTPException(status_code=403, detail="Only admins can assign subject teachers")
-    
+        raise HTTPException(
+            status_code=403, detail="Only admins can assign subject teachers"
+        )
+
     service = TeacherService(db)
     success = service.assign_subject(teacher_id, subject_id, class_id, user.tenant_id)
-    
+
     if not success:
-        raise HTTPException(status_code=404, detail="Teacher, subject, or class not found")
-    
+        raise HTTPException(
+            status_code=404, detail="Teacher, subject, or class not found"
+        )
+
     return {"message": "Teacher assigned to subject successfully"}

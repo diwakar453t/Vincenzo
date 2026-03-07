@@ -1,4 +1,5 @@
 """User schemas for request/response validation."""
+
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
@@ -6,53 +7,75 @@ from datetime import datetime
 
 # --- Request Schemas ---
 
+
 class UserRegisterRequest(BaseModel):
     """Schema for user registration."""
+
     email: str = Field(..., description="User email address")
-    password: str = Field(..., min_length=6, max_length=128, description="Password (min 6 chars)")
+    password: str = Field(
+        ..., min_length=6, max_length=128, description="Password (min 6 chars)"
+    )
     full_name: str = Field(..., min_length=2, max_length=255, description="Full name")
-    role: str = Field(default="student", description="User role: admin, teacher, student, parent")
+    role: str = Field(
+        default="student", description="User role: admin, teacher, student, parent"
+    )
     tenant_id: str = Field(..., description="Tenant identifier")
 
 
 class UserLoginRequest(BaseModel):
     """Schema for user login."""
+
     email: str = Field(..., description="User email address")
     password: str = Field(..., description="Password")
 
 
 class TokenRefreshRequest(BaseModel):
     """Schema for token refresh."""
+
     refresh_token: str = Field(..., description="Refresh token")
 
 
 class ChangePasswordRequest(BaseModel):
     """Schema for changing password."""
+
     current_password: str = Field(..., description="Current password")
-    new_password: str = Field(..., min_length=6, max_length=128, description="New password")
+    new_password: str = Field(
+        ..., min_length=6, max_length=128, description="New password"
+    )
 
 
 class ForgotPasswordRequest(BaseModel):
     """Schema for forgot password request."""
+
     email: str = Field(..., description="Email address associated with the account")
 
 
 class ResetPasswordRequest(BaseModel):
     """Schema for resetting password with token."""
+
     token: str = Field(..., description="Password reset token")
-    new_password: str = Field(..., min_length=6, max_length=128, description="New password")
+    new_password: str = Field(
+        ..., min_length=6, max_length=128, description="New password"
+    )
 
 
 class ValidatePasswordRequest(BaseModel):
     """Schema for password strength validation (Issue 3: replaces raw dict endpoint)."""
-    password: str = Field(..., min_length=1, max_length=128, description="Password to validate")
-    email: Optional[str] = Field(None, description="Optional email for context-aware validation")
+
+    password: str = Field(
+        ..., min_length=1, max_length=128, description="Password to validate"
+    )
+    email: Optional[str] = Field(
+        None, description="Optional email for context-aware validation"
+    )
 
 
 # --- Response Schemas ---
 
+
 class UserResponse(BaseModel):
     """Schema for user response (no password)."""
+
     id: int
     email: str
     full_name: str
@@ -69,6 +92,7 @@ class UserResponse(BaseModel):
 
 class TokenResponse(BaseModel):
     """Schema for token response after login."""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
@@ -78,5 +102,6 @@ class TokenResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     """Schema for simple message responses."""
+
     message: str
     success: bool = True

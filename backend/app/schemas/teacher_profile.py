@@ -5,6 +5,7 @@ from datetime import date
 
 class TeacherProfileResponse(BaseModel):
     """Teacher profile information"""
+
     id: int
     employee_id: str
     first_name: str
@@ -17,13 +18,14 @@ class TeacherProfileResponse(BaseModel):
     hire_date: date
     photo_url: Optional[str]
     user_id: int
-    
+
     class Config:
         from_attributes = True
 
 
 class TeacherClassInfo(BaseModel):
     """Information about a class assigned to teacher"""
+
     id: int
     name: str
     grade_level: int
@@ -35,6 +37,7 @@ class TeacherClassInfo(BaseModel):
 
 class TeacherStudentInfo(BaseModel):
     """Student information for teacher's view"""
+
     id: int
     student_id: str
     full_name: str
@@ -46,6 +49,7 @@ class TeacherStudentInfo(BaseModel):
 
 class GradeEntry(BaseModel):
     """Grade entry/update schema"""
+
     student_id: int
     subject_id: int
     class_id: int
@@ -58,6 +62,7 @@ class GradeEntry(BaseModel):
 
 class AssignmentCreate(BaseModel):
     """Create assignment schema"""
+
     title: str = Field(..., min_length=1, max_length=200)
     description: Optional[str]
     subject_id: int
@@ -68,6 +73,7 @@ class AssignmentCreate(BaseModel):
 
 class AssignmentUpdate(BaseModel):
     """Update assignment schema"""
+
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str]
     due_date: Optional[date]
@@ -76,6 +82,7 @@ class AssignmentUpdate(BaseModel):
 
 class AssignmentResponse(BaseModel):
     """Assignment response"""
+
     id: int
     title: str
     description: Optional[str]
@@ -90,6 +97,7 @@ class AssignmentResponse(BaseModel):
 
 class AttendanceEntry(BaseModel):
     """Attendance marking schema"""
+
     class_id: int
     date: date
     attendance_records: List[dict]  # [{"student_id": 1, "status": "present"}]
@@ -97,12 +105,14 @@ class AttendanceEntry(BaseModel):
 
 class TeacherUpdateProfile(BaseModel):
     """Fields that teacher can update in their profile"""
+
     phone: Optional[str] = Field(None, max_length=20)
     photo_url: Optional[str] = Field(None, max_length=500)
 
 
 class TeacherScheduleItem(BaseModel):
     """Teaching schedule entry"""
+
     day: str
     period: int
     start_time: str

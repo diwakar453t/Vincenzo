@@ -10,6 +10,7 @@ Production-grade security hardening:
 6. Security Headers (HSTS, CSP, X-Frame-Options, etc.)
 7. Request Validation & Threat Detection
 """
+
 import re
 import time
 import html
@@ -30,12 +31,14 @@ logger = logging.getLogger("preskool.security")
 # 1. RATE LIMITING — Token Bucket Algorithm
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TokenBucket:
     """Token bucket rate limiter with burst support."""
+
     __slots__ = ("rate", "capacity", "tokens", "last_refill")
 
     def __init__(self, rate: float, capacity: int):
-        self.rate = rate          # Tokens per second
+        self.rate = rate  # Tokens per second
         self.capacity = capacity  # Max burst
         self.tokens = float(capacity)
         self.last_refill = time.monotonic()
@@ -59,7 +62,7 @@ class RateLimiter:
     """
     Multi-tier rate limiter:
     - Per IP: Prevents individual abuse
-    - Per tenant: Fair usage across colleges  
+    - Per tenant: Fair usage across colleges
     - Per endpoint: Protects sensitive operations (login, register)
     """
 
@@ -88,7 +91,8 @@ class RateLimiter:
         """
         # Per-IP: 120 req/min, burst 30
         ip_bucket = self._get_or_create(
-            self._ip_buckets, ip,
+            self._ip_buckets,
+            ip,
             rate=settings.RATE_LIMIT_PER_MINUTE / 60.0,
             capacity=settings.RATE_LIMIT_BURST,
         )
@@ -98,8 +102,9 @@ class RateLimiter:
         # Per-tenant: 600 req/min, burst 100 (shared across all users)
         if tenant_id:
             tenant_bucket = self._get_or_create(
-                self._tenant_buckets, tenant_id,
-                rate=10.0,   # 600/min
+                self._tenant_buckets,
+                tenant_id,
+                rate=10.0,  # 600/min
                 capacity=100,
             )
             if not tenant_bucket.consume():
@@ -110,8 +115,10 @@ class RateLimiter:
         if sensitive:
             ep_key = f"{ip}:{path}"
             ep_bucket = self._get_or_create(
-                self._endpoint_buckets, ep_key,
-                rate=sensitive[0], capacity=sensitive[1],
+                self._endpoint_buckets,
+                ep_key,
+                rate=sensitive[0],
+                capacity=sensitive[1],
             )
             if not ep_bucket.consume():
                 return False, ep_bucket.retry_after
@@ -126,11 +133,11 @@ class RateLimiter:
     def _get_sensitive_limit(self, path: str) -> Optional[Tuple[float, int]]:
         """Stricter limits for auth/sensitive endpoints."""
         sensitive_paths = {
-            "/api/v1/auth/login": (0.2, 5),         # 12/min, burst 5
-            "/api/v1/auth/register": (0.1, 3),       # 6/min, burst 3
+            "/api/v1/auth/login": (0.2, 5),  # 12/min, burst 5
+            "/api/v1/auth/register": (0.1, 3),  # 6/min, burst 3
             "/api/v1/auth/forgot-password": (0.05, 2),  # 3/min, burst 2
             "/api/v1/auth/reset-password": (0.1, 3),
-            "/api/v1/payments/initiate": (0.5, 5),   # 30/min, burst 5
+            "/api/v1/payments/initiate": (0.5, 5),  # 30/min, burst 5
         }
         return sensitive_paths.get(path)
 
@@ -139,7 +146,8 @@ class RateLimiter:
         now = time.monotonic()
         for store in (self._ip_buckets, self._tenant_buckets, self._endpoint_buckets):
             stale = [
-                k for k, v in store.items()
+                k
+                for k, v in store.items()
                 if now - v.last_refill > 300  # 5 min idle
             ]
             for k in stale:
@@ -189,6 +197,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 # ═══════════════════════════════════════════════════════════════════════
 # 2. SECURITY HEADERS MIDDLEWARE
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """
@@ -248,25 +257,31 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 # 3. CSRF PROTECTION (Double-Submit Cookie Pattern)
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class CSRFMiddleware(BaseHTTPMiddleware):
     """
     Double-submit cookie CSRF protection.
-    
+
     How it works:
     1. Server sets CSRF token in cookie (csrf_token)
     2. Frontend reads cookie and sends in X-CSRF-Token header
     3. Server validates that cookie value == header value
-    
+
     API-only requests with Authorization: Bearer are exempt
     (JWT is already a CSRF-proof mechanism).
     """
 
     SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
-    EXEMPT_PATHS = frozenset({
-        "/api/v1/auth/login", "/api/v1/auth/register",
-        "/api/v1/auth/refresh", "/api/v1/auth/forgot-password",
-        "/api/v1/webhooks/alerts", "/metrics",
-    })
+    EXEMPT_PATHS = frozenset(
+        {
+            "/api/v1/auth/login",
+            "/api/v1/auth/register",
+            "/api/v1/auth/refresh",
+            "/api/v1/auth/forgot-password",
+            "/api/v1/webhooks/alerts",
+            "/metrics",
+        }
+    )
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         # Safe methods don't need CSRF
@@ -317,6 +332,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 # ═══════════════════════════════════════════════════════════════════════
 # 4. INPUT SANITIZATION & VALIDATION
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class InputSanitizer:
     """
@@ -436,11 +452,17 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
             if not InputSanitizer.is_safe(value):
                 logger.warning(
                     "Malicious input in query parameter",
-                    extra={"param_key": key, "client_ip": request.client.host if request.client else "-"},
+                    extra={
+                        "param_key": key,
+                        "client_ip": request.client.host if request.client else "-",
+                    },
                 )
                 return JSONResponse(
                     status_code=400,
-                    content={"error": "Invalid input detected", "detail": f"Suspicious content in parameter: {key}"},
+                    content={
+                        "error": "Invalid input detected",
+                        "detail": f"Suspicious content in parameter: {key}",
+                    },
                 )
 
         # Check URL path — ONLY for path traversal (not SQL/XSS patterns,
@@ -463,6 +485,7 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
 # 5. PASSWORD POLICY ENGINE
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class PasswordPolicy:
     """
     Enforces strong password requirements.
@@ -470,17 +493,53 @@ class PasswordPolicy:
     """
 
     # Common weak passwords (top 100)
-    COMMON_PASSWORDS = frozenset({
-        "password", "123456", "12345678", "qwerty", "abc123",
-        "monkey", "1234567", "letmein", "trustno1", "dragon",
-        "baseball", "iloveyou", "master", "sunshine", "ashley",
-        "bailey", "shadow", "123123", "654321", "superman",
-        "qazwsx", "michael", "football", "password1", "password123",
-        "charlie", "aa123456", "donald", "password1!", "admin",
-        "welcome", "welcome1", "p@ssw0rd", "passw0rd", "preskool",
-        "preskool123", "school123", "teacher123", "student123",
-        "admin123", "college", "college123", "erp123",
-    })
+    COMMON_PASSWORDS = frozenset(
+        {
+            "password",
+            "123456",
+            "12345678",
+            "qwerty",
+            "abc123",
+            "monkey",
+            "1234567",
+            "letmein",
+            "trustno1",
+            "dragon",
+            "baseball",
+            "iloveyou",
+            "master",
+            "sunshine",
+            "ashley",
+            "bailey",
+            "shadow",
+            "123123",
+            "654321",
+            "superman",
+            "qazwsx",
+            "michael",
+            "football",
+            "password1",
+            "password123",
+            "charlie",
+            "aa123456",
+            "donald",
+            "password1!",
+            "admin",
+            "welcome",
+            "welcome1",
+            "p@ssw0rd",
+            "passw0rd",
+            "preskool",
+            "preskool123",
+            "school123",
+            "teacher123",
+            "student123",
+            "admin123",
+            "college",
+            "college123",
+            "erp123",
+        }
+    )
 
     @staticmethod
     def validate(password: str, email: str = "") -> dict:
@@ -542,7 +601,9 @@ class PasswordPolicy:
 
         # No sequential characters (e.g., 1234, abcd)
         if _has_sequential(password, 4):
-            errors.append("Password should not contain sequential characters (1234, abcd)")
+            errors.append(
+                "Password should not contain sequential characters (1234, abcd)"
+            )
 
         # Strength assessment
         if score >= 5:
@@ -570,9 +631,9 @@ def _has_sequential(password: str, length: int) -> bool:
     pw_lower = password.lower()
     for seq in sequences:
         for i in range(len(seq) - length + 1):
-            if seq[i:i + length] in pw_lower:
+            if seq[i : i + length] in pw_lower:
                 return True
-            if seq[i:i + length][::-1] in pw_lower:
+            if seq[i : i + length][::-1] in pw_lower:
                 return True
     return False
 
@@ -581,22 +642,23 @@ def _has_sequential(password: str, length: int) -> bool:
 # 6. ACCOUNT LOCKOUT MECHANISM
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class AccountLockout:
     """
     Tracks failed login attempts and locks accounts after threshold.
-    
+
     Policy:
     - 5 failed attempts → 15 min lockout
     - 10 failed attempts → 1 hour lockout
     - 20 failed attempts → 24 hour lockout (admin reset required)
-    
+
     Uses in-memory store (production: use Redis for distributed state).
     """
 
     THRESHOLDS = [
-        (5, 900),      # 5 attempts → 15 min lock
-        (10, 3600),    # 10 attempts → 1 hour lock
-        (20, 86400),   # 20 attempts → 24 hour lock
+        (5, 900),  # 5 attempts → 15 min lock
+        (10, 3600),  # 10 attempts → 1 hour lock
+        (20, 86400),  # 20 attempts → 24 hour lock
     ]
 
     def __init__(self):
@@ -611,9 +673,10 @@ class AccountLockout:
         now = time.time()
         email_lower = email.lower()
 
-        entry = self._attempts.get(email_lower, {
-            "count": 0, "locked_until": 0, "last_attempt": 0, "ips": set()
-        })
+        entry = self._attempts.get(
+            email_lower,
+            {"count": 0, "locked_until": 0, "last_attempt": 0, "ips": set()},
+        )
 
         # Reset if last attempt was >1 hour ago
         if now - entry.get("last_attempt", 0) > 3600:
@@ -695,6 +758,7 @@ account_lockout = AccountLockout()
 # 7. TLS/HTTPS ENFORCEMENT MIDDLEWARE
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
     """
     Redirect HTTP → HTTPS in production.
@@ -721,6 +785,7 @@ class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
 # 8. SECURITY AUDIT LOGGER
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class SecurityAuditLogger:
     """Log security-relevant events for compliance and forensics."""
 
@@ -728,21 +793,36 @@ class SecurityAuditLogger:
     def log_login_success(email: str, ip: str, tenant_id: str = None):
         logger.info(
             f"AUTH_SUCCESS: email={email}, ip={ip}, tenant={tenant_id}",
-            extra={"event": "auth_success", "email": email, "client_ip": ip, "tenant_id": tenant_id},
+            extra={
+                "event": "auth_success",
+                "email": email,
+                "client_ip": ip,
+                "tenant_id": tenant_id,
+            },
         )
 
     @staticmethod
     def log_login_failure(email: str, ip: str, reason: str = "invalid_credentials"):
         logger.warning(
             f"AUTH_FAILURE: email={email}, ip={ip}, reason={reason}",
-            extra={"event": "auth_failure", "email": email, "client_ip": ip, "reason": reason},
+            extra={
+                "event": "auth_failure",
+                "email": email,
+                "client_ip": ip,
+                "reason": reason,
+            },
         )
 
     @staticmethod
     def log_account_locked(email: str, ip: str, duration: int):
         logger.warning(
             f"ACCOUNT_LOCKED: email={email}, ip={ip}, duration={duration}s",
-            extra={"event": "account_locked", "email": email, "client_ip": ip, "duration": duration},
+            extra={
+                "event": "account_locked",
+                "email": email,
+                "client_ip": ip,
+                "duration": duration,
+            },
         )
 
     @staticmethod
@@ -773,6 +853,7 @@ audit = SecurityAuditLogger()
 # ═══════════════════════════════════════════════════════════════════════
 # SETUP: Wire all security middleware into FastAPI
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def setup_security(app):
     """

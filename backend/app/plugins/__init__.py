@@ -1,6 +1,7 @@
 """
 Plugin system — base interface, lifecycle, and hooks
 """
+
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Callable, TYPE_CHECKING
 from dataclasses import dataclass, field
@@ -23,6 +24,7 @@ class PluginStatus(str, Enum):
 
 class HookType(str, Enum):
     """Predefined hook points in the application lifecycle."""
+
     # App lifecycle
     on_startup = "on_startup"
     on_shutdown = "on_shutdown"
@@ -63,24 +65,31 @@ class HookType(str, Enum):
 @dataclass
 class PluginMetadata:
     """Plugin descriptor / manifest."""
+
     name: str
     version: str
     description: str
     author: str = "PreSkool Team"
     category: str = "general"
     icon: str = "🔌"
-    requires: List[str] = field(default_factory=list)     # dependency plugins
-    hooks: List[str] = field(default_factory=list)         # hooks this plugin binds to
+    requires: List[str] = field(default_factory=list)  # dependency plugins
+    hooks: List[str] = field(default_factory=list)  # hooks this plugin binds to
     config_schema: Dict[str, Any] = field(default_factory=dict)  # configurable keys
     is_builtin: bool = False
     min_version: str = "1.0.0"
 
     def to_dict(self) -> dict:
         return {
-            "name": self.name, "version": self.version, "description": self.description,
-            "author": self.author, "category": self.category, "icon": self.icon,
-            "requires": self.requires, "hooks": self.hooks,
-            "config_schema": self.config_schema, "is_builtin": self.is_builtin,
+            "name": self.name,
+            "version": self.version,
+            "description": self.description,
+            "author": self.author,
+            "category": self.category,
+            "icon": self.icon,
+            "requires": self.requires,
+            "hooks": self.hooks,
+            "config_schema": self.config_schema,
+            "is_builtin": self.is_builtin,
             "min_version": self.min_version,
         }
 
@@ -131,7 +140,7 @@ class PluginContext:
 
     def __init__(self, registry: "PluginRegistry"):
         self.registry = registry
-        self._config: Dict[str, Dict[str, Any]] = {}      # plugin_name → config
+        self._config: Dict[str, Dict[str, Any]] = {}  # plugin_name → config
         self._db_factory = None
 
     def set_db_factory(self, factory):

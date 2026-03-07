@@ -2,6 +2,7 @@
 📌 Plugin Template
 Copy this file to create a new plugin. Rename the class and update metadata.
 """
+
 import logging
 from app.plugins import PluginBase, PluginMetadata, PluginContext
 
@@ -32,8 +33,16 @@ class MyCustomPlugin(PluginBase):
             icon="📌",
             hooks=["on_startup"],
             config_schema={
-                "enabled": {"type": "boolean", "default": True, "description": "Enable this plugin"},
-                "greeting": {"type": "string", "default": "Hello from plugin!", "description": "Custom greeting message"},
+                "enabled": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "Enable this plugin",
+                },
+                "greeting": {
+                    "type": "string",
+                    "default": "Hello from plugin!",
+                    "description": "Custom greeting message",
+                },
             },
             is_builtin=True,
         )
@@ -57,6 +66,7 @@ class MyCustomPlugin(PluginBase):
     def _on_startup(self, **kwargs):
         """Example hook callback — runs on app startup."""
         from app.plugins.registry import get_plugin_registry
+
         ctx = get_plugin_registry().context
         greeting = ctx.get_config("my_custom_plugin", "greeting", "Hello!")
         logger.info(f"📌 {greeting}")

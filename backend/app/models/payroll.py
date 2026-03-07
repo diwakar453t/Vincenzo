@@ -1,5 +1,15 @@
 import enum
-from sqlalchemy import Column, Integer, String, Float, Date, Enum, ForeignKey, Text, Boolean
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Float,
+    Date,
+    Enum,
+    ForeignKey,
+    Text,
+    Boolean,
+)
 from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
 
@@ -42,17 +52,26 @@ class SalaryStructure(BaseModel):
 
     __tablename__ = "salary_structures"
 
-    teacher_id = Column(Integer, ForeignKey("teachers.id", ondelete="CASCADE"), nullable=False, unique=True)
+    teacher_id = Column(
+        Integer,
+        ForeignKey("teachers.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
     gross_salary = Column(Float, nullable=False, default=0)
     net_salary = Column(Float, nullable=False, default=0)
     effective_from = Column(Date, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
 
     teacher = relationship("Teacher", backref="salary_structure")
-    items = relationship("SalaryStructureItem", back_populates="structure", cascade="all, delete-orphan")
+    items = relationship(
+        "SalaryStructureItem", back_populates="structure", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
-        return f"<SalaryStructure(teacher={self.teacher_id}, gross={self.gross_salary})>"
+        return (
+            f"<SalaryStructure(teacher={self.teacher_id}, gross={self.gross_salary})>"
+        )
 
 
 class SalaryStructureItem(BaseModel):
@@ -60,8 +79,12 @@ class SalaryStructureItem(BaseModel):
 
     __tablename__ = "salary_structure_items"
 
-    structure_id = Column(Integer, ForeignKey("salary_structures.id", ondelete="CASCADE"), nullable=False)
-    component_id = Column(Integer, ForeignKey("payroll_components.id", ondelete="CASCADE"), nullable=False)
+    structure_id = Column(
+        Integer, ForeignKey("salary_structures.id", ondelete="CASCADE"), nullable=False
+    )
+    component_id = Column(
+        Integer, ForeignKey("payroll_components.id", ondelete="CASCADE"), nullable=False
+    )
     amount = Column(Float, nullable=False, default=0)
 
     structure = relationship("SalaryStructure", back_populates="items")
@@ -76,7 +99,9 @@ class Payroll(BaseModel):
 
     __tablename__ = "payrolls"
 
-    teacher_id = Column(Integer, ForeignKey("teachers.id", ondelete="CASCADE"), nullable=False)
+    teacher_id = Column(
+        Integer, ForeignKey("teachers.id", ondelete="CASCADE"), nullable=False
+    )
     month = Column(Integer, nullable=False)
     year = Column(Integer, nullable=False)
     working_days = Column(Integer, default=30, nullable=False)
@@ -90,7 +115,9 @@ class Payroll(BaseModel):
     paid_date = Column(Date, nullable=True)
 
     teacher = relationship("Teacher", backref="payrolls")
-    items = relationship("PayrollItem", back_populates="payroll", cascade="all, delete-orphan")
+    items = relationship(
+        "PayrollItem", back_populates="payroll", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<Payroll(teacher={self.teacher_id}, {self.month}/{self.year}, net={self.net_salary})>"
@@ -101,8 +128,12 @@ class PayrollItem(BaseModel):
 
     __tablename__ = "payroll_items"
 
-    payroll_id = Column(Integer, ForeignKey("payrolls.id", ondelete="CASCADE"), nullable=False)
-    component_id = Column(Integer, ForeignKey("payroll_components.id", ondelete="CASCADE"), nullable=False)
+    payroll_id = Column(
+        Integer, ForeignKey("payrolls.id", ondelete="CASCADE"), nullable=False
+    )
+    component_id = Column(
+        Integer, ForeignKey("payroll_components.id", ondelete="CASCADE"), nullable=False
+    )
     component_name = Column(String(100), nullable=False)
     component_type = Column(Enum(ComponentType), nullable=False)
     amount = Column(Float, nullable=False, default=0)

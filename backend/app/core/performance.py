@@ -11,6 +11,7 @@ Features:
   - Groups repeated slow patterns for N+1 detection
   - Configurable via environment variables
 """
+
 import logging
 import os
 import time
@@ -31,7 +32,7 @@ LOG_ALL_REQUESTS = os.getenv("LOG_ALL_REQUESTS", "false").lower() == "true"
 class PerformanceMiddleware(BaseHTTPMiddleware):
     """
     Middleware that tracks request timing and flags slow endpoints.
-    
+
     Install in main.py:
         from app.core.performance import PerformanceMiddleware
         app.add_middleware(PerformanceMiddleware)
@@ -135,7 +136,9 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
                     "count": len(times),
                     "avg_ms": sum(times) / len(times),
                     "max_ms": max(times),
-                    "p95_ms": sorted(times)[int(len(times) * 0.95)] if len(times) > 1 else times[0],
+                    "p95_ms": sorted(times)[int(len(times) * 0.95)]
+                    if len(times) > 1
+                    else times[0],
                 }
                 for endpoint, times in self._slow_endpoints.items()
             ],
@@ -146,9 +149,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
         return {
             "total_requests": self._total_requests,
             "slow_requests": self._slow_requests,
-            "slow_rate": round(
-                self._slow_requests / max(self._total_requests, 1), 4
-            ),
+            "slow_rate": round(self._slow_requests / max(self._total_requests, 1), 4),
             "slow_threshold_ms": SLOW_REQUEST_THRESHOLD_MS,
             "top_slow_endpoints": top_slow,
         }
@@ -176,7 +177,7 @@ class SQLQueryLogger:
         context._pf_sql = statement
 
     def after(self, conn, cursor, statement, parameters, context, executemany):
-        if not hasattr(context, '_pf_start'):
+        if not hasattr(context, "_pf_start"):
             return
 
         duration_ms = (time.perf_counter() - context._pf_start) * 1000

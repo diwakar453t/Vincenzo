@@ -1,6 +1,7 @@
 """
 Search API endpoints
 """
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -28,7 +29,9 @@ def global_search(
 ):
     tenant_id = _get_tenant(current_user, db)
     module_list = modules.split(",") if modules else None
-    return SearchService(db).global_search(q, tenant_id, modules=module_list, limit=limit, offset=offset)
+    return SearchService(db).global_search(
+        q, tenant_id, modules=module_list, limit=limit, offset=offset
+    )
 
 
 @router.get("/autocomplete")

@@ -2,6 +2,7 @@
 Plugin Registry & Hook System
 Central registry for all plugins, hook management, and event dispatch.
 """
+
 import logging
 from typing import Dict, List, Callable, Optional
 from collections import defaultdict
@@ -20,7 +21,9 @@ class PluginRegistry:
         self._plugins: Dict[str, PluginBase] = {}
         self._metadata: Dict[str, PluginMetadata] = {}
         self._status: Dict[str, PluginStatus] = {}
-        self._hooks: Dict[str, List[dict]] = defaultdict(list)   # hook_type → [{callback, plugin_name}]
+        self._hooks: Dict[str, List[dict]] = defaultdict(
+            list
+        )  # hook_type → [{callback, plugin_name}]
         self._errors: Dict[str, str] = {}
         self.context = PluginContext(self)
         logger.info("🔌 Plugin registry initialized")
@@ -37,8 +40,13 @@ class PluginRegistry:
 
             # Check dependencies
             for dep in meta.requires:
-                if dep not in self._plugins or self._status.get(dep) != PluginStatus.active:
-                    logger.error(f"Plugin '{meta.name}' requires '{dep}' which is not active")
+                if (
+                    dep not in self._plugins
+                    or self._status.get(dep) != PluginStatus.active
+                ):
+                    logger.error(
+                        f"Plugin '{meta.name}' requires '{dep}' which is not active"
+                    )
                     self._errors[meta.name] = f"Missing dependency: {dep}"
                     return False
 
@@ -51,7 +59,9 @@ class PluginRegistry:
             for k, v in defaults.items():
                 self.context.set_config(meta.name, k, v)
 
-            logger.info(f"🔌 Plugin registered: {meta.icon} {meta.name} v{meta.version}")
+            logger.info(
+                f"🔌 Plugin registered: {meta.icon} {meta.name} v{meta.version}"
+            )
             return True
         except Exception as e:
             logger.error(f"Failed to register plugin: {e}")
@@ -130,7 +140,9 @@ class PluginRegistry:
 
     def register_hook(self, hook_type: str, callback: Callable, plugin_name: str = ""):
         """Register a callback for a hook type."""
-        self._hooks[hook_type].append({"callback": callback, "plugin_name": plugin_name})
+        self._hooks[hook_type].append(
+            {"callback": callback, "plugin_name": plugin_name}
+        )
         logger.debug(f"Hook registered: {hook_type} ← {plugin_name}")
 
     def unregister_hooks(self, plugin_name: str):
@@ -147,7 +159,9 @@ class PluginRegistry:
             try:
                 hook["callback"](**kwargs)
             except Exception as e:
-                logger.error(f"Hook error [{hook_type}] from '{hook['plugin_name']}': {e}")
+                logger.error(
+                    f"Hook error [{hook_type}] from '{hook['plugin_name']}': {e}"
+                )
 
     def get_hooks(self, hook_type: str) -> List[dict]:
         """Get all registered hooks for a type."""
@@ -159,12 +173,14 @@ class PluginRegistry:
         """List all plugins with their status."""
         result = []
         for name, meta in self._metadata.items():
-            result.append({
-                **meta.to_dict(),
-                "status": self._status.get(name, PluginStatus.installed).value,
-                "error": self._errors.get(name),
-                "config": self.context.get_all_config(name),
-            })
+            result.append(
+                {
+                    **meta.to_dict(),
+                    "status": self._status.get(name, PluginStatus.installed).value,
+                    "error": self._errors.get(name),
+                    "config": self.context.get_all_config(name),
+                }
+            )
         return result
 
     def get_plugin(self, name: str) -> Optional[dict]:
@@ -189,7 +205,9 @@ class PluginRegistry:
         return {
             "total": len(self._plugins),
             "active": sum(1 for s in self._status.values() if s == PluginStatus.active),
-            "disabled": sum(1 for s in self._status.values() if s == PluginStatus.disabled),
+            "disabled": sum(
+                1 for s in self._status.values() if s == PluginStatus.disabled
+            ),
             "errors": sum(1 for s in self._status.values() if s == PluginStatus.error),
             "hooks_registered": sum(len(v) for v in self._hooks.values()),
         }

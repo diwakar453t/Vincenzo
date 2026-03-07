@@ -1,8 +1,19 @@
 """
 Sports Management models
 """
+
 import enum
-from sqlalchemy import Column, String, Integer, Float, Text, Boolean, Date, Enum, ForeignKey
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    Float,
+    Text,
+    Boolean,
+    Date,
+    Enum,
+    ForeignKey,
+)
 from app.models.base import BaseModel
 
 
@@ -57,7 +68,9 @@ class Sport(BaseModel):
     coach_name = Column(String(200), nullable=True)
     coach_phone = Column(String(20), nullable=True)
     venue = Column(String(200), nullable=True)
-    practice_schedule = Column(String(200), nullable=True)  # e.g., "Mon,Wed,Fri 4:00-5:30 PM"
+    practice_schedule = Column(
+        String(200), nullable=True
+    )  # e.g., "Mon,Wed,Fri 4:00-5:30 PM"
     max_participants = Column(Integer, nullable=False, default=30)
     current_participants = Column(Integer, nullable=False, default=0)
     season = Column(String(50), nullable=True)
@@ -73,14 +86,22 @@ class Sport(BaseModel):
 class SportParticipation(BaseModel):
     __tablename__ = "sport_participations"
 
-    sport_id = Column(Integer, ForeignKey("sports.id", ondelete="CASCADE"), nullable=False)
-    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    sport_id = Column(
+        Integer, ForeignKey("sports.id", ondelete="CASCADE"), nullable=False
+    )
+    student_id = Column(
+        Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False
+    )
     registration_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=True)
     position = Column(String(50), nullable=True)  # e.g. "Captain", "Goalkeeper"
     jersey_number = Column(String(10), nullable=True)
     fee_paid = Column(Boolean, default=False, nullable=False)
-    status = Column(Enum(ParticipationStatus), nullable=False, default=ParticipationStatus.registered)
+    status = Column(
+        Enum(ParticipationStatus),
+        nullable=False,
+        default=ParticipationStatus.registered,
+    )
     remarks = Column(Text, nullable=True)
 
     def __repr__(self):
@@ -90,11 +111,19 @@ class SportParticipation(BaseModel):
 class SportAchievement(BaseModel):
     __tablename__ = "sport_achievements"
 
-    sport_id = Column(Integer, ForeignKey("sports.id", ondelete="CASCADE"), nullable=False)
-    student_id = Column(Integer, ForeignKey("students.id", ondelete="SET NULL"), nullable=True)
+    sport_id = Column(
+        Integer, ForeignKey("sports.id", ondelete="CASCADE"), nullable=False
+    )
+    student_id = Column(
+        Integer, ForeignKey("students.id", ondelete="SET NULL"), nullable=True
+    )
     title = Column(String(300), nullable=False)
-    achievement_type = Column(Enum(AchievementType), nullable=False, default=AchievementType.participation)
-    level = Column(Enum(AchievementLevel), nullable=False, default=AchievementLevel.school)
+    achievement_type = Column(
+        Enum(AchievementType), nullable=False, default=AchievementType.participation
+    )
+    level = Column(
+        Enum(AchievementLevel), nullable=False, default=AchievementLevel.school
+    )
     event_name = Column(String(300), nullable=True)
     event_date = Column(Date, nullable=True)
     event_venue = Column(String(200), nullable=True)

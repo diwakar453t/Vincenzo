@@ -1,5 +1,15 @@
 import enum
-from sqlalchemy import Column, Integer, String, Float, Date, Enum, ForeignKey, Text, Boolean
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Float,
+    Date,
+    Enum,
+    ForeignKey,
+    Text,
+    Boolean,
+)
 from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
 
@@ -30,7 +40,9 @@ class FeeGroup(BaseModel):
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
 
-    fee_types = relationship("FeeType", back_populates="fee_group", cascade="all, delete-orphan")
+    fee_types = relationship(
+        "FeeType", back_populates="fee_group", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<FeeGroup({self.name})>"
@@ -41,7 +53,9 @@ class FeeType(BaseModel):
 
     __tablename__ = "fee_types"
 
-    fee_group_id = Column(Integer, ForeignKey("fee_groups.id", ondelete="CASCADE"), nullable=False)
+    fee_group_id = Column(
+        Integer, ForeignKey("fee_groups.id", ondelete="CASCADE"), nullable=False
+    )
     name = Column(String(100), nullable=False)
     code = Column(String(20), nullable=True)
     amount = Column(Float, nullable=False, default=0)
@@ -51,7 +65,9 @@ class FeeType(BaseModel):
     academic_year = Column(String(20), nullable=False, default="2025-26")
     is_active = Column(Boolean, default=True, nullable=False)
     description = Column(Text, nullable=True)
-    class_id = Column(Integer, ForeignKey("classes.id", ondelete="SET NULL"), nullable=True)
+    class_id = Column(
+        Integer, ForeignKey("classes.id", ondelete="SET NULL"), nullable=True
+    )
 
     fee_group = relationship("FeeGroup", back_populates="fee_types")
     class_ref = relationship("Class", backref="fee_types")
@@ -66,13 +82,19 @@ class StudentFeeAssignment(BaseModel):
 
     __tablename__ = "student_fee_assignments"
 
-    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
-    fee_type_id = Column(Integer, ForeignKey("fee_types.id", ondelete="CASCADE"), nullable=False)
-    amount = Column(Float, nullable=False, default=0)          # actual amount (can differ from fee_type)
+    student_id = Column(
+        Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False
+    )
+    fee_type_id = Column(
+        Integer, ForeignKey("fee_types.id", ondelete="CASCADE"), nullable=False
+    )
+    amount = Column(
+        Float, nullable=False, default=0
+    )  # actual amount (can differ from fee_type)
     discount = Column(Float, nullable=False, default=0)
-    net_amount = Column(Float, nullable=False, default=0)      # amount - discount
+    net_amount = Column(Float, nullable=False, default=0)  # amount - discount
     paid_amount = Column(Float, nullable=False, default=0)
-    balance = Column(Float, nullable=False, default=0)         # net_amount - paid_amount
+    balance = Column(Float, nullable=False, default=0)  # net_amount - paid_amount
     status = Column(Enum(PaymentStatus), default=PaymentStatus.UNPAID, nullable=False)
     due_date = Column(Date, nullable=True)
     academic_year = Column(String(20), nullable=False, default="2025-26")
@@ -89,12 +111,22 @@ class FeeCollection(BaseModel):
 
     __tablename__ = "fee_collections"
 
-    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
-    fee_type_id = Column(Integer, ForeignKey("fee_types.id", ondelete="CASCADE"), nullable=False)
-    assignment_id = Column(Integer, ForeignKey("student_fee_assignments.id", ondelete="SET NULL"), nullable=True)
+    student_id = Column(
+        Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False
+    )
+    fee_type_id = Column(
+        Integer, ForeignKey("fee_types.id", ondelete="CASCADE"), nullable=False
+    )
+    assignment_id = Column(
+        Integer,
+        ForeignKey("student_fee_assignments.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     receipt_number = Column(String(50), nullable=True)
     amount = Column(Float, nullable=False)
-    payment_method = Column(Enum(PaymentMethod), default=PaymentMethod.CASH, nullable=False)
+    payment_method = Column(
+        Enum(PaymentMethod), default=PaymentMethod.CASH, nullable=False
+    )
     payment_date = Column(Date, nullable=False)
     transaction_id = Column(String(100), nullable=True)
     remarks = Column(Text, nullable=True)

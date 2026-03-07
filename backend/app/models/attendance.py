@@ -17,10 +17,16 @@ class StudentAttendance(BaseModel):
 
     __tablename__ = "student_attendance"
 
-    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
-    class_id = Column(Integer, ForeignKey("classes.id", ondelete="CASCADE"), nullable=False)
+    student_id = Column(
+        Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False
+    )
+    class_id = Column(
+        Integer, ForeignKey("classes.id", ondelete="CASCADE"), nullable=False
+    )
     date = Column(Date, nullable=False)
-    status = Column(Enum(AttendanceStatus), default=AttendanceStatus.PRESENT, nullable=False)
+    status = Column(
+        Enum(AttendanceStatus), default=AttendanceStatus.PRESENT, nullable=False
+    )
     remarks = Column(Text, nullable=True)
     academic_year = Column(String(20), nullable=False, default="2025-26")
 
@@ -37,11 +43,15 @@ class StaffAttendance(BaseModel):
 
     __tablename__ = "staff_attendance"
 
-    teacher_id = Column(Integer, ForeignKey("teachers.id", ondelete="CASCADE"), nullable=False)
+    teacher_id = Column(
+        Integer, ForeignKey("teachers.id", ondelete="CASCADE"), nullable=False
+    )
     date = Column(Date, nullable=False)
-    status = Column(Enum(AttendanceStatus), default=AttendanceStatus.PRESENT, nullable=False)
-    check_in = Column(String(10), nullable=True)   # HH:MM
-    check_out = Column(String(10), nullable=True)   # HH:MM
+    status = Column(
+        Enum(AttendanceStatus), default=AttendanceStatus.PRESENT, nullable=False
+    )
+    check_in = Column(String(10), nullable=True)  # HH:MM
+    check_out = Column(String(10), nullable=True)  # HH:MM
     remarks = Column(Text, nullable=True)
 
     # Relationships

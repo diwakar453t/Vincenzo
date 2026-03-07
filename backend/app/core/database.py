@@ -7,6 +7,7 @@ Key design decisions:
 - Tenant-aware get_db() injects tenant_id filter context
 - Statement-level connection recycling to prevent stale connections
 """
+
 from sqlalchemy import create_engine, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -33,11 +34,11 @@ else:
         logger.info("🔌 Using PgBouncer — SQLAlchemy pool disabled (NullPool)")
     else:
         engine_kwargs["poolclass"] = QueuePool
-        engine_kwargs["pool_size"] = settings.DB_POOL_SIZE          # 50 connections
-        engine_kwargs["max_overflow"] = settings.DB_MAX_OVERFLOW    # 30 burst
-        engine_kwargs["pool_timeout"] = settings.DB_POOL_TIMEOUT   # 30s wait
-        engine_kwargs["pool_recycle"] = settings.DB_POOL_RECYCLE   # Recycle after 1800s
-        engine_kwargs["pool_pre_ping"] = True                      # Check connection health
+        engine_kwargs["pool_size"] = settings.DB_POOL_SIZE  # 50 connections
+        engine_kwargs["max_overflow"] = settings.DB_MAX_OVERFLOW  # 30 burst
+        engine_kwargs["pool_timeout"] = settings.DB_POOL_TIMEOUT  # 30s wait
+        engine_kwargs["pool_recycle"] = settings.DB_POOL_RECYCLE  # Recycle after 1800s
+        engine_kwargs["pool_pre_ping"] = True  # Check connection health
         logger.info(
             f"🔌 SQLAlchemy pool: size={settings.DB_POOL_SIZE}, "
             f"overflow={settings.DB_MAX_OVERFLOW}, "
@@ -53,12 +54,14 @@ engine = create_engine(settings.DATABASE_URL, **engine_kwargs)
 
 # Enable WAL mode for SQLite (better concurrency in dev)
 if is_sqlite:
+
     @event.listens_for(engine, "connect")
     def set_sqlite_pragma(dbapi_connection, connection_record):
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA journal_mode=WAL")
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
+
 
 # Create SessionLocal class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -95,11 +98,12 @@ def get_tenant_db(tenant_id: str):
 
 # ── Connection Pool Monitoring ────────────────────────────────────────
 if not is_sqlite and not settings.USE_PGBOUNCER:
+
     @event.listens_for(engine, "checkout")
     def on_checkout(dbapi_conn, connection_rec, connection_proxy):
         """Log when pool is getting exhausted (early warning)."""
         pool = engine.pool
-        if hasattr(pool, 'checkedout') and hasattr(pool, 'size'):
+        if hasattr(pool, "checkedout") and hasattr(pool, "size"):
             checked_out = pool.checkedout()
             pool_size = pool.size()
             if checked_out > pool_size * 0.8:

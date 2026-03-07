@@ -1,4 +1,5 @@
 """Health check router for PreSkool ERP."""
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -14,7 +15,7 @@ async def health_check():
     return {
         "status": "healthy",
         "app": settings.APP_NAME,
-        "version": settings.APP_VERSION
+        "version": settings.APP_VERSION,
     }
 
 
@@ -25,9 +26,9 @@ async def detailed_health_check(db: Session = Depends(get_db)):
         "status": "healthy",
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION,
-        "components": {}
+        "components": {},
     }
-    
+
     # Check database
     try:
         db.execute(text("SELECT 1"))
@@ -35,16 +36,17 @@ async def detailed_health_check(db: Session = Depends(get_db)):
     except Exception as e:
         health_status["status"] = "unhealthy"
         health_status["components"]["database"] = f"unhealthy: {str(e)}"
-    
+
     # Check Redis (optional, don't fail if unavailable)
     try:
         import redis
+
         redis_client = redis.from_url(settings.REDIS_URL)
         redis_client.ping()
         health_status["components"]["cache"] = "healthy"
     except Exception:
         health_status["components"]["cache"] = "unavailable (optional for local dev)"
-    
+
     return health_status
 
 
@@ -55,5 +57,5 @@ async def status():
         "api": "PreSkool ERP API",
         "version": settings.APP_VERSION,
         "environment": "development" if settings.DEBUG else "production",
-        "documentation": "/docs"
+        "documentation": "/docs",
     }

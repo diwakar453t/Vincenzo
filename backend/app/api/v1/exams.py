@@ -6,9 +6,16 @@ from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.services.exam_service import ExamService
 from app.schemas.exam import (
-    ExamCreate, ExamUpdate, ExamResponse, ExamListResponse, ExamListItem,
-    ExamScheduleCreate, ExamScheduleUpdate, ExamScheduleResponse,
-    ExamCalendarResponse, CalendarEvent,
+    ExamCreate,
+    ExamUpdate,
+    ExamResponse,
+    ExamListResponse,
+    ExamListItem,
+    ExamScheduleCreate,
+    ExamScheduleUpdate,
+    ExamScheduleResponse,
+    ExamCalendarResponse,
+    CalendarEvent,
 )
 from app.models.user import User
 
@@ -25,12 +32,15 @@ def _get_user(current_user: dict, db: Session) -> User:
 
 def _require_admin(user: User):
     if user.role not in ["admin", "super_admin"]:
-        raise HTTPException(status_code=403, detail="Only admins can perform this action")
+        raise HTTPException(
+            status_code=403, detail="Only admins can perform this action"
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # Exam endpoints
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @router.get("/", response_model=ExamListResponse)
 def list_exams(
@@ -43,7 +53,9 @@ def list_exams(
 ):
     user = _get_user(current_user, db)
     service = ExamService(db)
-    items, total = service.get_exams(user.tenant_id, class_id, status_filter, exam_type, search)
+    items, total = service.get_exams(
+        user.tenant_id, class_id, status_filter, exam_type, search
+    )
     return ExamListResponse(exams=[ExamListItem(**i) for i in items], total=total)
 
 
@@ -125,7 +137,12 @@ def delete_exam(
 # Schedule endpoints
 # ═══════════════════════════════════════════════════════════════════════
 
-@router.post("/{exam_id}/schedules", response_model=ExamScheduleResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/{exam_id}/schedules",
+    response_model=ExamScheduleResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def add_schedule(
     exam_id: int,
     data: ExamScheduleCreate,

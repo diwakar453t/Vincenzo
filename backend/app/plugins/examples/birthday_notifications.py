@@ -3,6 +3,7 @@
 Sends birthday wishes to students and teachers on their birthdays.
 Hooks into: daily_morning, on_startup
 """
+
 from datetime import date
 import logging
 from app.plugins import PluginBase, PluginMetadata, PluginContext
@@ -11,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class BirthdayNotificationsPlugin(PluginBase):
-
     def get_metadata(self) -> PluginMetadata:
         return PluginMetadata(
             name="birthday_notifications",
@@ -22,11 +22,31 @@ class BirthdayNotificationsPlugin(PluginBase):
             icon="🎂",
             hooks=["daily_morning", "on_startup"],
             config_schema={
-                "enabled": {"type": "boolean", "default": True, "description": "Enable birthday notifications"},
-                "include_students": {"type": "boolean", "default": True, "description": "Include student birthdays"},
-                "include_teachers": {"type": "boolean", "default": True, "description": "Include teacher birthdays"},
-                "wish_message": {"type": "string", "default": "🎉 Happy Birthday, {name}! Wishing you a wonderful day!", "description": "Birthday wish template"},
-                "notify_admin": {"type": "boolean", "default": True, "description": "Notify admin about today's birthdays"},
+                "enabled": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "Enable birthday notifications",
+                },
+                "include_students": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "Include student birthdays",
+                },
+                "include_teachers": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "Include teacher birthdays",
+                },
+                "wish_message": {
+                    "type": "string",
+                    "default": "🎉 Happy Birthday, {name}! Wishing you a wonderful day!",
+                    "description": "Birthday wish template",
+                },
+                "notify_admin": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "Notify admin about today's birthdays",
+                },
             },
             is_builtin=True,
         )
@@ -41,13 +61,19 @@ class BirthdayNotificationsPlugin(PluginBase):
         }
 
     def activate(self, context: PluginContext):
-        context.register_hook("daily_morning", self._check_birthdays, "birthday_notifications")
+        context.register_hook(
+            "daily_morning", self._check_birthdays, "birthday_notifications"
+        )
         context.register_hook("on_startup", self._on_startup, "birthday_notifications")
-        context.log("birthday_notifications", "🎂 Birthday notifications plugin activated")
+        context.log(
+            "birthday_notifications", "🎂 Birthday notifications plugin activated"
+        )
 
     def deactivate(self, context: PluginContext):
         context.unregister_hooks("birthday_notifications")
-        context.log("birthday_notifications", "Birthday notifications plugin deactivated")
+        context.log(
+            "birthday_notifications", "Birthday notifications plugin deactivated"
+        )
 
     def _on_startup(self, **kwargs):
         logger.info("🎂 Birthday plugin ready — will check birthdays daily")
@@ -56,6 +82,7 @@ class BirthdayNotificationsPlugin(PluginBase):
         """Check for today's birthdays and send notifications."""
         try:
             from app.plugins.registry import get_plugin_registry
+
             registry = get_plugin_registry()
             ctx = registry.context
 
@@ -72,35 +99,57 @@ class BirthdayNotificationsPlugin(PluginBase):
             # Check students
             if ctx.get_config("birthday_notifications", "include_students", True):
                 from app.models.student import Student
+
                 students = db.query(Student).all()
                 for s in students:
-                    if hasattr(s, 'date_of_birth') and s.date_of_birth:
+                    if hasattr(s, "date_of_birth") and s.date_of_birth:
                         dob = s.date_of_birth
-                        if hasattr(dob, 'date'):
+                        if hasattr(dob, "date"):
                             dob = dob.date()
                         if dob.month == today.month and dob.day == today.day:
-                            name = f"{s.first_name} {s.last_name}" if hasattr(s, 'first_name') else f"Student #{s.id}"
-                            birthdays.append({"type": "student", "id": s.id, "name": name})
+                            name = (
+                                f"{s.first_name} {s.last_name}"
+                                if hasattr(s, "first_name")
+                                else f"Student #{s.id}"
+                            )
+                            birthdays.append(
+                                {"type": "student", "id": s.id, "name": name}
+                            )
 
             # Check teachers
             if ctx.get_config("birthday_notifications", "include_teachers", True):
                 from app.models.teacher import Teacher
+
                 teachers = db.query(Teacher).all()
                 for t in teachers:
-                    if hasattr(t, 'date_of_birth') and t.date_of_birth:
+                    if hasattr(t, "date_of_birth") and t.date_of_birth:
                         dob = t.date_of_birth
-                        if hasattr(dob, 'date'):
+                        if hasattr(dob, "date"):
                             dob = dob.date()
                         if dob.month == today.month and dob.day == today.day:
-                            name = f"{t.first_name} {t.last_name}" if hasattr(t, 'first_name') else f"Teacher #{t.id}"
-                            birthdays.append({"type": "teacher", "id": t.id, "name": name})
+                            name = (
+                                f"{t.first_name} {t.last_name}"
+                                if hasattr(t, "first_name")
+                                else f"Teacher #{t.id}"
+                            )
+                            birthdays.append(
+                                {"type": "teacher", "id": t.id, "name": name}
+                            )
 
             if birthdays:
-                _wish_msg = ctx.get_config("birthday_notifications", "wish_message", "🎉 Happy Birthday, {name}!")
+                _wish_msg = ctx.get_config(
+                    "birthday_notifications",
+                    "wish_message",
+                    "🎉 Happy Birthday, {name}!",
+                )
                 for b in birthdays:
                     logger.info(
                         "Birthday notification sent",
-                        extra={"entity_type": b["type"], "entity_id": b["id"], "event": "birthday_notification"},
+                        extra={
+                            "entity_type": b["type"],
+                            "entity_id": b["id"],
+                            "event": "birthday_notification",
+                        },
                     )
 
                 logger.info(

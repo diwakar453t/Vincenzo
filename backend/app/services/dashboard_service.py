@@ -1,4 +1,5 @@
 """Dashboard service for business logic and data aggregation."""
+
 from typing import List
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
@@ -19,9 +20,7 @@ class DashboardService:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_statistics_for_role(
-        self, current_user: User
-    ) -> DashboardStatistics:
+    def get_statistics_for_role(self, current_user: User) -> DashboardStatistics:
         """Get dashboard statistics based on user role."""
         if current_user.role in [UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value]:
             return self._get_admin_dashboard(current_user)
@@ -43,21 +42,21 @@ class DashboardService:
             .filter(User.tenant_id == user.tenant_id)
             .scalar()
         )
-        
+
         total_students = (
             self.db.query(func.count(User.id))
             .filter(User.tenant_id == user.tenant_id)
             .filter(User.role == UserRole.STUDENT.value)
             .scalar()
         )
-        
+
         total_teachers = (
             self.db.query(func.count(User.id))
             .filter(User.tenant_id == user.tenant_id)
             .filter(User.role == UserRole.TEACHER.value)
             .scalar()
         )
-        
+
         (
             self.db.query(func.count(User.id))
             .filter(User.tenant_id == user.tenant_id)
@@ -445,11 +444,11 @@ class DashboardService:
             .filter(User.role == UserRole.STUDENT.value)
             .scalar()
         ) or 100  # Default to 100 if no students
-        
+
         present = int(total_students * 0.85)  # 85% attendance
-        absent = int(total_students * 0.10)   # 10% absent
+        absent = int(total_students * 0.10)  # 10% absent
         leave = total_students - present - absent  # Rest on leave
-        
+
         return AttendanceSummaryData(
             total_students=total_students,
             present=present,

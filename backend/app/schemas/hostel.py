@@ -1,12 +1,14 @@
 """
 Hostel Management schemas
 """
+
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 
 
 # ─── Hostel ──────────────────────────────────────────────────────────────
+
 
 class HostelCreate(BaseModel):
     name: str
@@ -58,6 +60,7 @@ class HostelResponse(BaseModel):
 
 
 # ─── Hostel Room ─────────────────────────────────────────────────────────
+
 
 class HostelRoomCreate(BaseModel):
     hostel_id: int
@@ -112,6 +115,7 @@ class HostelRoomResponse(BaseModel):
 
 # ─── Room Allocation ────────────────────────────────────────────────────
 
+
 class AllocationCreate(BaseModel):
     hostel_id: int
     room_id: int
@@ -154,17 +158,21 @@ class AllocationResponse(BaseModel):
 
 # ─── Lists & Stats ──────────────────────────────────────────────────────
 
+
 class HostelListResponse(BaseModel):
     hostels: List[HostelResponse]
     total: int
+
 
 class HostelRoomListResponse(BaseModel):
     rooms: List[HostelRoomResponse]
     total: int
 
+
 class AllocationListResponse(BaseModel):
     allocations: List[AllocationResponse]
     total: int
+
 
 class HostelStatsResponse(BaseModel):
     total_hostels: int

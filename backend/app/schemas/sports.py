@@ -1,12 +1,14 @@
 """
 Sports Management schemas
 """
+
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 
 
 # ─── Sport ───────────────────────────────────────────────────────────────
+
 
 class SportCreate(BaseModel):
     name: str
@@ -68,6 +70,7 @@ class SportResponse(BaseModel):
 
 # ─── Participation ──────────────────────────────────────────────────────
 
+
 class ParticipationCreate(BaseModel):
     sport_id: int
     student_id: int
@@ -106,6 +109,7 @@ class ParticipationResponse(BaseModel):
 
 
 # ─── Achievement ─────────────────────────────────────────────────────────
+
 
 class AchievementCreate(BaseModel):
     sport_id: int
@@ -153,17 +157,21 @@ class AchievementResponse(BaseModel):
 
 # ─── Lists & Stats ──────────────────────────────────────────────────────
 
+
 class SportListResponse(BaseModel):
     sports: List[SportResponse]
     total: int
+
 
 class ParticipationListResponse(BaseModel):
     participations: List[ParticipationResponse]
     total: int
 
+
 class AchievementListResponse(BaseModel):
     achievements: List[AchievementResponse]
     total: int
+
 
 class SportsStatsResponse(BaseModel):
     total_sports: int

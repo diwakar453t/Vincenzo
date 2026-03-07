@@ -10,6 +10,7 @@ Features:
 - Before/after values stored as hashed digest (privacy-preserving)
 - Retention: logs kept for 7 years (compliance), archived after 1 year
 """
+
 import enum
 from sqlalchemy import Column, Integer, String, Text, DateTime, Enum as SQLEnum, Index
 from sqlalchemy.sql import func
@@ -18,6 +19,7 @@ from app.core.database import Base
 
 class AuditAction(str, enum.Enum):
     """Actions that trigger audit log entries."""
+
     # Data operations
     CREATE = "create"
     READ = "read"
@@ -36,8 +38,8 @@ class AuditAction(str, enum.Enum):
     TOKEN_REFRESH = "token_refresh"
 
     # GDPR actions
-    DATA_EXPORT = "data_export"        # Right to portability
-    DATA_ERASURE = "data_erasure"      # Right to erasure
+    DATA_EXPORT = "data_export"  # Right to portability
+    DATA_ERASURE = "data_erasure"  # Right to erasure
     CONSENT_GIVEN = "consent_given"
     CONSENT_WITHDRAWN = "consent_withdrawn"
     DATA_RECTIFICATION = "data_rectification"
@@ -61,6 +63,7 @@ class AuditAction(str, enum.Enum):
 
 class AuditResource(str, enum.Enum):
     """Resource types that can be audited."""
+
     USER = "user"
     STUDENT = "student"
     TEACHER = "teacher"
@@ -101,13 +104,13 @@ class AuditLog(Base):
     )
 
     # Who
-    user_id = Column(Integer, nullable=True, index=True)      # Null for anonymous/system
-    user_email = Column(String(255), nullable=True)           # Stored for forensics
+    user_id = Column(Integer, nullable=True, index=True)  # Null for anonymous/system
+    user_email = Column(String(255), nullable=True)  # Stored for forensics
     user_role = Column(String(50), nullable=True)
     tenant_id = Column(String(50), nullable=True, index=True)
     client_ip = Column(String(50), nullable=True)
     user_agent = Column(String(512), nullable=True)
-    request_id = Column(String(64), nullable=True)            # Trace correlation
+    request_id = Column(String(64), nullable=True)  # Trace correlation
 
     # What
     action = Column(
@@ -120,25 +123,29 @@ class AuditLog(Base):
         nullable=False,
         index=True,
     )
-    resource_id = Column(String(255), nullable=True, index=True)  # ID of affected record
-    resource_name = Column(String(255), nullable=True)             # Human-readable name
+    resource_id = Column(
+        String(255), nullable=True, index=True
+    )  # ID of affected record
+    resource_name = Column(String(255), nullable=True)  # Human-readable name
 
     # Change details (privacy-preserving: hashed, not raw values)
     changes = Column(Text, nullable=True)  # JSON of {field: {before_hash, after_hash}}
     extra_data = Column(Text, nullable=True)  # JSON of additional context (sanitised)
 
     # Outcome
-    status = Column(String(20), nullable=False, default="success")  # success | failure | blocked
+    status = Column(
+        String(20), nullable=False, default="success"
+    )  # success | failure | blocked
     failure_reason = Column(String(512), nullable=True)
 
     # Tamper detection: each record hashes the previous record's hash
     # Forms an audit chain — any modification breaks the chain
-    record_hash = Column(String(64), nullable=True)          # SHA-256 of this record
-    previous_hash = Column(String(64), nullable=True)        # Hash of prior record (chain)
+    record_hash = Column(String(64), nullable=True)  # SHA-256 of this record
+    previous_hash = Column(String(64), nullable=True)  # Hash of prior record (chain)
 
     # GDPR specifics
-    legal_basis = Column(String(100), nullable=True)          # e.g., "legitimate_interest"
-    data_category = Column(String(50), nullable=True)         # e.g., "SENSITIVE_PII"
+    legal_basis = Column(String(100), nullable=True)  # e.g., "legitimate_interest"
+    data_category = Column(String(50), nullable=True)  # e.g., "SENSITIVE_PII"
 
     __table_args__ = (
         # Composite indexes for efficient querying

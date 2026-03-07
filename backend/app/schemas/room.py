@@ -5,13 +5,19 @@ from datetime import datetime
 
 class RoomBase(BaseModel):
     """Base schema for Room"""
+
     room_number: str = Field(..., min_length=1, max_length=20)
     name: Optional[str] = Field(None, max_length=100)
     building: Optional[str] = Field(None, max_length=100)
     floor: Optional[int] = None
-    room_type: str = Field(default="classroom", pattern="^(classroom|laboratory|computer_lab|library|auditorium|sports_hall|staff_room|other)$")
+    room_type: str = Field(
+        default="classroom",
+        pattern="^(classroom|laboratory|computer_lab|library|auditorium|sports_hall|staff_room|other)$",
+    )
     capacity: int = Field(default=40, ge=1, le=500)
-    status: str = Field(default="available", pattern="^(available|occupied|maintenance|reserved)$")
+    status: str = Field(
+        default="available", pattern="^(available|occupied|maintenance|reserved)$"
+    )
     has_projector: bool = False
     has_ac: bool = False
     has_whiteboard: bool = True
@@ -21,18 +27,25 @@ class RoomBase(BaseModel):
 
 class RoomCreate(RoomBase):
     """Schema for creating a room"""
+
     pass
 
 
 class RoomUpdate(BaseModel):
     """Schema for updating a room"""
+
     room_number: Optional[str] = Field(None, min_length=1, max_length=20)
     name: Optional[str] = Field(None, max_length=100)
     building: Optional[str] = Field(None, max_length=100)
     floor: Optional[int] = None
-    room_type: Optional[str] = Field(None, pattern="^(classroom|laboratory|computer_lab|library|auditorium|sports_hall|staff_room|other)$")
+    room_type: Optional[str] = Field(
+        None,
+        pattern="^(classroom|laboratory|computer_lab|library|auditorium|sports_hall|staff_room|other)$",
+    )
     capacity: Optional[int] = Field(None, ge=1, le=500)
-    status: Optional[str] = Field(None, pattern="^(available|occupied|maintenance|reserved)$")
+    status: Optional[str] = Field(
+        None, pattern="^(available|occupied|maintenance|reserved)$"
+    )
     has_projector: Optional[bool] = None
     has_ac: Optional[bool] = None
     has_whiteboard: Optional[bool] = None
@@ -42,6 +55,7 @@ class RoomUpdate(BaseModel):
 
 class AssignedClassInfo(BaseModel):
     """Info about a class assigned to a room"""
+
     id: int
     name: str
     grade_level: int
@@ -54,6 +68,7 @@ class AssignedClassInfo(BaseModel):
 
 class RoomResponse(RoomBase):
     """Schema for room response"""
+
     id: int
     tenant_id: str
     created_at: datetime
@@ -68,6 +83,7 @@ class RoomResponse(RoomBase):
 
 class RoomListItem(BaseModel):
     """Schema for room list item (simplified)"""
+
     id: int
     room_number: str
     name: Optional[str] = None
@@ -89,6 +105,7 @@ class RoomListItem(BaseModel):
 
 class RoomListResponse(BaseModel):
     """Schema for paginated room list"""
+
     rooms: list[RoomListItem]
     total: int
     skip: int

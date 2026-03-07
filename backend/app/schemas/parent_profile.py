@@ -5,6 +5,7 @@ from datetime import date
 
 class ParentProfileResponse(BaseModel):
     """Parent profile information"""
+
     id: int
     full_name: str
     email: str
@@ -12,13 +13,14 @@ class ParentProfileResponse(BaseModel):
     address: Optional[str]
     occupation: Optional[str]
     user_id: int
-    
+
     class Config:
         from_attributes = True
 
 
 class ParentChildInfo(BaseModel):
     """Basic child information for parent view"""
+
     id: int
     student_id: str
     full_name: str
@@ -32,6 +34,7 @@ class ParentChildInfo(BaseModel):
 
 class ChildDetailedInfo(BaseModel):
     """Detailed child profile"""
+
     id: int
     student_id: str
     first_name: str
@@ -55,6 +58,7 @@ class ChildDetailedInfo(BaseModel):
 
 class ChildGradeItem(BaseModel):
     """Individual grade entry"""
+
     subject_name: str
     subject_code: str
     term: str
@@ -67,6 +71,7 @@ class ChildGradeItem(BaseModel):
 
 class ChildGradeReport(BaseModel):
     """Complete grade report for a child"""
+
     student_id: int
     student_name: str
     class_name: str
@@ -82,6 +87,7 @@ class ChildGradeReport(BaseModel):
 
 class ChildAttendanceDay(BaseModel):
     """Single day attendance record"""
+
     date: date
     status: str  # present, absent, late, holiday
     remarks: Optional[str]
@@ -89,6 +95,7 @@ class ChildAttendanceDay(BaseModel):
 
 class ChildAttendanceSummary(BaseModel):
     """Attendance summary for a child"""
+
     student_id: int
     student_name: str
     total_days: int
@@ -101,6 +108,7 @@ class ChildAttendanceSummary(BaseModel):
 
 class ChildAssignmentInfo(BaseModel):
     """Assignment information for parent view"""
+
     id: int
     title: str
     description: Optional[str]
@@ -116,6 +124,7 @@ class ChildAssignmentInfo(BaseModel):
 
 class FeeItem(BaseModel):
     """Individual fee item"""
+
     fee_type: str
     amount: float
     due_date: date
@@ -127,6 +136,7 @@ class FeeItem(BaseModel):
 
 class FeePaymentStatus(BaseModel):
     """Complete fee payment status"""
+
     student_id: int
     student_name: str
     academic_year: str
@@ -138,6 +148,7 @@ class FeePaymentStatus(BaseModel):
 
 class NotificationItem(BaseModel):
     """School notification"""
+
     id: int
     title: str
     message: str
@@ -148,6 +159,7 @@ class NotificationItem(BaseModel):
 
 class ParentUpdateProfile(BaseModel):
     """Fields that parent can update"""
+
     phone: Optional[str] = Field(None, max_length=20)
     address: Optional[str] = Field(None, max_length=500)
     occupation: Optional[str] = Field(None, max_length=100)

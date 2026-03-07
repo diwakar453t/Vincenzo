@@ -7,7 +7,12 @@ from typing import List, Optional
 from app.models.syllabus import Syllabus, SyllabusTopic
 from app.models.subject import Subject
 from app.models.class_model import Class
-from app.schemas.syllabus import SyllabusCreate, SyllabusUpdate, SyllabusTopicCreate, SyllabusTopicUpdate
+from app.schemas.syllabus import (
+    SyllabusCreate,
+    SyllabusUpdate,
+    SyllabusTopicCreate,
+    SyllabusTopicUpdate,
+)
 from app.core.config import settings
 
 
@@ -75,19 +80,29 @@ class SyllabusService:
         return [self._to_list_item(s) for s in syllabi], total
 
     def get_syllabus(self, syllabus_id: int, tenant_id: str) -> Optional[dict]:
-        s = self.db.query(Syllabus).filter(
-            Syllabus.id == syllabus_id, Syllabus.tenant_id == tenant_id
-        ).first()
+        s = (
+            self.db.query(Syllabus)
+            .filter(Syllabus.id == syllabus_id, Syllabus.tenant_id == tenant_id)
+            .first()
+        )
         if not s:
             return None
         return self._to_detail(s)
 
     def create_syllabus(self, data: SyllabusCreate, tenant_id: str) -> Syllabus:
         # Verify subject and class exist
-        subject = self.db.query(Subject).filter(Subject.id == data.subject_id, Subject.tenant_id == tenant_id).first()
+        subject = (
+            self.db.query(Subject)
+            .filter(Subject.id == data.subject_id, Subject.tenant_id == tenant_id)
+            .first()
+        )
         if not subject:
             raise ValueError("Subject not found")
-        cls = self.db.query(Class).filter(Class.id == data.class_id, Class.tenant_id == tenant_id).first()
+        cls = (
+            self.db.query(Class)
+            .filter(Class.id == data.class_id, Class.tenant_id == tenant_id)
+            .first()
+        )
         if not cls:
             raise ValueError("Class not found")
 
@@ -97,8 +112,14 @@ class SyllabusService:
         self.db.refresh(syllabus)
         return syllabus
 
-    def update_syllabus(self, syllabus_id: int, data: SyllabusUpdate, tenant_id: str) -> Optional[Syllabus]:
-        s = self.db.query(Syllabus).filter(Syllabus.id == syllabus_id, Syllabus.tenant_id == tenant_id).first()
+    def update_syllabus(
+        self, syllabus_id: int, data: SyllabusUpdate, tenant_id: str
+    ) -> Optional[Syllabus]:
+        s = (
+            self.db.query(Syllabus)
+            .filter(Syllabus.id == syllabus_id, Syllabus.tenant_id == tenant_id)
+            .first()
+        )
         if not s:
             return None
         for field, value in data.model_dump(exclude_unset=True).items():
@@ -108,7 +129,11 @@ class SyllabusService:
         return s
 
     def delete_syllabus(self, syllabus_id: int, tenant_id: str) -> bool:
-        s = self.db.query(Syllabus).filter(Syllabus.id == syllabus_id, Syllabus.tenant_id == tenant_id).first()
+        s = (
+            self.db.query(Syllabus)
+            .filter(Syllabus.id == syllabus_id, Syllabus.tenant_id == tenant_id)
+            .first()
+        )
         if not s:
             return False
         self.db.delete(s)
@@ -117,8 +142,14 @@ class SyllabusService:
 
     # ─── Topic CRUD ──────────────────────────────────────────────────────
 
-    def add_topic(self, syllabus_id: int, data: SyllabusTopicCreate, tenant_id: str) -> SyllabusTopic:
-        s = self.db.query(Syllabus).filter(Syllabus.id == syllabus_id, Syllabus.tenant_id == tenant_id).first()
+    def add_topic(
+        self, syllabus_id: int, data: SyllabusTopicCreate, tenant_id: str
+    ) -> SyllabusTopic:
+        s = (
+            self.db.query(Syllabus)
+            .filter(Syllabus.id == syllabus_id, Syllabus.tenant_id == tenant_id)
+            .first()
+        )
         if not s:
             raise ValueError("Syllabus not found")
 
@@ -132,8 +163,14 @@ class SyllabusService:
         self.db.refresh(topic)
         return topic
 
-    def update_topic(self, topic_id: int, data: SyllabusTopicUpdate, tenant_id: str) -> Optional[SyllabusTopic]:
-        t = self.db.query(SyllabusTopic).filter(SyllabusTopic.id == topic_id, SyllabusTopic.tenant_id == tenant_id).first()
+    def update_topic(
+        self, topic_id: int, data: SyllabusTopicUpdate, tenant_id: str
+    ) -> Optional[SyllabusTopic]:
+        t = (
+            self.db.query(SyllabusTopic)
+            .filter(SyllabusTopic.id == topic_id, SyllabusTopic.tenant_id == tenant_id)
+            .first()
+        )
         if not t:
             return None
         for field, value in data.model_dump(exclude_unset=True).items():
@@ -143,7 +180,11 @@ class SyllabusService:
         return t
 
     def delete_topic(self, topic_id: int, tenant_id: str) -> bool:
-        t = self.db.query(SyllabusTopic).filter(SyllabusTopic.id == topic_id, SyllabusTopic.tenant_id == tenant_id).first()
+        t = (
+            self.db.query(SyllabusTopic)
+            .filter(SyllabusTopic.id == topic_id, SyllabusTopic.tenant_id == tenant_id)
+            .first()
+        )
         if not t:
             return False
         # Remove associated file if exists
@@ -156,8 +197,14 @@ class SyllabusService:
         self.db.commit()
         return True
 
-    def toggle_topic_completion(self, topic_id: int, tenant_id: str) -> Optional[SyllabusTopic]:
-        t = self.db.query(SyllabusTopic).filter(SyllabusTopic.id == topic_id, SyllabusTopic.tenant_id == tenant_id).first()
+    def toggle_topic_completion(
+        self, topic_id: int, tenant_id: str
+    ) -> Optional[SyllabusTopic]:
+        t = (
+            self.db.query(SyllabusTopic)
+            .filter(SyllabusTopic.id == topic_id, SyllabusTopic.tenant_id == tenant_id)
+            .first()
+        )
         if not t:
             return None
         t.is_completed = not t.is_completed
@@ -168,8 +215,14 @@ class SyllabusService:
 
     # ─── Document Upload ─────────────────────────────────────────────────
 
-    def save_topic_document(self, topic_id: int, tenant_id: str, file_data: bytes, filename: str) -> Optional[SyllabusTopic]:
-        t = self.db.query(SyllabusTopic).filter(SyllabusTopic.id == topic_id, SyllabusTopic.tenant_id == tenant_id).first()
+    def save_topic_document(
+        self, topic_id: int, tenant_id: str, file_data: bytes, filename: str
+    ) -> Optional[SyllabusTopic]:
+        t = (
+            self.db.query(SyllabusTopic)
+            .filter(SyllabusTopic.id == topic_id, SyllabusTopic.tenant_id == tenant_id)
+            .first()
+        )
         if not t:
             return None
 
@@ -197,8 +250,14 @@ class SyllabusService:
         self.db.refresh(t)
         return t
 
-    def delete_topic_document(self, topic_id: int, tenant_id: str) -> Optional[SyllabusTopic]:
-        t = self.db.query(SyllabusTopic).filter(SyllabusTopic.id == topic_id, SyllabusTopic.tenant_id == tenant_id).first()
+    def delete_topic_document(
+        self, topic_id: int, tenant_id: str
+    ) -> Optional[SyllabusTopic]:
+        t = (
+            self.db.query(SyllabusTopic)
+            .filter(SyllabusTopic.id == topic_id, SyllabusTopic.tenant_id == tenant_id)
+            .first()
+        )
         if not t:
             return None
         if t.document_path:

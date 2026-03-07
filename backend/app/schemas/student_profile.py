@@ -5,6 +5,7 @@ from datetime import date
 
 class StudentProfileResponse(BaseModel):
     """Student profile information"""
+
     id: int
     student_id: str
     first_name: str
@@ -22,13 +23,14 @@ class StudentProfileResponse(BaseModel):
     emergency_contact_name: Optional[str]
     class_id: Optional[int]
     class_name: Optional[str]
-    
+
     class Config:
         from_attributes = True
 
 
 class StudentClassInfo(BaseModel):
     """Information about a class the student is enrolled in"""
+
     id: int
     name: str
     grade_level: int
@@ -40,6 +42,7 @@ class StudentClassInfo(BaseModel):
 
 class StudentScheduleItem(BaseModel):
     """A single schedule/timetable entry"""
+
     day: str  # Monday, Tuesday, etc.
     period: int
     start_time: str
@@ -52,6 +55,7 @@ class StudentScheduleItem(BaseModel):
 
 class StudentGradeItem(BaseModel):
     """A grade/mark for a subject"""
+
     subject_name: str
     subject_code: str
     term: str  # "Term 1", "Mid-term", etc.
@@ -65,6 +69,7 @@ class StudentGradeItem(BaseModel):
 
 class StudentAssignment(BaseModel):
     """Assignment information"""
+
     id: int
     title: str
     subject_name: str
@@ -81,6 +86,7 @@ class StudentAssignment(BaseModel):
 
 class StudentAttendanceSummary(BaseModel):
     """Attendance summary for student"""
+
     total_days: int
     present_days: int
     absent_days: int
@@ -92,6 +98,7 @@ class StudentAttendanceSummary(BaseModel):
 
 class StudentUpdateProfile(BaseModel):
     """Fields that student can update in their profile"""
+
     phone: Optional[str] = Field(None, max_length=20)
     photo_url: Optional[str] = Field(None, max_length=500)
     emergency_contact: Optional[str] = Field(None, max_length=20)
@@ -100,6 +107,7 @@ class StudentUpdateProfile(BaseModel):
 
 class StudentGradesResponse(BaseModel):
     """Response containing all grades"""
+
     grades: List[StudentGradeItem]
     gpa: float
     overall_percentage: float
@@ -108,6 +116,7 @@ class StudentGradesResponse(BaseModel):
 
 class StudentAssignmentsResponse(BaseModel):
     """Response containing assignments"""
+
     assignments: List[StudentAssignment]
     total: int
     pending_count: int

@@ -23,6 +23,7 @@ def is_token_revoked(jti: str) -> bool:
     """Return True if the given JTI has been revoked."""
     return jti in _revoked_jtis
 
+
 # OAuth2 scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
@@ -30,8 +31,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against a hash."""
     return bcrypt.checkpw(
-        plain_password.encode("utf-8"),
-        hashed_password.encode("utf-8")
+        plain_password.encode("utf-8"), hashed_password.encode("utf-8")
     )
 
 
@@ -47,34 +47,48 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
 
-    to_encode.update({
-        "exp": expire,
-        "type": "access",          # Issue 2: explicit type claim
-        "jti": secrets.token_hex(16),  # Issue 4: unique ID for revocation
-    })
-    encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    to_encode.update(
+        {
+            "exp": expire,
+            "type": "access",  # Issue 2: explicit type claim
+            "jti": secrets.token_hex(16),  # Issue 4: unique ID for revocation
+        }
+    )
+    encoded_jwt = jwt.encode(
+        to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM
+    )
     return encoded_jwt
 
 
 def create_refresh_token(data: dict) -> str:
     """Create a JWT refresh token with explicit type and unique JTI."""
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)  # Issue 9
-    to_encode.update({
-        "exp": expire,
-        "type": "refresh",
-        "jti": secrets.token_hex(16),  # Issue 4: unique ID for revocation
-    })
-    encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    expire = datetime.now(timezone.utc) + timedelta(
+        days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+    )  # Issue 9
+    to_encode.update(
+        {
+            "exp": expire,
+            "type": "refresh",
+            "jti": secrets.token_hex(16),  # Issue 4: unique ID for revocation
+        }
+    )
+    encoded_jwt = jwt.encode(
+        to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM
+    )
     return encoded_jwt
 
 
 def decode_token(token: str) -> dict:
     """Decode and validate a JWT token."""
     try:
-        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        payload = jwt.decode(
+            token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
+        )
         return payload
     except JWTError:
         raise HTTPException(

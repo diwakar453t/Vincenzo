@@ -7,6 +7,7 @@ Processes incoming alerts and:
 3. Forwards tenant-specific alerts to notification service
 4. Provides alert query API for dashboard widgets
 """
+
 import logging
 from datetime import datetime
 from typing import List, Optional
@@ -20,6 +21,7 @@ router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
 
 
 # ── Alert Models ──────────────────────────────────────────────────────
+
 
 class AlertLabel(BaseModel):
     alertname: str

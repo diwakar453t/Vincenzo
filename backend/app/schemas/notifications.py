@@ -1,12 +1,14 @@
 """
 Notification schemas
 """
+
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 
 
 # ─── Send / Create ──────────────────────────────────────────────────────
+
 
 class NotificationCreate(BaseModel):
     user_id: int
@@ -28,6 +30,7 @@ class NotificationBroadcast(BaseModel):
 
 
 # ─── Response ───────────────────────────────────────────────────────────
+
 
 class NotificationResponse(BaseModel):
     id: int
@@ -58,6 +61,7 @@ class NotificationListResponse(BaseModel):
 
 
 # ─── Preferences ────────────────────────────────────────────────────────
+
 
 class PreferenceUpdate(BaseModel):
     email_enabled: Optional[bool] = None

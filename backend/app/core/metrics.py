@@ -10,12 +10,19 @@ Provides:
 
 Scaled for 200+ colleges: per-tenant labels where critical, aggregated where not.
 """
+
 import time
 import logging
 from typing import Callable
 from prometheus_client import (
-    Counter, Histogram, Gauge, Summary, Info,
-    generate_latest, CONTENT_TYPE_LATEST, REGISTRY,
+    Counter,
+    Histogram,
+    Gauge,
+    Summary,
+    Info,
+    generate_latest,
+    CONTENT_TYPE_LATEST,
+    REGISTRY,
 )
 from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -169,6 +176,7 @@ APP_STARTUP_TIME = Gauge(
 # Middleware: Auto-instrument HTTP endpoints
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def _get_path_template(request: Request) -> str:
     """
     Extract route path template (e.g., /api/v1/students/{id})
@@ -220,11 +228,15 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
 
             # Record metrics
             HTTP_REQUEST_DURATION.labels(
-                method=method, path_template=path_template, status_code=status,
+                method=method,
+                path_template=path_template,
+                status_code=status,
             ).observe(duration)
 
             HTTP_REQUESTS_TOTAL.labels(
-                method=method, path_template=path_template, status_code=status,
+                method=method,
+                path_template=path_template,
+                status_code=status,
             ).inc()
 
             HTTP_REQUESTS_IN_FLIGHT.labels(method=method).dec()
@@ -245,6 +257,7 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
 # /metrics endpoint
 # ═══════════════════════════════════════════════════════════════════════
 
+
 async def metrics_endpoint(request: Request) -> Response:
     """Prometheus scrape endpoint."""
     return Response(
@@ -257,6 +270,7 @@ async def metrics_endpoint(request: Request) -> Response:
 # Setup function
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def setup_metrics(app: FastAPI):
     """
     Initialize Prometheus metrics for the FastAPI app.
@@ -265,11 +279,13 @@ def setup_metrics(app: FastAPI):
     from app.core.config import settings
 
     # Set app info
-    APP_INFO.info({
-        "version": settings.APP_VERSION,
-        "environment": settings.APP_ENV,
-        "service": "preskool-backend",
-    })
+    APP_INFO.info(
+        {
+            "version": settings.APP_VERSION,
+            "environment": settings.APP_ENV,
+            "service": "preskool-backend",
+        }
+    )
     APP_STARTUP_TIME.set(time.time())
 
     # Add middleware

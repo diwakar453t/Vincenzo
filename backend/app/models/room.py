@@ -6,6 +6,7 @@ import enum
 
 class RoomType(str, enum.Enum):
     """Room type enumeration."""
+
     CLASSROOM = "classroom"
     LABORATORY = "laboratory"
     COMPUTER_LAB = "computer_lab"
@@ -18,6 +19,7 @@ class RoomType(str, enum.Enum):
 
 class RoomStatus(str, enum.Enum):
     """Room status enumeration."""
+
     AVAILABLE = "available"
     OCCUPIED = "occupied"
     MAINTENANCE = "maintenance"

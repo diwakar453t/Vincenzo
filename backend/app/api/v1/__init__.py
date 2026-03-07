@@ -3,7 +3,44 @@ API v1 router configuration
 """
 
 from fastapi import APIRouter
-from app.api.v1 import health, auth, dashboard, students, teachers, classes, subjects, student_profile, teacher_profile, parent_profile, guardians, rooms, syllabus, timetable, exams, grades, departments, attendance, leaves, payroll, fees, library, hostel, transport, sports, reports, notifications, search, files, settings, payments, plugins, webhooks, gdpr, super_admin, feature_flags
+from app.api.v1 import (
+    health,
+    auth,
+    dashboard,
+    students,
+    teachers,
+    classes,
+    subjects,
+    student_profile,
+    teacher_profile,
+    parent_profile,
+    guardians,
+    rooms,
+    syllabus,
+    timetable,
+    exams,
+    grades,
+    departments,
+    attendance,
+    leaves,
+    payroll,
+    fees,
+    library,
+    hostel,
+    transport,
+    sports,
+    reports,
+    notifications,
+    search,
+    files,
+    settings,
+    payments,
+    plugins,
+    webhooks,
+    gdpr,
+    super_admin,
+    feature_flags,
+)
 
 api_router = APIRouter()
 
@@ -17,13 +54,19 @@ api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 
 # Student endpoints (requires authentication + student role)
-api_router.include_router(student_profile.router, prefix="/student-profile", tags=["student-profile"])
+api_router.include_router(
+    student_profile.router, prefix="/student-profile", tags=["student-profile"]
+)
 
 # Teacher endpoints (requires authentication + teacher role)
-api_router.include_router(teacher_profile.router, prefix="/teacher-profile", tags=["teacher-profile"])
+api_router.include_router(
+    teacher_profile.router, prefix="/teacher-profile", tags=["teacher-profile"]
+)
 
 # Parent endpoints (requires authentication + parent role)
-api_router.include_router(parent_profile.router, prefix="/parent-profile", tags=["parent-profile"])
+api_router.include_router(
+    parent_profile.router, prefix="/parent-profile", tags=["parent-profile"]
+)
 
 # Admin endpoints (requires authentication + admin role)
 api_router.include_router(students.router, prefix="/students", tags=["students"])
@@ -36,7 +79,9 @@ api_router.include_router(syllabus.router, prefix="/syllabus", tags=["syllabus"]
 api_router.include_router(timetable.router, prefix="/timetable", tags=["timetable"])
 api_router.include_router(exams.router, prefix="/exams", tags=["exams"])
 api_router.include_router(grades.router, prefix="/grades", tags=["grades"])
-api_router.include_router(departments.router, prefix="/departments", tags=["departments"])
+api_router.include_router(
+    departments.router, prefix="/departments", tags=["departments"]
+)
 api_router.include_router(attendance.router, prefix="/attendance", tags=["attendance"])
 api_router.include_router(leaves.router, prefix="/leaves", tags=["leaves"])
 api_router.include_router(payroll.router, prefix="/payroll", tags=["payroll"])
@@ -46,7 +91,9 @@ api_router.include_router(hostel.router, prefix="/hostel", tags=["hostel"])
 api_router.include_router(transport.router, prefix="/transport", tags=["transport"])
 api_router.include_router(sports.router, prefix="/sports", tags=["sports"])
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
-api_router.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
+api_router.include_router(
+    notifications.router, prefix="/notifications", tags=["notifications"]
+)
 api_router.include_router(search.router, prefix="/search", tags=["search"])
 api_router.include_router(files.router, prefix="/files", tags=["files"])
 api_router.include_router(settings.router, prefix="/settings", tags=["settings"])
@@ -54,10 +101,14 @@ api_router.include_router(payments.router, prefix="/payments", tags=["payments"]
 api_router.include_router(plugins.router, prefix="/plugins", tags=["plugins"])
 
 # Super Admin endpoints (requires super_admin or admin role)
-api_router.include_router(super_admin.router, prefix="/super-admin", tags=["super-admin"])
+api_router.include_router(
+    super_admin.router, prefix="/super-admin", tags=["super-admin"]
+)
 
 # Feature Flags (admin + super_admin)
-api_router.include_router(feature_flags.router, prefix="/feature-flags", tags=["feature-flags"])
+api_router.include_router(
+    feature_flags.router, prefix="/feature-flags", tags=["feature-flags"]
+)
 
 # Observability & Webhooks
 api_router.include_router(webhooks.router, tags=["webhooks"])

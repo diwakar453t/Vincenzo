@@ -27,6 +27,7 @@ router = APIRouter()
 
 # ─── Helper: get user or raise ───────────────────────────────────────────
 
+
 def _get_user(current_user: dict, db: Session) -> User:
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
@@ -37,12 +38,15 @@ def _get_user(current_user: dict, db: Session) -> User:
 
 def _require_admin(user: User):
     if user.role not in ["admin", "super_admin"]:
-        raise HTTPException(status_code=403, detail="Only admins can perform this action")
+        raise HTTPException(
+            status_code=403, detail="Only admins can perform this action"
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Subject endpoints
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 @router.get("/", response_model=SubjectListResponse)
 def list_subjects(
@@ -52,7 +56,7 @@ def list_subjects(
     subject_type: Optional[str] = None,
     group_id: Optional[int] = None,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """List all subjects with pagination and filtering"""
     user = _get_user(current_user, db)
@@ -91,7 +95,7 @@ def list_subjects(
 def create_subject(
     subject_data: SubjectCreate,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Create a new subject"""
     user = _get_user(current_user, db)
@@ -111,7 +115,7 @@ def create_subject(
 def get_subject(
     subject_id: int,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get a single subject by ID"""
     user = _get_user(current_user, db)
@@ -131,7 +135,7 @@ def update_subject(
     subject_id: int,
     subject_data: SubjectUpdate,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Update a subject"""
     user = _get_user(current_user, db)
@@ -153,7 +157,7 @@ def update_subject(
 def delete_subject(
     subject_id: int,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Delete a subject"""
     user = _get_user(current_user, db)
@@ -174,10 +178,10 @@ def delete_subject(
 # Subject Group endpoints
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 @router.get("/groups/list", response_model=SubjectGroupListResponse)
 def list_subject_groups(
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """List all subject groups"""
     user = _get_user(current_user, db)
@@ -197,11 +201,13 @@ def list_subject_groups(
     return SubjectGroupListResponse(groups=group_items, total=len(group_items))
 
 
-@router.post("/groups", response_model=SubjectGroupResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/groups", response_model=SubjectGroupResponse, status_code=status.HTTP_201_CREATED
+)
 def create_subject_group(
     data: SubjectGroupCreate,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Create a new subject group"""
     user = _get_user(current_user, db)
@@ -217,7 +223,7 @@ def update_subject_group(
     group_id: int,
     data: SubjectGroupUpdate,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Update a subject group"""
     user = _get_user(current_user, db)
@@ -234,7 +240,7 @@ def update_subject_group(
 def delete_subject_group(
     group_id: int,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Delete a subject group"""
     user = _get_user(current_user, db)
@@ -252,13 +258,14 @@ def delete_subject_group(
 # Class-Subject Assignment endpoints
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 @router.post("/{subject_id}/assign/{class_id}", status_code=status.HTTP_200_OK)
 def assign_subject_to_class(
     subject_id: int,
     class_id: int,
     data: ClassSubjectCreate = ClassSubjectCreate(),
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Assign a subject to a class"""
     user = _get_user(current_user, db)
@@ -282,7 +289,7 @@ def unassign_subject_from_class(
     subject_id: int,
     class_id: int,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Remove subject assignment from a class"""
     user = _get_user(current_user, db)
@@ -300,15 +307,18 @@ def unassign_subject_from_class(
 def get_class_subjects(
     class_id: int,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get all subjects assigned to a class"""
     user = _get_user(current_user, db)
 
     from app.models.class_model import Class
-    class_obj = db.query(Class).filter(
-        Class.id == class_id, Class.tenant_id == user.tenant_id
-    ).first()
+
+    class_obj = (
+        db.query(Class)
+        .filter(Class.id == class_id, Class.tenant_id == user.tenant_id)
+        .first()
+    )
     if not class_obj:
         raise HTTPException(status_code=404, detail="Class not found")
 

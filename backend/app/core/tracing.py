@@ -16,6 +16,7 @@ Architecture:
         → HTTP client calls (auto-instrumented) → External span
     All spans exported → Jaeger Collector → Jaeger UI
 """
+
 import logging
 from typing import Optional
 
@@ -71,18 +72,22 @@ def setup_tracing(app):
         return
 
     # Resource: identifies this service in Jaeger
-    resource = Resource.create({
-        SERVICE_NAME: "preskool-backend",
-        "service.version": settings.APP_VERSION,
-        "deployment.environment": settings.APP_ENV,
-        "service.namespace": "preskool",
-    })
+    resource = Resource.create(
+        {
+            SERVICE_NAME: "preskool-backend",
+            "service.version": settings.APP_VERSION,
+            "deployment.environment": settings.APP_ENV,
+            "service.namespace": "preskool",
+        }
+    )
 
     # TracerProvider
     provider = TracerProvider(resource=resource)
 
     # Exporter: send spans to Jaeger via OTLP gRPC
-    jaeger_endpoint = getattr(settings, "OTEL_EXPORTER_ENDPOINT", "http://localhost:4317")
+    jaeger_endpoint = getattr(
+        settings, "OTEL_EXPORTER_ENDPOINT", "http://localhost:4317"
+    )
 
     if settings.APP_ENV == "development":
         # Development: console output + Jaeger (if available)
@@ -113,10 +118,14 @@ def setup_tracing(app):
     trace.set_tracer_provider(provider)
 
     # Context propagation (W3C + B3 for cross-service compatibility)
-    set_global_textmap(CompositePropagator([
-        TraceContextTextMapPropagator(),
-        B3MultiFormat(),
-    ]))
+    set_global_textmap(
+        CompositePropagator(
+            [
+                TraceContextTextMapPropagator(),
+                B3MultiFormat(),
+            ]
+        )
+    )
 
     # ── Auto-Instrumentation ─────────────────────────────────────────
 
@@ -130,6 +139,7 @@ def setup_tracing(app):
 
     # SQLAlchemy: trace every DB query
     from app.core.database import engine
+
     SQLAlchemyInstrumentor().instrument(
         engine=engine,
         enable_commenter=True,  # Adds trace context as SQL comments
@@ -160,6 +170,7 @@ def setup_tracing(app):
 # Hooks: Enrich spans with tenant/user context
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def _server_request_hook(span, scope):
     """Add tenant and request context to incoming request spans."""
     if span and span.is_recording():
@@ -182,6 +193,7 @@ def _client_response_hook(span, scope, response):
 # Decorators: Manual tracing for critical business operations
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def trace_operation(operation_name: str, attributes: dict = None):
     """
     Decorator to trace a critical business operation.
@@ -191,6 +203,7 @@ def trace_operation(operation_name: str, attributes: dict = None):
         def enroll_student(db, data):
             ...
     """
+
     def decorator(func):
         import functools
 
@@ -236,6 +249,7 @@ def trace_operation(operation_name: str, attributes: dict = None):
                     raise
 
         import asyncio
+
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         return sync_wrapper
@@ -306,6 +320,7 @@ def trace_external_call(service: str, operation: str):
 # ═══════════════════════════════════════════════════════════════════════
 # Utility: Get current trace/span IDs for log correlation
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def get_current_trace_id() -> Optional[str]:
     """Get the current trace ID (for log correlation)."""

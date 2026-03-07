@@ -16,6 +16,7 @@ Endpoints:
   GET    /gdpr/audit-trail               — My audit trail (what we logged about me)
   POST   /gdpr/verify-audit-chain        — Admin: verify audit integrity
 """
+
 import hashlib
 import secrets
 from datetime import datetime, timezone, timedelta
@@ -27,7 +28,12 @@ from pydantic import BaseModel as PydanticModel
 from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.models.gdpr import (
-    UserConsent, DataSubjectRequest, ConsentType, ConsentStatus, DataRequestType, DataRequestStatus,
+    UserConsent,
+    DataSubjectRequest,
+    ConsentType,
+    ConsentStatus,
+    DataRequestType,
+    DataRequestStatus,
 )
 from app.models.audit_log import AuditLog, AuditAction
 from app.models.user import User
@@ -38,15 +44,18 @@ router = APIRouter()
 
 # ── Schemas ───────────────────────────────────────────────────────────
 
+
 class ConsentRequest(PydanticModel):
     consent_type: ConsentType
     granted: bool
     consent_version: str = "1.0"
 
+
 class DataSubjectRequestCreate(PydanticModel):
     request_type: DataRequestType
     note: Optional[str] = None
     export_format: Optional[str] = "json"
+
 
 class ConsentResponse(PydanticModel):
     consent_type: str
@@ -57,6 +66,7 @@ class ConsentResponse(PydanticModel):
 
     class Config:
         from_attributes = True
+
 
 class DSRResponse(PydanticModel):
     id: int
@@ -72,6 +82,7 @@ class DSRResponse(PydanticModel):
 
 # ── Consent Management ────────────────────────────────────────────────
 
+
 @router.post("/consent", status_code=200)
 def record_consent(
     payload: ConsentRequest,
@@ -86,11 +97,15 @@ def record_consent(
     ua = request.headers.get("user-agent")
 
     # Find existing consent
-    existing = db.query(UserConsent).filter(
-        UserConsent.user_id == user_id,
-        UserConsent.consent_type == payload.consent_type,
-        UserConsent.tenant_id == tenant_id,
-    ).first()
+    existing = (
+        db.query(UserConsent)
+        .filter(
+            UserConsent.user_id == user_id,
+            UserConsent.consent_type == payload.consent_type,
+            UserConsent.tenant_id == tenant_id,
+        )
+        .first()
+    )
 
     now = datetime.now(timezone.utc)
     new_status = ConsentStatus.GRANTED if payload.granted else ConsentStatus.WITHDRAWN
@@ -119,9 +134,13 @@ def record_consent(
     db.commit()
 
     # Audit log
-    action = AuditAction.CONSENT_GIVEN if payload.granted else AuditAction.CONSENT_WITHDRAWN
+    action = (
+        AuditAction.CONSENT_GIVEN if payload.granted else AuditAction.CONSENT_WITHDRAWN
+    )
     audit_logger.log_gdpr(
-        db, action, request,
+        db,
+        action,
+        request,
         data_subject_id=user_id,
         requesting_user=current_user,
         details=f"consent_type={payload.consent_type.value}",
@@ -147,6 +166,7 @@ def get_my_consents(
 
 
 # ── Data Subject Requests ─────────────────────────────────────────────
+
 
 @router.post("/requests", response_model=DSRResponse, status_code=201)
 def submit_data_request(
@@ -184,7 +204,9 @@ def submit_data_request(
 
     # Audit log
     audit_logger.log_gdpr(
-        db, AuditAction.ACCESS_REQUEST, request,
+        db,
+        AuditAction.ACCESS_REQUEST,
+        request,
         data_subject_id=user_id,
         data_subject_email=user_email,
         requesting_user=current_user,
@@ -193,9 +215,7 @@ def submit_data_request(
 
     # Auto-process portability requests
     if payload.request_type == DataRequestType.PORTABILITY:
-        background_tasks.add_task(
-            _process_portability_request, dsr.id, user_id, db
-        )
+        background_tasks.add_task(_process_portability_request, dsr.id, user_id, db)
 
     return dsr
 
@@ -207,9 +227,12 @@ def list_my_requests(
 ):
     """List all data subject requests for the current user."""
     user_id = int(current_user["sub"])
-    requests = db.query(DataSubjectRequest).filter(
-        DataSubjectRequest.data_subject_id == user_id
-    ).order_by(DataSubjectRequest.created_at.desc()).all()
+    requests = (
+        db.query(DataSubjectRequest)
+        .filter(DataSubjectRequest.data_subject_id == user_id)
+        .order_by(DataSubjectRequest.created_at.desc())
+        .all()
+    )
     return requests
 
 
@@ -221,16 +244,21 @@ def get_request_status(
 ):
     """Get status of a specific data subject request."""
     user_id = int(current_user["sub"])
-    dsr = db.query(DataSubjectRequest).filter(
-        DataSubjectRequest.id == request_id,
-        DataSubjectRequest.data_subject_id == user_id,
-    ).first()
+    dsr = (
+        db.query(DataSubjectRequest)
+        .filter(
+            DataSubjectRequest.id == request_id,
+            DataSubjectRequest.data_subject_id == user_id,
+        )
+        .first()
+    )
     if not dsr:
         raise HTTPException(status_code=404, detail="Request not found")
     return dsr
 
 
 # ── Data Export (Art. 20 — Right to Portability) ────────────────────
+
 
 @router.get("/export")
 def export_my_data(
@@ -287,15 +315,17 @@ def export_my_data(
                 "submitted_at": str(r.created_at),
                 "completed_at": str(r.completed_at) if r.completed_at else None,
             }
-            for r in db.query(DataSubjectRequest).filter(
-                DataSubjectRequest.data_subject_id == user_id
-            ).all()
+            for r in db.query(DataSubjectRequest)
+            .filter(DataSubjectRequest.data_subject_id == user_id)
+            .all()
         ],
     }
 
     # Audit log the export
     audit_logger.log_gdpr(
-        db, AuditAction.DATA_EXPORT, request,
+        db,
+        AuditAction.DATA_EXPORT,
+        request,
         data_subject_id=user_id,
         data_subject_email=user.email,
         requesting_user=current_user,
@@ -305,6 +335,7 @@ def export_my_data(
 
 
 # ── Right to Erasure (Art. 17) ────────────────────────────────────────
+
 
 @router.delete("/me", status_code=200)
 def request_erasure(
@@ -344,7 +375,9 @@ def request_erasure(
 
     # Audit the erasure
     audit_logger.log_gdpr(
-        db, AuditAction.DATA_ERASURE, request,
+        db,
+        AuditAction.DATA_ERASURE,
+        request,
         data_subject_id=user_id,
         data_subject_email=original_email,
         requesting_user=current_user,
@@ -363,6 +396,7 @@ def request_erasure(
 
 
 # ── Audit Trail Access ────────────────────────────────────────────────
+
 
 @router.get("/audit-trail")
 def get_my_audit_trail(
@@ -401,6 +435,7 @@ def get_my_audit_trail(
 
 
 # ── Policy Documents ──────────────────────────────────────────────────
+
 
 @router.get("/privacy-policy")
 def get_privacy_policy():
@@ -457,6 +492,7 @@ def get_terms():
 
 # ── Admin Endpoints ───────────────────────────────────────────────────
 
+
 @router.post("/admin/verify-audit-chain")
 def verify_audit_chain(
     request: Request,
@@ -478,12 +514,15 @@ def verify_audit_chain(
 
 # ── Background Tasks ──────────────────────────────────────────────────
 
+
 def _process_portability_request(request_id: int, user_id: int, db: Session):
     """Background task to process a data portability request."""
     try:
-        dsr = db.query(DataSubjectRequest).filter(
-            DataSubjectRequest.id == request_id
-        ).first()
+        dsr = (
+            db.query(DataSubjectRequest)
+            .filter(DataSubjectRequest.id == request_id)
+            .first()
+        )
         if not dsr:
             return
 
@@ -504,4 +543,5 @@ def _process_portability_request(request_id: int, user_id: int, db: Session):
         db.commit()
     except Exception as e:
         import logging
+
         logging.getLogger("preskool.gdpr").error(f"Portability request failed: {e}")

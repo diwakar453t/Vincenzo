@@ -5,6 +5,7 @@ from datetime import datetime
 
 class ClassBase(BaseModel):
     """Base schema for Class"""
+
     name: str = Field(..., min_length=1, max_length=100)
     grade_level: int = Field(..., ge=1, le=12)
     section: str = Field(..., min_length=1, max_length=10)
@@ -17,11 +18,13 @@ class ClassBase(BaseModel):
 
 class ClassCreate(ClassBase):
     """Schema for creating a class"""
+
     pass
 
 
 class ClassUpdate(BaseModel):
     """Schema for updating a class"""
+
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     grade_level: Optional[int] = Field(None, ge=1, le=12)
     section: Optional[str] = Field(None, min_length=1, max_length=10)
@@ -34,6 +37,7 @@ class ClassUpdate(BaseModel):
 
 class ClassResponse(ClassBase):
     """Schema for class response"""
+
     id: int
     tenant_id: str
     created_at: datetime
@@ -48,6 +52,7 @@ class ClassResponse(ClassBase):
 
 class ClassListItem(BaseModel):
     """Schema for class list item (simplified)"""
+
     id: int
     name: str
     grade_level: int
@@ -66,8 +71,8 @@ class ClassListItem(BaseModel):
 
 class ClassListResponse(BaseModel):
     """Schema for paginated class list"""
+
     classes: list[ClassListItem]
     total: int
     skip: int
     limit: int
-

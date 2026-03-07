@@ -1,12 +1,14 @@
 """
 Library Management schemas
 """
+
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 
 
 # ─── Book ────────────────────────────────────────────────────────────────
+
 
 class BookCreate(BaseModel):
     title: str
@@ -80,6 +82,7 @@ class BookListResponse(BaseModel):
 
 # ─── Library Member ──────────────────────────────────────────────────────
 
+
 class MemberCreate(BaseModel):
     member_type: str = "student"
     student_id: Optional[int] = None
@@ -131,6 +134,7 @@ class MemberListResponse(BaseModel):
 
 # ─── Issue / Return ──────────────────────────────────────────────────────
 
+
 class IssueBookRequest(BaseModel):
     book_id: int
     member_id: int
@@ -174,6 +178,7 @@ class IssueReturnListResponse(BaseModel):
 
 
 # ─── Reports ─────────────────────────────────────────────────────────────
+
 
 class OverdueItem(BaseModel):
     issue_id: int

@@ -1,10 +1,11 @@
 """Schemas module exports."""
+
 from app.schemas.base import (
     BaseSchema,
     BaseResponseSchema,
     HealthResponse,
     StatusResponse,
-    ErrorResponse
+    ErrorResponse,
 )
 
 __all__ = [
@@ -12,5 +13,5 @@ __all__ = [
     "BaseResponseSchema",
     "HealthResponse",
     "StatusResponse",
-    "ErrorResponse"
+    "ErrorResponse",
 ]

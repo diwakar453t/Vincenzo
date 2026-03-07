@@ -17,6 +17,7 @@ Usage:
 
   # Auto-encrypt on save, decrypt on load — transparent to business logic
 """
+
 import os
 import base64
 import hashlib
@@ -40,6 +41,7 @@ logger = logging.getLogger("preskool.encryption")
 # ═══════════════════════════════════════════════════════════════════════
 # KEY MANAGEMENT
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class EncryptionKeyManager:
     """
@@ -76,7 +78,7 @@ class EncryptionKeyManager:
             else:
                 raise EnvironmentError(
                     "ENCRYPTION_MASTER_KEY environment variable is required in production. "
-                    "Generate with: python3 -c \"import secrets; print(secrets.token_hex(32))\""
+                    'Generate with: python3 -c "import secrets; print(secrets.token_hex(32))"'
                 )
 
         # Derive 32-byte key via PBKDF2-SHA256
@@ -105,7 +107,9 @@ class EncryptionKeyManager:
             old_key_env = f"ENCRYPTION_OLD_KEY_{i}"
             old_key_str = os.environ.get(old_key_env, "")
             if old_key_str:
-                old_salt = os.environ.get(f"ENCRYPTION_OLD_SALT_{i}", "preskool-erp-v1").encode()
+                old_salt = os.environ.get(
+                    f"ENCRYPTION_OLD_SALT_{i}", "preskool-erp-v1"
+                ).encode()
                 kdf = PBKDF2HMAC(
                     algorithm=hashes.SHA256(),
                     length=32,
@@ -126,7 +130,9 @@ class EncryptionKeyManager:
         self._hmac_key = hashlib.sha256(b"preskool-hmac:" + primary_key).digest()
 
         self._initialized = True
-        logger.info("🔒 Encryption engine initialized (AES-256-GCM + Fernet MultiFernet)")
+        logger.info(
+            "🔒 Encryption engine initialized (AES-256-GCM + Fernet MultiFernet)"
+        )
 
     @property
     def fernet(self) -> MultiFernet:
@@ -160,7 +166,9 @@ class EncryptionKeyManager:
         logger.info("🔑 Starting key rotation...")
         # In production: set ENCRYPTION_MASTER_KEY = new key, ENCRYPTION_OLD_KEY_1 = old key
         # Then run the data migration job to re-encrypt all rows
-        raise NotImplementedError("Set env vars and run: python3 security/scripts/rotate_keys.py")
+        raise NotImplementedError(
+            "Set env vars and run: python3 security/scripts/rotate_keys.py"
+        )
 
 
 # Singleton — initialized at app startup
@@ -170,6 +178,7 @@ key_manager = EncryptionKeyManager()
 # ═══════════════════════════════════════════════════════════════════════
 # ENCRYPTION / DECRYPTION FUNCTIONS
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def encrypt(plaintext: str) -> str:
     """
@@ -271,6 +280,7 @@ def anonymise(value: str, preserve_length: bool = False) -> str:
 # SQLALCHEMY ENCRYPTED TYPE — Drop-in Column Type
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class EncryptedString(TypeDecorator):
     """
     SQLAlchemy TypeDecorator that transparently encrypts/decrypts column values.
@@ -319,6 +329,7 @@ class EncryptedText(TypeDecorator):
     Encrypted text for larger fields (notes, addresses, medical records).
     Uses TEXT underlying type with AES-256-GCM.
     """
+
     from sqlalchemy import Text as SAText
 
     impl = SAText
@@ -342,6 +353,7 @@ class EncryptedText(TypeDecorator):
 # DATA CLASSIFICATION HELPERS
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class DataClassification:
     """
     Data sensitivity levels following ISO 27001 and GDPR categories.
@@ -349,44 +361,50 @@ class DataClassification:
     """
 
     # CRITICAL PII — must be encrypted at rest, masked in logs
-    CRITICAL_PII = frozenset({
-        "aadhaar_number",   # Indian national ID
-        "pan_number",       # Tax ID
-        "passport_number",
-        "bank_account",
-        "credit_card",
-        "medical_records",
-        "health_data",
-        "biometric_data",
-    })
+    CRITICAL_PII = frozenset(
+        {
+            "aadhaar_number",  # Indian national ID
+            "pan_number",  # Tax ID
+            "passport_number",
+            "bank_account",
+            "credit_card",
+            "medical_records",
+            "health_data",
+            "biometric_data",
+        }
+    )
 
     # SENSITIVE PII — should be encrypted, restricted access
-    SENSITIVE_PII = frozenset({
-        "email",
-        "phone",
-        "mobile",
-        "date_of_birth",
-        "address",
-        "home_address",
-        "emergency_contact",
-        "salary",
-        "income",
-        "caste",           # Protected in India
-        "religion",        # Protected
-        "disability",      # Protected
-    })
+    SENSITIVE_PII = frozenset(
+        {
+            "email",
+            "phone",
+            "mobile",
+            "date_of_birth",
+            "address",
+            "home_address",
+            "emergency_contact",
+            "salary",
+            "income",
+            "caste",  # Protected in India
+            "religion",  # Protected
+            "disability",  # Protected
+        }
+    )
 
     # GENERAL PII — needs data subject rights but not strictly encrypted
-    GENERAL_PII = frozenset({
-        "full_name",
-        "first_name",
-        "last_name",
-        "gender",
-        "nationality",
-        "profile_photo",
-        "student_id",
-        "employee_id",
-    })
+    GENERAL_PII = frozenset(
+        {
+            "full_name",
+            "first_name",
+            "last_name",
+            "gender",
+            "nationality",
+            "profile_photo",
+            "student_id",
+            "employee_id",
+        }
+    )
 
     @classmethod
     def classify(cls, field_name: str) -> str:

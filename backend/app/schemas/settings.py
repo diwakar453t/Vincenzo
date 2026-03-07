@@ -1,12 +1,14 @@
 """
 Settings & Configuration schemas
 """
+
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 
 
 # ─── School Settings ─────────────────────────────────────────────────────
+
 
 class SchoolSettingsUpdate(BaseModel):
     school_name: Optional[str] = None
@@ -55,6 +57,7 @@ class SchoolSettingsResponse(BaseModel):
 
 # ─── Academic Year ────────────────────────────────────────────────────────
 
+
 class AcademicYearCreate(BaseModel):
     name: str
     start_date: datetime
@@ -85,6 +88,7 @@ class AcademicYearResponse(BaseModel):
 
 
 # ─── System Preferences ──────────────────────────────────────────────────
+
 
 class PreferenceUpsert(BaseModel):
     key: str

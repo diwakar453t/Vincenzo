@@ -6,9 +6,16 @@ from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.services.leave_service import LeaveService
 from app.schemas.leave import (
-    LeaveTypeCreate, LeaveTypeUpdate, LeaveTypeResponse, LeaveTypeListResponse,
-    LeaveApplicationCreate, LeaveActionRequest, LeaveApplicationResponse,
-    LeaveApplicationListResponse, LeaveBalanceResponse, LeaveCalendarEvent,
+    LeaveTypeCreate,
+    LeaveTypeUpdate,
+    LeaveTypeResponse,
+    LeaveTypeListResponse,
+    LeaveApplicationCreate,
+    LeaveActionRequest,
+    LeaveApplicationResponse,
+    LeaveApplicationListResponse,
+    LeaveBalanceResponse,
+    LeaveCalendarEvent,
 )
 from app.models.user import User
 
@@ -25,12 +32,15 @@ def _get_user(current_user: dict, db: Session) -> User:
 
 def _require_admin(user: User):
     if user.role not in ["admin", "super_admin"]:
-        raise HTTPException(status_code=403, detail="Only admins can perform this action")
+        raise HTTPException(
+            status_code=403, detail="Only admins can perform this action"
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # Leave Types
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @router.get("/types", response_model=LeaveTypeListResponse)
 def list_leave_types(
@@ -42,10 +52,14 @@ def list_leave_types(
     user = _get_user(current_user, db)
     service = LeaveService(db)
     items, total = service.get_leave_types(user.tenant_id, applies_to, is_active)
-    return LeaveTypeListResponse(leave_types=[LeaveTypeResponse(**t) for t in items], total=total)
+    return LeaveTypeListResponse(
+        leave_types=[LeaveTypeResponse(**t) for t in items], total=total
+    )
 
 
-@router.post("/types", response_model=LeaveTypeResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/types", response_model=LeaveTypeResponse, status_code=status.HTTP_201_CREATED
+)
 def create_leave_type(
     data: LeaveTypeCreate,
     current_user: dict = Depends(get_current_user),
@@ -67,7 +81,9 @@ def update_leave_type(
     user = _get_user(current_user, db)
     _require_admin(user)
     service = LeaveService(db)
-    result = service.update_leave_type(type_id, data.model_dump(exclude_unset=True), user.tenant_id)
+    result = service.update_leave_type(
+        type_id, data.model_dump(exclude_unset=True), user.tenant_id
+    )
     if not result:
         raise HTTPException(status_code=404, detail="Leave type not found")
     return result
@@ -91,6 +107,7 @@ def delete_leave_type(
 # Leave Applications
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @router.get("/applications", response_model=LeaveApplicationListResponse)
 def list_applications(
     applicant_type: Optional[str] = None,
@@ -104,11 +121,25 @@ def list_applications(
 ):
     user = _get_user(current_user, db)
     service = LeaveService(db)
-    items, total = service.get_applications(user.tenant_id, applicant_type, teacher_id, student_id, status_filter, month, year)
-    return LeaveApplicationListResponse(applications=[LeaveApplicationResponse(**a) for a in items], total=total)
+    items, total = service.get_applications(
+        user.tenant_id,
+        applicant_type,
+        teacher_id,
+        student_id,
+        status_filter,
+        month,
+        year,
+    )
+    return LeaveApplicationListResponse(
+        applications=[LeaveApplicationResponse(**a) for a in items], total=total
+    )
 
 
-@router.post("/applications", response_model=LeaveApplicationResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/applications",
+    response_model=LeaveApplicationResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def apply_leave(
     data: LeaveApplicationCreate,
     current_user: dict = Depends(get_current_user),
@@ -167,7 +198,10 @@ def delete_application(
 # Balance & Calendar
 # ═══════════════════════════════════════════════════════════════════════
 
-@router.get("/balance/{applicant_type}/{applicant_id}", response_model=LeaveBalanceResponse)
+
+@router.get(
+    "/balance/{applicant_type}/{applicant_id}", response_model=LeaveBalanceResponse
+)
 def get_leave_balance(
     applicant_type: str,
     applicant_id: int,
@@ -177,7 +211,9 @@ def get_leave_balance(
 ):
     user = _get_user(current_user, db)
     service = LeaveService(db)
-    return service.get_balance(applicant_type, applicant_id, user.tenant_id, academic_year)
+    return service.get_balance(
+        applicant_type, applicant_id, user.tenant_id, academic_year
+    )
 
 
 @router.get("/calendar")

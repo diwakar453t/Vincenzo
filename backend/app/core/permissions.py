@@ -1,16 +1,17 @@
 """Role-based permission decorators for PreSkool ERP."""
+
 from fastapi import HTTPException, status
 
 
 def require_role(*allowed_roles: str):
     """
     Decorator/dependency that checks if the current user has one of the allowed roles.
-    
+
     Usage:
         @router.get("/admin-only")
         def admin_endpoint(current_user: dict = Depends(require_role("admin"))):
             ...
-        
+
         @router.get("/staff-only")
         def staff_endpoint(current_user: dict = Depends(require_role("admin", "teacher"))):
             ...

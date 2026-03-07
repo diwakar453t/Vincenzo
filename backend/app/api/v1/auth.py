@@ -1,4 +1,5 @@
 """Authentication API router for PreSkool ERP — Security Hardened."""
+
 import logging
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
@@ -47,7 +48,7 @@ def register(request: UserRegisterRequest, req: Request, db: Session = Depends(g
     """
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
-        detail="Self-registration is disabled. Contact your administrator to create an account."
+        detail="Self-registration is disabled. Contact your administrator to create an account.",
     )
 
 
@@ -55,7 +56,7 @@ def register(request: UserRegisterRequest, req: Request, db: Session = Depends(g
 def login(request: UserLoginRequest, req: Request, db: Session = Depends(get_db)):
     """
     Authenticate user with account lockout protection.
-    
+
     Security features:
     - Account lockout after 5 failed attempts (progressive)
     - Constant-time comparison (prevent timing attacks)
@@ -75,7 +76,7 @@ def login(request: UserLoginRequest, req: Request, db: Session = Depends(get_db)
                 "error": "Account temporarily locked",
                 "message": f"Too many failed attempts. Try again in {remaining} seconds.",
                 "retry_after": remaining,
-            }
+            },
         )
 
     user = db.query(User).filter(User.email == email).first()
@@ -88,8 +89,7 @@ def login(request: UserLoginRequest, req: Request, db: Session = Depends(get_db)
         lockout_status = account_lockout.record_failure(email, ip)
         audit.log_login_failure(email, ip, reason="user_not_found")
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
         )
 
     if not verify_password(request.password, user.hashed_password):
@@ -103,27 +103,31 @@ def login(request: UserLoginRequest, req: Request, db: Session = Depends(get_db)
                 detail={
                     "error": "Account temporarily locked",
                     "message": "Too many failed attempts. Account locked for 15 minutes.",
-                }
+                },
             )
 
         # Issue 1 (partial): Don't reveal attempt count — reduces attacker info
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
         )
 
     if not user.is_active:
         audit.log_login_failure(email, ip, reason="account_deactivated")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is deactivated. Contact administrator."
+            detail="Account is deactivated. Contact administrator.",
         )
 
     # Successful login — clear lockout
     account_lockout.record_success(email)
     audit.log_login_success(email, ip, user.tenant_id)
 
-    token_data = {"sub": str(user.id), "email": user.email, "role": user.role, "tenant_id": user.tenant_id}
+    token_data = {
+        "sub": str(user.id),
+        "email": user.email,
+        "role": user.role,
+        "tenant_id": user.tenant_id,
+    }
     access_token = create_access_token(data=token_data)
     refresh_token = create_refresh_token(data=token_data)
 
@@ -132,7 +136,7 @@ def login(request: UserLoginRequest, req: Request, db: Session = Depends(get_db)
         refresh_token=refresh_token,
         token_type="bearer",
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        user=UserResponse.model_validate(user)
+        user=UserResponse.model_validate(user),
     )
 
 
@@ -145,30 +149,32 @@ def refresh_token(request: TokenRefreshRequest, db: Session = Depends(get_db)):
     if payload.get("type") != "refresh":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token: a refresh token is required"
+            detail="Invalid token: a refresh token is required",
         )
 
     user_id = payload.get("sub")
     if not user_id:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
         )
 
     user = db.query(User).filter(User.id == int(user_id)).first()
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
         )
 
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account deactivated"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Account deactivated"
         )
 
-    token_data = {"sub": str(user.id), "email": user.email, "role": user.role, "tenant_id": user.tenant_id}
+    token_data = {
+        "sub": str(user.id),
+        "email": user.email,
+        "role": user.role,
+        "tenant_id": user.tenant_id,
+    }
     new_access_token = create_access_token(data=token_data)
     new_refresh_token = create_refresh_token(data=token_data)
 
@@ -177,19 +183,20 @@ def refresh_token(request: TokenRefreshRequest, db: Session = Depends(get_db)):
         refresh_token=new_refresh_token,
         token_type="bearer",
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        user=UserResponse.model_validate(user)
+        user=UserResponse.model_validate(user),
     )
 
 
 @router.get("/profile", response_model=UserResponse)
-def get_profile(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_profile(
+    current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)
+):
     """Get current user's profile."""
     user_id = current_user.get("sub")
     user = db.query(User).filter(User.id == int(user_id)).first()
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     return UserResponse.model_validate(user)
 
@@ -199,7 +206,7 @@ def change_password(
     request: ChangePasswordRequest,
     req: Request,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Change password with policy enforcement."""
     ip = req.client.host if req.client else "unknown"
@@ -207,14 +214,13 @@ def change_password(
     user = db.query(User).filter(User.id == int(user_id)).first()
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
     if not verify_password(request.current_password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Current password is incorrect"
+            detail="Current password is incorrect",
         )
 
     # Validate new password against policy
@@ -226,14 +232,14 @@ def change_password(
                 "error": "New password does not meet security requirements",
                 "policy_errors": policy_result["errors"],
                 "strength": policy_result["strength"],
-            }
+            },
         )
 
     # Prevent reuse of current password
     if verify_password(request.new_password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="New password must be different from current password"
+            detail="New password must be different from current password",
         )
 
     user.hashed_password = get_password_hash(request.new_password)
@@ -257,7 +263,7 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
         # Generate a short-lived reset token (15 min)
         _reset_token = create_access_token(
             data={"sub": str(user.id), "email": user.email, "type": "password_reset"},
-            expires_delta=timedelta(minutes=15)
+            expires_delta=timedelta(minutes=15),
         )
         # TODO: In production, send email with the reset link (token must NOT be logged)
         # Email service integration point — send reset_token via email only
@@ -266,11 +272,15 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
             extra={"user_id": user.id, "event": "password_reset_requested"},
         )
 
-    return MessageResponse(message="If an account with that email exists, a password reset link has been sent.")
+    return MessageResponse(
+        message="If an account with that email exists, a password reset link has been sent."
+    )
 
 
 @router.post("/reset-password", response_model=MessageResponse)
-def reset_password(request: ResetPasswordRequest, req: Request, db: Session = Depends(get_db)):
+def reset_password(
+    request: ResetPasswordRequest, req: Request, db: Session = Depends(get_db)
+):
     """Reset password using a reset token with policy enforcement."""
     ip = req.client.host if req.client else "unknown"
 
@@ -280,22 +290,20 @@ def reset_password(request: ResetPasswordRequest, req: Request, db: Session = De
     except HTTPException:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired reset token"
+            detail="Invalid or expired reset token",
         )
 
     # Verify it's a password reset token
     if payload.get("type") != "password_reset":
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid reset token"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid reset token"
         )
 
     user_id = payload.get("sub")
     user = db.query(User).filter(User.id == int(user_id)).first()
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
     # Validate new password against policy
@@ -306,7 +314,7 @@ def reset_password(request: ResetPasswordRequest, req: Request, db: Session = De
             detail={
                 "error": "Password does not meet security requirements",
                 "policy_errors": policy_result["errors"],
-            }
+            },
         )
 
     user.hashed_password = get_password_hash(request.new_password)

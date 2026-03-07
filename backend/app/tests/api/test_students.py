@@ -3,6 +3,7 @@ from httpx import AsyncClient
 
 pytestmark = pytest.mark.asyncio
 
+
 @pytest.mark.api
 async def test_students_api_health(async_client: AsyncClient):
     """Minimal test to ensure api client works."""

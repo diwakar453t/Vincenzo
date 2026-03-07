@@ -2,11 +2,13 @@
 Notification Service
 Handles sending, listing, marking read, broadcasting, preferences, and email/push stubs.
 """
+
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.models.notification import (
-    Notification, NotificationPreference,
+    Notification,
+    NotificationPreference,
 )
 from app.models.user import User
 import logging
@@ -20,7 +22,9 @@ class NotificationService:
 
     # ─── Send ────────────────────────────────────────────────────────────
 
-    def send_notification(self, data: dict, tenant_id: str, sender_id: int = None) -> dict:
+    def send_notification(
+        self, data: dict, tenant_id: str, sender_id: int = None
+    ) -> dict:
         notif = Notification(
             user_id=data["user_id"],
             title=data["title"],
@@ -50,9 +54,11 @@ class NotificationService:
 
     def broadcast(self, data: dict, tenant_id: str, sender_id: int) -> int:
         """Send notification to all active users in tenant."""
-        users = self.db.query(User).filter(
-            User.tenant_id == tenant_id, User.is_active
-        ).all()
+        users = (
+            self.db.query(User)
+            .filter(User.tenant_id == tenant_id, User.is_active)
+            .all()
+        )
         count = 0
         for user in users:
             notif = Notification(
@@ -73,9 +79,15 @@ class NotificationService:
 
     # ─── List / Read ─────────────────────────────────────────────────────
 
-    def get_notifications(self, user_id: int, tenant_id: str,
-                          is_read: bool = None, notification_type: str = None,
-                          limit: int = 50, offset: int = 0):
+    def get_notifications(
+        self,
+        user_id: int,
+        tenant_id: str,
+        is_read: bool = None,
+        notification_type: str = None,
+        limit: int = 50,
+        offset: int = 0,
+    ):
         q = self.db.query(Notification).filter(
             Notification.user_id == user_id,
             Notification.tenant_id == tenant_id,
@@ -87,21 +99,31 @@ class NotificationService:
             q = q.filter(Notification.notification_type == notification_type)
 
         total = q.count()
-        unread = self.db.query(Notification).filter(
-            Notification.user_id == user_id,
-            Notification.tenant_id == tenant_id,
-            Notification.is_active,
-            not Notification.is_read,
-        ).count()
-        notifications = q.order_by(Notification.created_at.desc()).offset(offset).limit(limit).all()
+        unread = (
+            self.db.query(Notification)
+            .filter(
+                Notification.user_id == user_id,
+                Notification.tenant_id == tenant_id,
+                Notification.is_active,
+                not Notification.is_read,
+            )
+            .count()
+        )
+        notifications = (
+            q.order_by(Notification.created_at.desc()).offset(offset).limit(limit).all()
+        )
         return [self._notif_dict(n) for n in notifications], total, unread
 
     def mark_as_read(self, notification_id: int, user_id: int, tenant_id: str) -> dict:
-        notif = self.db.query(Notification).filter(
-            Notification.id == notification_id,
-            Notification.user_id == user_id,
-            Notification.tenant_id == tenant_id,
-        ).first()
+        notif = (
+            self.db.query(Notification)
+            .filter(
+                Notification.id == notification_id,
+                Notification.user_id == user_id,
+                Notification.tenant_id == tenant_id,
+            )
+            .first()
+        )
         if not notif:
             raise ValueError("Notification not found")
         notif.is_read = True
@@ -111,35 +133,49 @@ class NotificationService:
         return self._notif_dict(notif)
 
     def mark_all_read(self, user_id: int, tenant_id: str) -> int:
-        result = self.db.query(Notification).filter(
-            Notification.user_id == user_id,
-            Notification.tenant_id == tenant_id,
-            not Notification.is_read,
-            Notification.is_active,
-        ).update({
-            Notification.is_read: True,
-            Notification.read_at: datetime.utcnow(),
-        })
+        result = (
+            self.db.query(Notification)
+            .filter(
+                Notification.user_id == user_id,
+                Notification.tenant_id == tenant_id,
+                not Notification.is_read,
+                Notification.is_active,
+            )
+            .update(
+                {
+                    Notification.is_read: True,
+                    Notification.read_at: datetime.utcnow(),
+                }
+            )
+        )
         self.db.commit()
         return result
 
     def delete_notification(self, notification_id: int, user_id: int, tenant_id: str):
-        notif = self.db.query(Notification).filter(
-            Notification.id == notification_id,
-            Notification.user_id == user_id,
-            Notification.tenant_id == tenant_id,
-        ).first()
+        notif = (
+            self.db.query(Notification)
+            .filter(
+                Notification.id == notification_id,
+                Notification.user_id == user_id,
+                Notification.tenant_id == tenant_id,
+            )
+            .first()
+        )
         if not notif:
             raise ValueError("Notification not found")
         notif.is_active = False
         self.db.commit()
 
     def clear_all(self, user_id: int, tenant_id: str) -> int:
-        result = self.db.query(Notification).filter(
-            Notification.user_id == user_id,
-            Notification.tenant_id == tenant_id,
-            Notification.is_active,
-        ).update({Notification.is_active: False})
+        result = (
+            self.db.query(Notification)
+            .filter(
+                Notification.user_id == user_id,
+                Notification.tenant_id == tenant_id,
+                Notification.is_active,
+            )
+            .update({Notification.is_active: False})
+        )
         self.db.commit()
         return result
 
@@ -154,34 +190,52 @@ class NotificationService:
         total = base.count()
         unread = base.filter(not Notification.is_read).count()
 
-        type_breakdown = self.db.query(
-            Notification.notification_type, func.count(Notification.id)
-        ).filter(
-            Notification.user_id == user_id,
-            Notification.tenant_id == tenant_id,
-            Notification.is_active,
-        ).group_by(Notification.notification_type).all()
+        type_breakdown = (
+            self.db.query(Notification.notification_type, func.count(Notification.id))
+            .filter(
+                Notification.user_id == user_id,
+                Notification.tenant_id == tenant_id,
+                Notification.is_active,
+            )
+            .group_by(Notification.notification_type)
+            .all()
+        )
 
-        priority_breakdown = self.db.query(
-            Notification.priority, func.count(Notification.id)
-        ).filter(
-            Notification.user_id == user_id,
-            Notification.tenant_id == tenant_id,
-            Notification.is_active,
-        ).group_by(Notification.priority).all()
+        priority_breakdown = (
+            self.db.query(Notification.priority, func.count(Notification.id))
+            .filter(
+                Notification.user_id == user_id,
+                Notification.tenant_id == tenant_id,
+                Notification.is_active,
+            )
+            .group_by(Notification.priority)
+            .all()
+        )
 
         return {
-            "total": total, "unread": unread, "read": total - unread,
-            "by_type": [{"type": str(t.value if hasattr(t, 'value') else t), "count": c} for t, c in type_breakdown],
-            "by_priority": [{"priority": str(p.value if hasattr(p, 'value') else p), "count": c} for p, c in priority_breakdown],
+            "total": total,
+            "unread": unread,
+            "read": total - unread,
+            "by_type": [
+                {"type": str(t.value if hasattr(t, "value") else t), "count": c}
+                for t, c in type_breakdown
+            ],
+            "by_priority": [
+                {"priority": str(p.value if hasattr(p, "value") else p), "count": c}
+                for p, c in priority_breakdown
+            ],
         }
 
     # ─── Preferences ─────────────────────────────────────────────────────
 
     def get_preferences(self, user_id: int, tenant_id: str) -> dict:
-        pref = self.db.query(NotificationPreference).filter(
-            NotificationPreference.user_id == user_id,
-        ).first()
+        pref = (
+            self.db.query(NotificationPreference)
+            .filter(
+                NotificationPreference.user_id == user_id,
+            )
+            .first()
+        )
         if not pref:
             pref = NotificationPreference(user_id=user_id, tenant_id=tenant_id)
             self.db.add(pref)
@@ -190,9 +244,13 @@ class NotificationService:
         return self._pref_dict(pref)
 
     def update_preferences(self, user_id: int, tenant_id: str, data: dict) -> dict:
-        pref = self.db.query(NotificationPreference).filter(
-            NotificationPreference.user_id == user_id,
-        ).first()
+        pref = (
+            self.db.query(NotificationPreference)
+            .filter(
+                NotificationPreference.user_id == user_id,
+            )
+            .first()
+        )
         if not pref:
             pref = NotificationPreference(user_id=user_id, tenant_id=tenant_id)
             self.db.add(pref)
@@ -210,37 +268,60 @@ class NotificationService:
 
     def _dispatch_email(self, notif: Notification):
         """Stub for email dispatch — integrate SMTP/SendGrid/SES here."""
-        logger.info(f"📧 Email notification queued: [{notif.title}] → user {notif.user_id}")
+        logger.info(
+            f"📧 Email notification queued: [{notif.title}] → user {notif.user_id}"
+        )
 
     def _dispatch_push(self, notif: Notification):
         """Stub for push notification — integrate FCM/APNS here."""
-        logger.info(f"🔔 Push notification queued: [{notif.title}] → user {notif.user_id}")
+        logger.info(
+            f"🔔 Push notification queued: [{notif.title}] → user {notif.user_id}"
+        )
 
     def _dispatch_sms(self, notif: Notification):
         """Stub for SMS — integrate Twilio/MSG91 here."""
-        logger.info(f"📱 SMS notification queued: [{notif.title}] → user {notif.user_id}")
+        logger.info(
+            f"📱 SMS notification queued: [{notif.title}] → user {notif.user_id}"
+        )
 
     # ─── Serializers ─────────────────────────────────────────────────────
 
     def _notif_dict(self, n: Notification) -> dict:
         return {
-            "id": n.id, "tenant_id": n.tenant_id, "user_id": n.user_id,
-            "title": n.title, "message": n.message,
-            "notification_type": n.notification_type.value if hasattr(n.notification_type, 'value') else str(n.notification_type),
-            "priority": n.priority.value if hasattr(n.priority, 'value') else str(n.priority),
-            "channel": n.channel.value if hasattr(n.channel, 'value') else str(n.channel),
-            "is_read": n.is_read, "read_at": n.read_at,
-            "link": n.link, "metadata_json": n.metadata_json,
-            "sender_id": n.sender_id, "is_active": n.is_active,
-            "created_at": n.created_at, "updated_at": n.updated_at,
+            "id": n.id,
+            "tenant_id": n.tenant_id,
+            "user_id": n.user_id,
+            "title": n.title,
+            "message": n.message,
+            "notification_type": n.notification_type.value
+            if hasattr(n.notification_type, "value")
+            else str(n.notification_type),
+            "priority": n.priority.value
+            if hasattr(n.priority, "value")
+            else str(n.priority),
+            "channel": n.channel.value
+            if hasattr(n.channel, "value")
+            else str(n.channel),
+            "is_read": n.is_read,
+            "read_at": n.read_at,
+            "link": n.link,
+            "metadata_json": n.metadata_json,
+            "sender_id": n.sender_id,
+            "is_active": n.is_active,
+            "created_at": n.created_at,
+            "updated_at": n.updated_at,
         }
 
     def _pref_dict(self, p: NotificationPreference) -> dict:
         return {
-            "id": p.id, "user_id": p.user_id,
-            "email_enabled": p.email_enabled, "sms_enabled": p.sms_enabled,
-            "push_enabled": p.push_enabled, "in_app_enabled": p.in_app_enabled,
-            "attendance_alerts": p.attendance_alerts, "fee_reminders": p.fee_reminders,
+            "id": p.id,
+            "user_id": p.user_id,
+            "email_enabled": p.email_enabled,
+            "sms_enabled": p.sms_enabled,
+            "push_enabled": p.push_enabled,
+            "in_app_enabled": p.in_app_enabled,
+            "attendance_alerts": p.attendance_alerts,
+            "fee_reminders": p.fee_reminders,
             "exam_notifications": p.exam_notifications,
             "announcement_notifications": p.announcement_notifications,
             "leave_notifications": p.leave_notifications,

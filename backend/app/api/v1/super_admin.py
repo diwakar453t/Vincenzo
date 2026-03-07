@@ -1,4 +1,5 @@
 """Super Admin API router — platform-level controls for PreSkool ERP."""
+
 from typing import Optional, List
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -15,6 +16,7 @@ router = APIRouter()
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
+
 
 def _get_super_admin(current_user: dict, db: Session) -> User:
     try:
@@ -34,8 +36,9 @@ def _get_super_admin(current_user: dict, db: Session) -> User:
 
 # ─── Schemas ─────────────────────────────────────────────────────────────────
 
+
 class InstitutionCreate(BaseModel):
-    id: str          # e.g. "greenvalley"
+    id: str  # e.g. "greenvalley"
     name: str
     domain: str
 
@@ -77,6 +80,7 @@ class AuditLogEntry(BaseModel):
 
 # ─── Endpoints ───────────────────────────────────────────────────────────────
 
+
 @router.get("/institutions", response_model=List[InstitutionResponse])
 def list_institutions(
     current_user: dict = Depends(get_current_user),
@@ -88,30 +92,40 @@ def list_institutions(
     tenants = db.query(Tenant).all()
     result = []
     for t in tenants:
-        total_users = db.query(func.count(User.id)).filter(User.tenant_id == t.id).scalar() or 0
+        total_users = (
+            db.query(func.count(User.id)).filter(User.tenant_id == t.id).scalar() or 0
+        )
         total_students = (
             db.query(func.count(User.id))
             .filter(User.tenant_id == t.id, User.role == UserRole.STUDENT.value)
-            .scalar() or 0
+            .scalar()
+            or 0
         )
         total_teachers = (
             db.query(func.count(User.id))
             .filter(User.tenant_id == t.id, User.role == UserRole.TEACHER.value)
-            .scalar() or 0
+            .scalar()
+            or 0
         )
-        result.append(InstitutionResponse(
-            id=t.id,
-            name=t.name,
-            domain=t.domain,
-            is_active=t.is_active,
-            total_users=total_users,
-            total_students=total_students,
-            total_teachers=total_teachers,
-        ))
+        result.append(
+            InstitutionResponse(
+                id=t.id,
+                name=t.name,
+                domain=t.domain,
+                is_active=t.is_active,
+                total_users=total_users,
+                total_students=total_students,
+                total_teachers=total_teachers,
+            )
+        )
     return result
 
 
-@router.post("/institutions", response_model=InstitutionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/institutions",
+    response_model=InstitutionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def create_institution(
     data: InstitutionCreate,
     current_user: dict = Depends(get_current_user),
@@ -120,11 +134,15 @@ def create_institution(
     """Create a new institution/tenant."""
     _get_super_admin(current_user, db)
 
-    existing = db.query(Tenant).filter(
-        (Tenant.id == data.id) | (Tenant.domain == data.domain)
-    ).first()
+    existing = (
+        db.query(Tenant)
+        .filter((Tenant.id == data.id) | (Tenant.domain == data.domain))
+        .first()
+    )
     if existing:
-        raise HTTPException(status_code=400, detail="Institution ID or domain already exists")
+        raise HTTPException(
+            status_code=400, detail="Institution ID or domain already exists"
+        )
 
     tenant = Tenant(id=data.id, name=data.name, domain=data.domain, is_active=True)
     db.add(tenant)
@@ -132,8 +150,13 @@ def create_institution(
     db.refresh(tenant)
 
     return InstitutionResponse(
-        id=tenant.id, name=tenant.name, domain=tenant.domain,
-        is_active=tenant.is_active, total_users=0, total_students=0, total_teachers=0,
+        id=tenant.id,
+        name=tenant.name,
+        domain=tenant.domain,
+        is_active=tenant.is_active,
+        total_users=0,
+        total_students=0,
+        total_teachers=0,
     )
 
 
@@ -164,11 +187,26 @@ def get_platform_stats(
     _get_super_admin(current_user, db)
 
     total_institutions = db.query(func.count(Tenant.id)).scalar() or 0
-    active_institutions = db.query(func.count(Tenant.id)).filter(Tenant.is_active).scalar() or 0
+    active_institutions = (
+        db.query(func.count(Tenant.id)).filter(Tenant.is_active).scalar() or 0
+    )
     total_users = db.query(func.count(User.id)).scalar() or 0
-    total_students = db.query(func.count(User.id)).filter(User.role == UserRole.STUDENT.value).scalar() or 0
-    total_teachers = db.query(func.count(User.id)).filter(User.role == UserRole.TEACHER.value).scalar() or 0
-    total_admins = db.query(func.count(User.id)).filter(User.role == UserRole.ADMIN.value).scalar() or 0
+    total_students = (
+        db.query(func.count(User.id))
+        .filter(User.role == UserRole.STUDENT.value)
+        .scalar()
+        or 0
+    )
+    total_teachers = (
+        db.query(func.count(User.id))
+        .filter(User.role == UserRole.TEACHER.value)
+        .scalar()
+        or 0
+    )
+    total_admins = (
+        db.query(func.count(User.id)).filter(User.role == UserRole.ADMIN.value).scalar()
+        or 0
+    )
 
     return PlatformStats(
         total_institutions=total_institutions,
@@ -177,7 +215,7 @@ def get_platform_stats(
         total_students=total_students,
         total_teachers=total_teachers,
         total_admins=total_admins,
-        storage_used_mb=round(total_users * 2.4, 2),   # Estimate
+        storage_used_mb=round(total_users * 2.4, 2),  # Estimate
         server_uptime_pct=99.97,
     )
 
@@ -214,7 +252,9 @@ def get_audit_logs(
                     "entity_id": log.entity_id,
                     "user_id": log.user_id,
                     "ip_address": getattr(log, "ip_address", None),
-                    "created_at": log.created_at.isoformat() if log.created_at else None,
+                    "created_at": log.created_at.isoformat()
+                    if log.created_at
+                    else None,
                 }
                 for log in logs
             ],

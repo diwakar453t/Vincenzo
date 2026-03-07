@@ -1,8 +1,19 @@
 """
 Library Management models
 """
+
 import enum
-from sqlalchemy import Column, String, Integer, Float, Text, Boolean, Date, Enum, ForeignKey
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    Float,
+    Text,
+    Boolean,
+    Date,
+    Enum,
+    ForeignKey,
+)
 from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
 
@@ -68,15 +79,21 @@ class LibraryMember(BaseModel):
 
     member_code = Column(String(30), nullable=True)
     member_type = Column(Enum(MemberType), nullable=False, default=MemberType.student)
-    student_id = Column(Integer, ForeignKey("students.id", ondelete="SET NULL"), nullable=True)
-    teacher_id = Column(Integer, ForeignKey("teachers.id", ondelete="SET NULL"), nullable=True)
+    student_id = Column(
+        Integer, ForeignKey("students.id", ondelete="SET NULL"), nullable=True
+    )
+    teacher_id = Column(
+        Integer, ForeignKey("teachers.id", ondelete="SET NULL"), nullable=True
+    )
     name = Column(String(200), nullable=False)
     email = Column(String(200), nullable=True)
     phone = Column(String(20), nullable=True)
     max_books_allowed = Column(Integer, nullable=False, default=3)
     membership_start = Column(Date, nullable=True)
     membership_end = Column(Date, nullable=True)
-    status = Column(Enum(MembershipStatus), nullable=False, default=MembershipStatus.active)
+    status = Column(
+        Enum(MembershipStatus), nullable=False, default=MembershipStatus.active
+    )
     books_issued = Column(Integer, nullable=False, default=0)
 
     issues = relationship("IssueReturn", back_populates="member", lazy="dynamic")
@@ -88,8 +105,12 @@ class LibraryMember(BaseModel):
 class IssueReturn(BaseModel):
     __tablename__ = "issue_returns"
 
-    book_id = Column(Integer, ForeignKey("books.id", ondelete="CASCADE"), nullable=False)
-    member_id = Column(Integer, ForeignKey("library_members.id", ondelete="CASCADE"), nullable=False)
+    book_id = Column(
+        Integer, ForeignKey("books.id", ondelete="CASCADE"), nullable=False
+    )
+    member_id = Column(
+        Integer, ForeignKey("library_members.id", ondelete="CASCADE"), nullable=False
+    )
     issue_date = Column(Date, nullable=False)
     due_date = Column(Date, nullable=False)
     return_date = Column(Date, nullable=True)

@@ -9,6 +9,7 @@ Features:
 - Performance timing for slow query detection
 - Log level per environment (DEBUG dev, INFO prod)
 """
+
 import logging
 import json
 import sys
@@ -19,15 +20,19 @@ from typing import Optional
 from app.core.config import settings
 
 # ── Context Variables (thread-safe, async-safe) ───────────────────────
-current_tenant_id: ContextVar[Optional[str]] = ContextVar("current_tenant_id", default=None)
-current_request_id: ContextVar[Optional[str]] = ContextVar("current_request_id", default=None)
+current_tenant_id: ContextVar[Optional[str]] = ContextVar(
+    "current_tenant_id", default=None
+)
+current_request_id: ContextVar[Optional[str]] = ContextVar(
+    "current_request_id", default=None
+)
 current_user_id: ContextVar[Optional[str]] = ContextVar("current_user_id", default=None)
 
 
 class JSONFormatter(logging.Formatter):
     """
     Produces structured JSON log lines for centralized log aggregation.
-    
+
     Output:
     {"timestamp":"2026-02-20T02:45:00Z","level":"INFO","logger":"app.api",
      "message":"GET /api/v1/students","tenant_id":"college1",
@@ -36,7 +41,9 @@ class JSONFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         log_entry = {
-            "timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
+            "timestamp": datetime.fromtimestamp(
+                record.created, tz=timezone.utc
+            ).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -95,10 +102,10 @@ class HumanReadableFormatter(logging.Formatter):
     """
 
     COLORS = {
-        "DEBUG": "\033[36m",    # Cyan
-        "INFO": "\033[32m",     # Green
+        "DEBUG": "\033[36m",  # Cyan
+        "INFO": "\033[32m",  # Green
         "WARNING": "\033[33m",  # Yellow
-        "ERROR": "\033[31m",    # Red
+        "ERROR": "\033[31m",  # Red
         "CRITICAL": "\033[1;31m",  # Bold Red
     }
     RESET = "\033[0m"

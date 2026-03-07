@@ -1,6 +1,7 @@
 """
 Payment schemas
 """
+
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
@@ -27,7 +28,7 @@ class PaymentVerify(BaseModel):
 
 class PaymentRefundRequest(BaseModel):
     transaction_id: int
-    amount: Optional[float] = None        # None = full refund
+    amount: Optional[float] = None  # None = full refund
     reason: str = "Requested by admin"
 
 

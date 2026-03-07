@@ -1,6 +1,7 @@
 """
 Settings & Configuration models
 """
+
 import enum
 from sqlalchemy import Column, String, Integer, Text, Boolean, DateTime, Enum
 from app.models.base import BaseModel
@@ -35,7 +36,9 @@ class SchoolSettings(BaseModel):
     established_year = Column(Integer, nullable=True)
     principal_name = Column(String(200), nullable=True)
     board_affiliation = Column(String(100), nullable=True)  # CBSE, ICSE, State Board
-    school_type = Column(String(50), nullable=True)  # primary, secondary, higher_secondary
+    school_type = Column(
+        String(50), nullable=True
+    )  # primary, secondary, higher_secondary
 
     def __repr__(self):
         return f"<SchoolSettings(name={self.school_name})>"
@@ -44,7 +47,7 @@ class SchoolSettings(BaseModel):
 class AcademicYear(BaseModel):
     __tablename__ = "academic_years"
 
-    name = Column(String(50), nullable=False)           # "2025-26"
+    name = Column(String(50), nullable=False)  # "2025-26"
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=False)
     is_current = Column(Boolean, default=False, nullable=False)
@@ -59,9 +62,11 @@ class SystemPreference(BaseModel):
 
     key = Column(String(100), nullable=False, unique=True)
     value = Column(Text, nullable=True)
-    category = Column(Enum(SettingCategory), default=SettingCategory.system, nullable=False)
+    category = Column(
+        Enum(SettingCategory), default=SettingCategory.system, nullable=False
+    )
     description = Column(String(300), nullable=True)
-    value_type = Column(String(20), default="string")   # string, boolean, number, json
+    value_type = Column(String(20), default="string")  # string, boolean, number, json
     is_active = Column(Boolean, default=True, nullable=False)
 
     def __repr__(self):

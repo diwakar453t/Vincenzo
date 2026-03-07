@@ -6,10 +6,16 @@ from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.services.timetable_service import TimetableService
 from app.schemas.timetable import (
-    TimetableCreate, TimetableUpdate, TimetableResponse,
-    TimetableListResponse, TimetableListItem,
-    PeriodCreate, PeriodUpdate, PeriodResponse,
-    ConflictCheckResponse, ConflictItem,
+    TimetableCreate,
+    TimetableUpdate,
+    TimetableResponse,
+    TimetableListResponse,
+    TimetableListItem,
+    PeriodCreate,
+    PeriodUpdate,
+    PeriodResponse,
+    ConflictCheckResponse,
+    ConflictItem,
     BulkPeriodsCreate,
 )
 from app.models.user import User
@@ -27,12 +33,15 @@ def _get_user(current_user: dict, db: Session) -> User:
 
 def _require_admin(user: User):
     if user.role not in ["admin", "super_admin"]:
-        raise HTTPException(status_code=403, detail="Only admins can perform this action")
+        raise HTTPException(
+            status_code=403, detail="Only admins can perform this action"
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Timetable endpoints
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 @router.get("/", response_model=TimetableListResponse)
 def list_timetables(
@@ -114,7 +123,12 @@ def delete_timetable(
 # Period endpoints
 # ═══════════════════════════════════════════════════════════════════════════
 
-@router.post("/{timetable_id}/periods", response_model=PeriodResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/{timetable_id}/periods",
+    response_model=PeriodResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def add_period(
     timetable_id: int,
     data: PeriodCreate,
@@ -192,6 +206,7 @@ def delete_period(
 # ═══════════════════════════════════════════════════════════════════════════
 # Conflict check endpoint
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 @router.get("/{timetable_id}/conflicts", response_model=ConflictCheckResponse)
 def check_conflicts(

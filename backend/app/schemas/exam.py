@@ -5,6 +5,7 @@ from datetime import date, datetime
 
 # ─── ExamSchedule Schemas ──────────────────────────────────────────────
 
+
 class ExamScheduleBase(BaseModel):
     subject_id: int
     exam_date: date
@@ -44,6 +45,7 @@ class ExamScheduleResponse(ExamScheduleBase):
 
 
 # ─── Exam Schemas ──────────────────────────────────────────────────────
+
 
 class ExamBase(BaseModel):
     name: str = Field(..., max_length=200)
@@ -110,6 +112,7 @@ class ExamListResponse(BaseModel):
 
 
 # ─── Calendar view ─────────────────────────────────────────────────────
+
 
 class CalendarEvent(BaseModel):
     id: int

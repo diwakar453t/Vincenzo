@@ -5,6 +5,7 @@ from datetime import datetime
 
 # ─── Department Schemas ────────────────────────────────────────────────
 
+
 class DepartmentBase(BaseModel):
     name: str = Field(..., max_length=100)
     code: Optional[str] = Field(None, max_length=20)
@@ -50,6 +51,7 @@ class DepartmentListResponse(BaseModel):
 
 # ─── Hierarchy node for tree view ──────────────────────────────────────
 
+
 class DepartmentTreeNode(BaseModel):
     id: int
     name: str
@@ -57,7 +59,8 @@ class DepartmentTreeNode(BaseModel):
     head_teacher_name: Optional[str] = None
     designation_count: int = 0
     is_active: bool = True
-    children: List['DepartmentTreeNode'] = []
+    children: List["DepartmentTreeNode"] = []
+
 
 DepartmentTreeNode.model_rebuild()
 
@@ -67,6 +70,7 @@ class DepartmentTreeResponse(BaseModel):
 
 
 # ─── Designation Schemas ───────────────────────────────────────────────
+
 
 class DesignationBase(BaseModel):
     name: str = Field(..., max_length=100)

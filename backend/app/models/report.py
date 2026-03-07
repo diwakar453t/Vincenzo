@@ -1,6 +1,7 @@
 """
 Reports model
 """
+
 import enum
 from sqlalchemy import Column, String, Integer, Text, Boolean, Enum, JSON
 from app.models.base import BaseModel
@@ -35,7 +36,7 @@ class Report(BaseModel):
     report_type = Column(Enum(ReportType), nullable=False)
     format = Column(Enum(ReportFormat), nullable=False, default=ReportFormat.json)
     status = Column(Enum(ReportStatus), nullable=False, default=ReportStatus.generated)
-    parameters = Column(JSON, nullable=True)   # stored filter params
+    parameters = Column(JSON, nullable=True)  # stored filter params
     summary = Column(Text, nullable=True)
     record_count = Column(Integer, nullable=False, default=0)
     generated_by = Column(Integer, nullable=True)

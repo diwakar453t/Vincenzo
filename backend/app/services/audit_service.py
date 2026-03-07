@@ -17,6 +17,7 @@ Usage:
     await audit.log_gdpr(db, AuditAction.DATA_ERASURE,
                          user_id=123, request=request)
 """
+
 import json
 import hashlib
 import logging
@@ -138,13 +139,13 @@ class AuditLogger:
         user_id = int(current_user["sub"]) if current_user else None
         user_email = current_user.get("email") if current_user else None
         user_role = current_user.get("role") if current_user else None
-        tenant_id = (
-            getattr(request.state, "tenant_id", None)
-            or (current_user.get("tenant_id") if current_user else None)
+        tenant_id = getattr(request.state, "tenant_id", None) or (
+            current_user.get("tenant_id") if current_user else None
         )
         client_ip = request.client.host if request.client else None
         user_agent = request.headers.get("user-agent")
         from app.core.logging_config import current_request_id
+
         request_id = current_request_id.get(None)
 
         return self.log(
@@ -183,18 +184,24 @@ class AuditLogger:
         """
         changes = {}
         if before and after:
-            before_dict = {c.name: getattr(before, c.name, None)
-                           for c in before.__table__.columns}
-            after_dict = {c.name: getattr(after, c.name, None)
-                          for c in after.__table__.columns}
+            before_dict = {
+                c.name: getattr(before, c.name, None) for c in before.__table__.columns
+            }
+            after_dict = {
+                c.name: getattr(after, c.name, None) for c in after.__table__.columns
+            }
 
             for field, new_val in after_dict.items():
                 old_val = before_dict.get(field)
                 if old_val != new_val:
                     # Hash values for privacy — proves change without exposing data
                     changes[field] = {
-                        "before": hash_pii(str(old_val)) if old_val is not None else None,
-                        "after": hash_pii(str(new_val)) if new_val is not None else None,
+                        "before": hash_pii(str(old_val))
+                        if old_val is not None
+                        else None,
+                        "after": hash_pii(str(new_val))
+                        if new_val is not None
+                        else None,
                         "is_pii": DataClassification.should_mask_in_logs(field),
                     }
 
@@ -207,7 +214,10 @@ class AuditLogger:
             resource_enum = AuditResource.SYSTEM
 
         return self.log_from_request(
-            db, action, resource_enum, request,
+            db,
+            action,
+            resource_enum,
+            request,
             resource_id=resource_id,
             current_user=current_user,
             changes=changes,
@@ -226,7 +236,10 @@ class AuditLogger:
     ) -> AuditLog:
         """Log a GDPR-specific action (export, erasure, consent, SAR)."""
         return self.log_from_request(
-            db, action, AuditResource.GDPR, request,
+            db,
+            action,
+            AuditResource.GDPR,
+            request,
             resource_id=str(data_subject_id),
             resource_name=data_subject_email,
             current_user=requesting_user,
@@ -234,7 +247,9 @@ class AuditLogger:
             data_category="PERSONAL_DATA",
         )
 
-    def verify_chain(self, db: Session, tenant_id: Optional[str] = None, limit: int = 100) -> dict:
+    def verify_chain(
+        self, db: Session, tenant_id: Optional[str] = None, limit: int = 100
+    ) -> dict:
         """
         Verify audit log chain integrity.
         Returns: {valid: bool, broken_at: int|None, checked: int}
@@ -258,17 +273,22 @@ class AuditLogger:
 
     def _compute_hash(self, entry: AuditLog, previous_hash: Optional[str]) -> str:
         """Compute SHA-256 chain hash for an audit record."""
-        components = "|".join(filter(None, [
-            str(entry.id),
-            str(entry.timestamp),
-            str(entry.user_id),
-            str(entry.action),
-            str(entry.resource_type),
-            str(entry.resource_id),
-            str(entry.tenant_id),
-            str(entry.status),
-            str(previous_hash or "GENESIS"),
-        ]))
+        components = "|".join(
+            filter(
+                None,
+                [
+                    str(entry.id),
+                    str(entry.timestamp),
+                    str(entry.user_id),
+                    str(entry.action),
+                    str(entry.resource_type),
+                    str(entry.resource_id),
+                    str(entry.tenant_id),
+                    str(entry.status),
+                    str(previous_hash or "GENESIS"),
+                ],
+            )
+        )
         return hashlib.sha256(components.encode("utf-8")).hexdigest()
 
     def _get_last_hash(self, db: Session, tenant_id: Optional[str]) -> Optional[str]:

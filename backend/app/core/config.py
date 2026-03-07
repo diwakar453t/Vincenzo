@@ -11,21 +11,21 @@ class Settings(BaseSettings):
     # ── Application ───────────────────────────────────────────────────
     APP_NAME: str = "PreSkool ERP"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = False          # NEVER True in production
-    APP_ENV: str = "development" # Override to 'production' in prod
+    DEBUG: bool = False  # NEVER True in production
+    APP_ENV: str = "development"  # Override to 'production' in prod
 
     # ── Database — PostgreSQL (mandatory in production) ────────────────
     DATABASE_URL: str = "sqlite:///./preskool.db"
 
     # Connection Pool (without PgBouncer)
-    DB_POOL_SIZE: int = 50           # Base connections (200 colleges = high concurrency)
-    DB_MAX_OVERFLOW: int = 30        # Burst capacity (total max: 80)
-    DB_POOL_TIMEOUT: int = 30        # Seconds to wait for a connection
-    DB_POOL_RECYCLE: int = 1800      # Recycle connections every 30 minutes
-    DB_ECHO: bool = False            # SQL logging (disable in production)
+    DB_POOL_SIZE: int = 50  # Base connections (200 colleges = high concurrency)
+    DB_MAX_OVERFLOW: int = 30  # Burst capacity (total max: 80)
+    DB_POOL_TIMEOUT: int = 30  # Seconds to wait for a connection
+    DB_POOL_RECYCLE: int = 1800  # Recycle connections every 30 minutes
+    DB_ECHO: bool = False  # SQL logging (disable in production)
 
     # PgBouncer (recommended for production — handles pooling externally)
-    USE_PGBOUNCER: bool = False      # Set True when PgBouncer is in front of PG
+    USE_PGBOUNCER: bool = False  # Set True when PgBouncer is in front of PG
 
     # ── Redis ─────────────────────────────────────────────────────────
     REDIS_URL: str = "redis://localhost:6379"
@@ -62,14 +62,17 @@ class Settings(BaseSettings):
             "CHANGE_ME_BEFORE_PRODUCTION_USE_token_hex_32",
             "your-secret-key-change-in-production",
             "change-me-in-production-32chars!!",
-            "secret", "password", "test", "",
+            "secret",
+            "password",
+            "test",
+            "",
         }
         if self.APP_ENV == "production" and (
             self.JWT_SECRET_KEY in weak or len(self.JWT_SECRET_KEY) < 32
         ):
             raise RuntimeError(
                 "SECURITY: JWT_SECRET_KEY is weak or default. "
-                "Generate one with: python3 -c \"import secrets; print(secrets.token_hex(32))\""
+                'Generate one with: python3 -c "import secrets; print(secrets.token_hex(32))"'
             )
 
     # ── Keycloak (optional SSO) ───────────────────────────────────────
@@ -80,21 +83,21 @@ class Settings(BaseSettings):
 
     # ── CORS (restrictive in production) ─────────────────────────────
     CORS_ORIGINS: list = [
-        "http://localhost:3000",       # React dev server
-        "http://localhost:5173",       # Vite dev server
+        "http://localhost:3000",  # React dev server
+        "http://localhost:5173",  # Vite dev server
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
     ]
     CORS_PRODUCTION_ORIGINS: list = [
         "https://erp.preskool.com",
         "https://*.erp.preskool.com",  # Tenant subdomains
-        "https://*.railway.app",       # Railway backend URL
+        "https://*.railway.app",  # Railway backend URL
         "https://*.up.railway.app",
-        "https://*.vercel.app",        # Vercel frontend (wildcard)
+        "https://*.vercel.app",  # Vercel frontend (wildcard)
         "https://frontend-three-rho-19.vercel.app",  # Exact Vercel URL
-        "https://*.azurewebsites.net", # Azure App Service
+        "https://*.azurewebsites.net",  # Azure App Service
         "https://preskool-api-backend.azurewebsites.net",
-        "*"
+        "*",
     ]
     CORS_ALLOW_CREDENTIALS: bool = False
     CORS_ALLOW_METHODS: list = ["*"]
@@ -113,14 +116,16 @@ class Settings(BaseSettings):
     S3_ENDPOINT_URL: Optional[str] = None  # For MinIO/localstack
 
     # ── Multi-Tenancy ─────────────────────────────────────────────────
-    TENANT_HEADER: str = "X-Tenant-ID"      # Header name for tenant identification
-    TENANT_ISOLATION: str = "row"            # "row" (shared DB) or "schema" (per-schema)
-    MAX_TENANTS: int = 500                   # Max supported tenants
-    TENANT_CACHE_TTL: int = 300              # Cache tenant info for 5 min (seconds)
+    TENANT_HEADER: str = "X-Tenant-ID"  # Header name for tenant identification
+    TENANT_ISOLATION: str = "row"  # "row" (shared DB) or "schema" (per-schema)
+    MAX_TENANTS: int = 500  # Max supported tenants
+    TENANT_CACHE_TTL: int = 300  # Cache tenant info for 5 min (seconds)
 
     # ── Rate Limiting ─────────────────────────────────────────────────
-    RATE_LIMIT_PER_MINUTE: int = 10000       # Per tenant, per minute (set lower in production via env)
-    RATE_LIMIT_BURST: int = 500              # Burst allowance (set lower in production via env)
+    RATE_LIMIT_PER_MINUTE: int = (
+        10000  # Per tenant, per minute (set lower in production via env)
+    )
+    RATE_LIMIT_BURST: int = 500  # Burst allowance (set lower in production via env)
 
     # ── Background Tasks / Celery ─────────────────────────────────────
     CELERY_BROKER_URL: str = "redis://localhost:6379/1"
@@ -140,15 +145,15 @@ class Settings(BaseSettings):
     # REQUIRED in production: python3 -c "import secrets; print(secrets.token_hex(32))"
     ENCRYPTION_MASTER_KEY: Optional[str] = None  # Master key for field-level encryption
     ENCRYPTION_SALT: str = "preskool-erp-v1-CHANGE-PER-DEPLOYMENT"  # Unique per deploy
-    ENCRYPTION_OLD_KEY_1: Optional[str] = None   # For key rotation
+    ENCRYPTION_OLD_KEY_1: Optional[str] = None  # For key rotation
 
     # ── GDPR & Data Retention ─────────────────────────────────────────
-    GDPR_DEFAULT_RETENTION_DAYS: int = 365 * 7   # 7 years for financial records
-    GDPR_ERASURE_GRACE_DAYS: int = 30            # 30-day grace after erasure request
-    GDPR_DSR_DEADLINE_DAYS: int = 30             # Data subject request deadline
+    GDPR_DEFAULT_RETENTION_DAYS: int = 365 * 7  # 7 years for financial records
+    GDPR_ERASURE_GRACE_DAYS: int = 30  # 30-day grace after erasure request
+    GDPR_DSR_DEADLINE_DAYS: int = 30  # Data subject request deadline
     GDPR_CONTACT_EMAIL: str = "privacy@preskool.com"
-    AUDIT_LOG_RETENTION_DAYS: int = 365          # Active audit logs (archive after 1yr)
-    AUDIT_LOG_ARCHIVE_DAYS: int = 365 * 7        # Total audit retention (7 years)
+    AUDIT_LOG_RETENTION_DAYS: int = 365  # Active audit logs (archive after 1yr)
+    AUDIT_LOG_ARCHIVE_DAYS: int = 365 * 7  # Total audit retention (7 years)
 
     class Config:
         env_file = ".env"

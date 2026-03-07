@@ -5,25 +5,30 @@ from datetime import datetime
 
 # ─── Subject Group Schemas ───────────────────────────────────────────────
 
+
 class SubjectGroupBase(BaseModel):
     """Base schema for SubjectGroup"""
+
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = None
 
 
 class SubjectGroupCreate(SubjectGroupBase):
     """Schema for creating a subject group"""
+
     pass
 
 
 class SubjectGroupUpdate(BaseModel):
     """Schema for updating a subject group"""
+
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = None
 
 
 class SubjectGroupResponse(SubjectGroupBase):
     """Schema for subject group response"""
+
     id: int
     tenant_id: str
     created_at: datetime
@@ -35,6 +40,7 @@ class SubjectGroupResponse(SubjectGroupBase):
 
 class SubjectGroupListItem(BaseModel):
     """Schema for subject group list item"""
+
     id: int
     name: str
     description: Optional[str] = None
@@ -46,14 +52,17 @@ class SubjectGroupListItem(BaseModel):
 
 class SubjectGroupListResponse(BaseModel):
     """Schema for paginated subject group list"""
+
     groups: list[SubjectGroupListItem]
     total: int
 
 
 # ─── Subject Schemas ─────────────────────────────────────────────────────
 
+
 class SubjectBase(BaseModel):
     """Base schema for Subject"""
+
     name: str = Field(..., min_length=1, max_length=100)
     code: str = Field(..., min_length=1, max_length=20)
     description: Optional[str] = None
@@ -64,11 +73,13 @@ class SubjectBase(BaseModel):
 
 class SubjectCreate(SubjectBase):
     """Schema for creating a subject"""
+
     pass
 
 
 class SubjectUpdate(BaseModel):
     """Schema for updating a subject"""
+
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     code: Optional[str] = Field(None, min_length=1, max_length=20)
     description: Optional[str] = None
@@ -79,6 +90,7 @@ class SubjectUpdate(BaseModel):
 
 class SubjectResponse(SubjectBase):
     """Schema for subject response"""
+
     id: int
     tenant_id: str
     group_name: Optional[str] = None
@@ -91,6 +103,7 @@ class SubjectResponse(SubjectBase):
 
 class SubjectListItem(BaseModel):
     """Schema for subject list item"""
+
     id: int
     name: str
     code: str
@@ -105,6 +118,7 @@ class SubjectListItem(BaseModel):
 
 class SubjectListResponse(BaseModel):
     """Schema for paginated subject list"""
+
     subjects: list[SubjectListItem]
     total: int
     skip: int
@@ -113,13 +127,16 @@ class SubjectListResponse(BaseModel):
 
 # ─── Class-Subject Assignment Schemas ────────────────────────────────────
 
+
 class ClassSubjectCreate(BaseModel):
     """Schema for assigning a subject to a class"""
+
     teacher_id: Optional[int] = None
 
 
 class ClassSubjectInfo(BaseModel):
     """Schema for class-subject assignment info"""
+
     id: int
     subject_id: int
     subject_name: str
@@ -133,6 +150,7 @@ class ClassSubjectInfo(BaseModel):
 
 class ClassSubjectsResponse(BaseModel):
     """Schema for listing subjects assigned to a class"""
+
     class_id: int
     class_name: str
     subjects: list[ClassSubjectInfo]

@@ -1,8 +1,19 @@
 """
 Notification models
 """
+
 import enum
-from sqlalchemy import Column, String, Integer, Text, Boolean, DateTime, Enum, ForeignKey, JSON
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    Text,
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
+    JSON,
+)
 from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
 
@@ -34,17 +45,27 @@ class NotificationPriority(str, enum.Enum):
 class Notification(BaseModel):
     __tablename__ = "notifications"
 
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     title = Column(String(300), nullable=False)
     message = Column(Text, nullable=False)
-    notification_type = Column(Enum(NotificationType), default=NotificationType.info, nullable=False)
-    priority = Column(Enum(NotificationPriority), default=NotificationPriority.medium, nullable=False)
-    channel = Column(Enum(NotificationChannel), default=NotificationChannel.in_app, nullable=False)
+    notification_type = Column(
+        Enum(NotificationType), default=NotificationType.info, nullable=False
+    )
+    priority = Column(
+        Enum(NotificationPriority), default=NotificationPriority.medium, nullable=False
+    )
+    channel = Column(
+        Enum(NotificationChannel), default=NotificationChannel.in_app, nullable=False
+    )
     is_read = Column(Boolean, default=False, nullable=False)
     read_at = Column(DateTime, nullable=True)
-    link = Column(String(500), nullable=True)          # optional deep link
-    metadata_json = Column(JSON, nullable=True)        # extra data (e.g. entity_type, entity_id)
-    sender_id = Column(Integer, nullable=True)         # system or another user
+    link = Column(String(500), nullable=True)  # optional deep link
+    metadata_json = Column(
+        JSON, nullable=True
+    )  # extra data (e.g. entity_type, entity_id)
+    sender_id = Column(Integer, nullable=True)  # system or another user
     is_active = Column(Boolean, default=True, nullable=False)
 
     user = relationship("User", backref="notifications", foreign_keys=[user_id])
@@ -56,7 +77,9 @@ class Notification(BaseModel):
 class NotificationPreference(BaseModel):
     __tablename__ = "notification_preferences"
 
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True
+    )
     email_enabled = Column(Boolean, default=True, nullable=False)
     sms_enabled = Column(Boolean, default=False, nullable=False)
     push_enabled = Column(Boolean, default=True, nullable=False)
@@ -69,7 +92,9 @@ class NotificationPreference(BaseModel):
     leave_notifications = Column(Boolean, default=True, nullable=False)
     report_notifications = Column(Boolean, default=True, nullable=False)
 
-    user = relationship("User", backref="notification_preferences", foreign_keys=[user_id])
+    user = relationship(
+        "User", backref="notification_preferences", foreign_keys=[user_id]
+    )
 
     def __repr__(self):
         return f"<NotificationPreference(user={self.user_id})>"

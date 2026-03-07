@@ -6,9 +6,16 @@ from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.services.department_service import DepartmentService
 from app.schemas.department import (
-    DepartmentCreate, DepartmentUpdate, DepartmentResponse, DepartmentListResponse,
-    DepartmentTreeNode, DepartmentTreeResponse,
-    DesignationCreate, DesignationUpdate, DesignationResponse, DesignationListResponse,
+    DepartmentCreate,
+    DepartmentUpdate,
+    DepartmentResponse,
+    DepartmentListResponse,
+    DepartmentTreeNode,
+    DepartmentTreeResponse,
+    DesignationCreate,
+    DesignationUpdate,
+    DesignationResponse,
+    DesignationListResponse,
 )
 from app.models.user import User
 
@@ -25,12 +32,15 @@ def _get_user(current_user: dict, db: Session) -> User:
 
 def _require_admin(user: User):
     if user.role not in ["admin", "super_admin"]:
-        raise HTTPException(status_code=403, detail="Only admins can perform this action")
+        raise HTTPException(
+            status_code=403, detail="Only admins can perform this action"
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # Department endpoints
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @router.get("/", response_model=DepartmentListResponse)
 def list_departments(
@@ -42,7 +52,9 @@ def list_departments(
     user = _get_user(current_user, db)
     service = DepartmentService(db)
     items, total = service.get_departments(user.tenant_id, search, is_active)
-    return DepartmentListResponse(departments=[DepartmentResponse(**d) for d in items], total=total)
+    return DepartmentListResponse(
+        departments=[DepartmentResponse(**d) for d in items], total=total
+    )
 
 
 @router.get("/tree", response_model=DepartmentTreeResponse)
@@ -70,7 +82,9 @@ def get_department(
     return d
 
 
-@router.post("/", response_model=DepartmentResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=DepartmentResponse, status_code=status.HTTP_201_CREATED
+)
 def create_department(
     data: DepartmentCreate,
     current_user: dict = Depends(get_current_user),
@@ -119,6 +133,7 @@ def delete_department(
 # Designation endpoints
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @router.get("/designations/all", response_model=DesignationListResponse)
 def list_designations(
     department_id: Optional[int] = None,
@@ -129,11 +144,19 @@ def list_designations(
 ):
     user = _get_user(current_user, db)
     service = DepartmentService(db)
-    items, total = service.get_designations(user.tenant_id, department_id, search, is_active)
-    return DesignationListResponse(designations=[DesignationResponse(**d) for d in items], total=total)
+    items, total = service.get_designations(
+        user.tenant_id, department_id, search, is_active
+    )
+    return DesignationListResponse(
+        designations=[DesignationResponse(**d) for d in items], total=total
+    )
 
 
-@router.post("/designations", response_model=DesignationResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/designations",
+    response_model=DesignationResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def create_designation(
     data: DesignationCreate,
     current_user: dict = Depends(get_current_user),

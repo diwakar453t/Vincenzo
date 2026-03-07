@@ -4,6 +4,7 @@ POST /api/v1/feedback        — Submit feedback (any authenticated user)
 GET  /api/v1/feedback        — List feedback (admin only, with filters)
 GET  /api/v1/feedback/stats  — Aggregated stats by module/type/rating (admin only)
 """
+
 import uuid
 import logging
 from datetime import datetime
@@ -92,7 +93,11 @@ async def list_feedback(
     if module:
         items = [i for i in items if i.get("module") == module]
     if min_rating is not None:
-        items = [i for i in items if i.get("rating") is not None and i["rating"] >= min_rating]
+        items = [
+            i
+            for i in items
+            if i.get("rating") is not None and i["rating"] >= min_rating
+        ]
 
     # Sort newest first
     items.sort(key=lambda x: x["created_at"], reverse=True)
@@ -136,7 +141,11 @@ async def feedback_stats():
     }
 
     overall_ratings = [i["rating"] for i in _FEEDBACK_STORE if i.get("rating")]
-    overall_avg = round(sum(overall_ratings) / len(overall_ratings), 2) if overall_ratings else None
+    overall_avg = (
+        round(sum(overall_ratings) / len(overall_ratings), 2)
+        if overall_ratings
+        else None
+    )
 
     return {
         "total": len(_FEEDBACK_STORE),

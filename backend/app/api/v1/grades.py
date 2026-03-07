@@ -6,9 +6,17 @@ from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.services.grade_service import GradeService
 from app.schemas.grade import (
-    GradeCategoryCreate, GradeCategoryUpdate, GradeCategoryResponse, GradeCategoryListResponse,
-    GradeCreate, GradeUpdate, GradeBulkEntry, GradeResponse, GradeListResponse,
-    StudentGPA, ReportCardResponse,
+    GradeCategoryCreate,
+    GradeCategoryUpdate,
+    GradeCategoryResponse,
+    GradeCategoryListResponse,
+    GradeCreate,
+    GradeUpdate,
+    GradeBulkEntry,
+    GradeResponse,
+    GradeListResponse,
+    StudentGPA,
+    ReportCardResponse,
 )
 from app.models.user import User
 
@@ -25,12 +33,15 @@ def _get_user(current_user: dict, db: Session) -> User:
 
 def _require_admin(user: User):
     if user.role not in ["admin", "super_admin"]:
-        raise HTTPException(status_code=403, detail="Only admins can perform this action")
+        raise HTTPException(
+            status_code=403, detail="Only admins can perform this action"
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # Grade Category (scale) endpoints
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @router.get("/categories", response_model=GradeCategoryListResponse)
 def list_categories(
@@ -40,10 +51,16 @@ def list_categories(
     user = _get_user(current_user, db)
     service = GradeService(db)
     cats = service.get_categories(user.tenant_id)
-    return GradeCategoryListResponse(categories=[GradeCategoryResponse(**c) for c in cats])
+    return GradeCategoryListResponse(
+        categories=[GradeCategoryResponse(**c) for c in cats]
+    )
 
 
-@router.post("/categories", response_model=GradeCategoryResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/categories",
+    response_model=GradeCategoryResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def create_category(
     data: GradeCategoryCreate,
     current_user: dict = Depends(get_current_user),
@@ -105,12 +122,15 @@ def seed_categories(
     service = GradeService(db)
     service.seed_default_categories(user.tenant_id)
     cats = service.get_categories(user.tenant_id)
-    return GradeCategoryListResponse(categories=[GradeCategoryResponse(**c) for c in cats])
+    return GradeCategoryListResponse(
+        categories=[GradeCategoryResponse(**c) for c in cats]
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # Grade endpoints
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @router.get("/", response_model=GradeListResponse)
 def list_grades(
@@ -123,7 +143,9 @@ def list_grades(
 ):
     user = _get_user(current_user, db)
     service = GradeService(db)
-    items, total = service.get_grades(user.tenant_id, exam_id, class_id, student_id, subject_id)
+    items, total = service.get_grades(
+        user.tenant_id, exam_id, class_id, student_id, subject_id
+    )
     return GradeListResponse(grades=[GradeResponse(**g) for g in items], total=total)
 
 
@@ -137,7 +159,12 @@ def create_grade(
     _require_admin(user)
     service = GradeService(db)
     g = service.create_grade(data, user.tenant_id)
-    items, _ = service.get_grades(user.tenant_id, student_id=g.student_id, exam_id=g.exam_id, subject_id=g.subject_id)
+    items, _ = service.get_grades(
+        user.tenant_id,
+        student_id=g.student_id,
+        exam_id=g.exam_id,
+        subject_id=g.subject_id,
+    )
     return items[0] if items else GradeResponse.model_validate(g)
 
 
@@ -151,7 +178,12 @@ def bulk_create_grades(
     _require_admin(user)
     service = GradeService(db)
     service.bulk_create_grades(data, user.tenant_id)
-    items, total = service.get_grades(user.tenant_id, exam_id=data.exam_id, subject_id=data.subject_id, class_id=data.class_id)
+    items, total = service.get_grades(
+        user.tenant_id,
+        exam_id=data.exam_id,
+        subject_id=data.subject_id,
+        class_id=data.class_id,
+    )
     return GradeListResponse(grades=[GradeResponse(**g) for g in items], total=total)
 
 
@@ -168,7 +200,12 @@ def update_grade(
     g = service.update_grade(grade_id, data, user.tenant_id)
     if not g:
         raise HTTPException(status_code=404, detail="Grade not found")
-    items, _ = service.get_grades(user.tenant_id, student_id=g.student_id, exam_id=g.exam_id, subject_id=g.subject_id)
+    items, _ = service.get_grades(
+        user.tenant_id,
+        student_id=g.student_id,
+        exam_id=g.exam_id,
+        subject_id=g.subject_id,
+    )
     return items[0] if items else GradeResponse.model_validate(g)
 
 
@@ -190,6 +227,7 @@ def delete_grade(
 # GPA & Report Card
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @router.get("/gpa/{student_id}/{exam_id}", response_model=StudentGPA)
 def get_student_gpa(
     student_id: int,
@@ -201,7 +239,9 @@ def get_student_gpa(
     service = GradeService(db)
     result = service.calculate_gpa(student_id, exam_id, user.tenant_id)
     if not result:
-        raise HTTPException(status_code=404, detail="No grades found for this student/exam")
+        raise HTTPException(
+            status_code=404, detail="No grades found for this student/exam"
+        )
     return result
 
 

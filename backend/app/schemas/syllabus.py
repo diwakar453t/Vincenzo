@@ -5,6 +5,7 @@ from datetime import datetime, date
 
 # ─── Syllabus Topic Schemas ────────────────────────────────────────────
 
+
 class SyllabusTopicBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = None
@@ -36,6 +37,7 @@ class SyllabusTopicResponse(SyllabusTopicBase):
 
 
 # ─── Syllabus Schemas ──────────────────────────────────────────────────
+
 
 class SyllabusBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)

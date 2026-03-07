@@ -3,7 +3,12 @@ from typing import Optional, List
 
 from app.models.exam import Exam, ExamSchedule
 from app.models.class_model import Class
-from app.schemas.exam import ExamCreate, ExamUpdate, ExamScheduleCreate, ExamScheduleUpdate
+from app.schemas.exam import (
+    ExamCreate,
+    ExamUpdate,
+    ExamScheduleCreate,
+    ExamScheduleUpdate,
+)
 
 
 class ExamService:
@@ -63,7 +68,9 @@ class ExamService:
             "class_name": e.class_ref.name if e.class_ref else None,
             "total_marks": e.total_marks,
             "passing_marks": e.passing_marks,
-            "schedules": [self._schedule_to_dict(s) for s in e.schedules] if e.schedules else [],
+            "schedules": [self._schedule_to_dict(s) for s in e.schedules]
+            if e.schedules
+            else [],
             "schedule_count": len(e.schedules) if e.schedules else 0,
             "created_at": e.created_at,
             "updated_at": e.updated_at,
@@ -71,9 +78,14 @@ class ExamService:
 
     # ─── Exam CRUD ───────────────────────────────────────────────────
 
-    def get_exams(self, tenant_id: str, class_id: Optional[int] = None,
-                  status: Optional[str] = None, exam_type: Optional[str] = None,
-                  search: Optional[str] = None) -> tuple:
+    def get_exams(
+        self,
+        tenant_id: str,
+        class_id: Optional[int] = None,
+        status: Optional[str] = None,
+        exam_type: Optional[str] = None,
+        search: Optional[str] = None,
+    ) -> tuple:
         q = self.db.query(Exam).filter(Exam.tenant_id == tenant_id)
         if class_id:
             q = q.filter(Exam.class_id == class_id)
@@ -84,15 +96,25 @@ class ExamService:
         if search:
             q = q.filter(Exam.name.ilike(f"%{search}%"))
         total = q.count()
-        items = q.order_by(Exam.start_date.desc().nullslast(), Exam.created_at.desc()).all()
+        items = q.order_by(
+            Exam.start_date.desc().nullslast(), Exam.created_at.desc()
+        ).all()
         return [self._exam_to_list(e) for e in items], total
 
     def get_exam(self, exam_id: int, tenant_id: str) -> Optional[dict]:
-        e = self.db.query(Exam).filter(Exam.id == exam_id, Exam.tenant_id == tenant_id).first()
+        e = (
+            self.db.query(Exam)
+            .filter(Exam.id == exam_id, Exam.tenant_id == tenant_id)
+            .first()
+        )
         return self._exam_to_detail(e) if e else None
 
     def create_exam(self, data: ExamCreate, tenant_id: str) -> Exam:
-        cls = self.db.query(Class).filter(Class.id == data.class_id, Class.tenant_id == tenant_id).first()
+        cls = (
+            self.db.query(Class)
+            .filter(Class.id == data.class_id, Class.tenant_id == tenant_id)
+            .first()
+        )
         if not cls:
             raise ValueError("Class not found")
         e = Exam(**data.model_dump(), tenant_id=tenant_id)
@@ -101,8 +123,14 @@ class ExamService:
         self.db.refresh(e)
         return e
 
-    def update_exam(self, exam_id: int, data: ExamUpdate, tenant_id: str) -> Optional[Exam]:
-        e = self.db.query(Exam).filter(Exam.id == exam_id, Exam.tenant_id == tenant_id).first()
+    def update_exam(
+        self, exam_id: int, data: ExamUpdate, tenant_id: str
+    ) -> Optional[Exam]:
+        e = (
+            self.db.query(Exam)
+            .filter(Exam.id == exam_id, Exam.tenant_id == tenant_id)
+            .first()
+        )
         if not e:
             return None
         for field, value in data.model_dump(exclude_unset=True).items():
@@ -112,7 +140,11 @@ class ExamService:
         return e
 
     def delete_exam(self, exam_id: int, tenant_id: str) -> bool:
-        e = self.db.query(Exam).filter(Exam.id == exam_id, Exam.tenant_id == tenant_id).first()
+        e = (
+            self.db.query(Exam)
+            .filter(Exam.id == exam_id, Exam.tenant_id == tenant_id)
+            .first()
+        )
         if not e:
             return False
         self.db.delete(e)
@@ -121,8 +153,14 @@ class ExamService:
 
     # ─── Schedule CRUD ───────────────────────────────────────────────
 
-    def add_schedule(self, exam_id: int, data: ExamScheduleCreate, tenant_id: str) -> ExamSchedule:
-        e = self.db.query(Exam).filter(Exam.id == exam_id, Exam.tenant_id == tenant_id).first()
+    def add_schedule(
+        self, exam_id: int, data: ExamScheduleCreate, tenant_id: str
+    ) -> ExamSchedule:
+        e = (
+            self.db.query(Exam)
+            .filter(Exam.id == exam_id, Exam.tenant_id == tenant_id)
+            .first()
+        )
         if not e:
             raise ValueError("Exam not found")
         s = ExamSchedule(**data.model_dump(), exam_id=exam_id, tenant_id=tenant_id)
@@ -131,8 +169,14 @@ class ExamService:
         self.db.refresh(s)
         return s
 
-    def update_schedule(self, schedule_id: int, data: ExamScheduleUpdate, tenant_id: str) -> Optional[ExamSchedule]:
-        s = self.db.query(ExamSchedule).filter(ExamSchedule.id == schedule_id, ExamSchedule.tenant_id == tenant_id).first()
+    def update_schedule(
+        self, schedule_id: int, data: ExamScheduleUpdate, tenant_id: str
+    ) -> Optional[ExamSchedule]:
+        s = (
+            self.db.query(ExamSchedule)
+            .filter(ExamSchedule.id == schedule_id, ExamSchedule.tenant_id == tenant_id)
+            .first()
+        )
         if not s:
             return None
         for field, value in data.model_dump(exclude_unset=True).items():
@@ -142,7 +186,11 @@ class ExamService:
         return s
 
     def delete_schedule(self, schedule_id: int, tenant_id: str) -> bool:
-        s = self.db.query(ExamSchedule).filter(ExamSchedule.id == schedule_id, ExamSchedule.tenant_id == tenant_id).first()
+        s = (
+            self.db.query(ExamSchedule)
+            .filter(ExamSchedule.id == schedule_id, ExamSchedule.tenant_id == tenant_id)
+            .first()
+        )
         if not s:
             return False
         self.db.delete(s)
@@ -151,8 +199,13 @@ class ExamService:
 
     # ─── Calendar ────────────────────────────────────────────────────
 
-    def get_calendar(self, tenant_id: str, month: Optional[int] = None,
-                     year: Optional[int] = None, class_id: Optional[int] = None) -> List[dict]:
+    def get_calendar(
+        self,
+        tenant_id: str,
+        month: Optional[int] = None,
+        year: Optional[int] = None,
+        class_id: Optional[int] = None,
+    ) -> List[dict]:
         """Get exam schedule events for calendar view."""
         q = (
             self.db.query(ExamSchedule)
@@ -163,28 +216,34 @@ class ExamService:
             q = q.filter(Exam.class_id == class_id)
         if month and year:
             from sqlalchemy import extract
+
             q = q.filter(
-                extract('month', ExamSchedule.exam_date) == month,
-                extract('year', ExamSchedule.exam_date) == year,
+                extract("month", ExamSchedule.exam_date) == month,
+                extract("year", ExamSchedule.exam_date) == year,
             )
         elif year:
             from sqlalchemy import extract
-            q = q.filter(extract('year', ExamSchedule.exam_date) == year)
+
+            q = q.filter(extract("year", ExamSchedule.exam_date) == year)
 
         schedules = q.order_by(ExamSchedule.exam_date).all()
         events = []
         for s in schedules:
-            events.append({
-                "id": s.id,
-                "exam_id": s.exam_id,
-                "exam_name": s.exam.name if s.exam else "",
-                "subject_name": s.subject.name if s.subject else "",
-                "class_name": s.exam.class_ref.name if s.exam and s.exam.class_ref else None,
-                "exam_date": s.exam_date,
-                "start_time": s.start_time,
-                "end_time": s.end_time,
-                "room_name": s.room.display_name if s.room else None,
-                "exam_type": s.exam.exam_type if s.exam else "",
-                "status": s.exam.status if s.exam else "",
-            })
+            events.append(
+                {
+                    "id": s.id,
+                    "exam_id": s.exam_id,
+                    "exam_name": s.exam.name if s.exam else "",
+                    "subject_name": s.subject.name if s.subject else "",
+                    "class_name": s.exam.class_ref.name
+                    if s.exam and s.exam.class_ref
+                    else None,
+                    "exam_date": s.exam_date,
+                    "start_time": s.start_time,
+                    "end_time": s.end_time,
+                    "room_name": s.room.display_name if s.room else None,
+                    "exam_type": s.exam.exam_type if s.exam else "",
+                    "status": s.exam.status if s.exam else "",
+                }
+            )
         return events

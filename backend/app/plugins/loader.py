@@ -1,6 +1,7 @@
 """
 Plugin Loader — discovers and loads plugins from the filesystem and built-in examples.
 """
+
 import os
 import importlib
 import importlib.util
@@ -62,7 +63,9 @@ class PluginLoader:
             logger.error(f"Failed to load plugin from {module_path}: {e}")
             return False
 
-    def _load_from_directory(self, directory: str, is_builtin: bool = False) -> List[str]:
+    def _load_from_directory(
+        self, directory: str, is_builtin: bool = False
+    ) -> List[str]:
         """Load all plugins from a directory."""
         loaded = []
         if not os.path.exists(directory):
@@ -99,7 +102,11 @@ class PluginLoader:
         # Look for a class that subclasses PluginBase
         for attr_name in dir(module):
             attr = getattr(module, attr_name)
-            if (isinstance(attr, type) and issubclass(attr, PluginBase) and attr is not PluginBase):
+            if (
+                isinstance(attr, type)
+                and issubclass(attr, PluginBase)
+                and attr is not PluginBase
+            ):
                 return attr
 
         logger.warning(f"No PluginBase subclass found in {filename}")
@@ -111,7 +118,11 @@ class PluginLoader:
             module = importlib.import_module(module_path)
             for attr_name in dir(module):
                 attr = getattr(module, attr_name)
-                if (isinstance(attr, type) and issubclass(attr, PluginBase) and attr is not PluginBase):
+                if (
+                    isinstance(attr, type)
+                    and issubclass(attr, PluginBase)
+                    and attr is not PluginBase
+                ):
                     return attr
             return None
         except ImportError as e:
@@ -130,7 +141,11 @@ class PluginLoader:
         for mod_name, mod in self._loaded_modules.items():
             for attr_name in dir(mod):
                 attr = getattr(mod, attr_name)
-                if isinstance(attr, type) and issubclass(attr, PluginBase) and attr is not PluginBase:
+                if (
+                    isinstance(attr, type)
+                    and issubclass(attr, PluginBase)
+                    and attr is not PluginBase
+                ):
                     meta = attr().get_metadata()
                     if meta.name == plugin_name:
                         importlib.reload(mod)

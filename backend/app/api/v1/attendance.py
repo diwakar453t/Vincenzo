@@ -6,11 +6,16 @@ from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.services.attendance_service import AttendanceService
 from app.schemas.attendance import (
-    StudentAttendanceCreate, StudentAttendanceBulk,
-    StudentAttendanceResponse, StudentAttendanceListResponse,
-    StaffAttendanceCreate, StaffAttendanceBulk,
-    StaffAttendanceResponse, StaffAttendanceListResponse,
-    AttendanceStats, ClassAttendanceReport,
+    StudentAttendanceCreate,
+    StudentAttendanceBulk,
+    StudentAttendanceResponse,
+    StudentAttendanceListResponse,
+    StaffAttendanceCreate,
+    StaffAttendanceBulk,
+    StaffAttendanceResponse,
+    StaffAttendanceListResponse,
+    AttendanceStats,
+    ClassAttendanceReport,
     MonthlyAttendanceResponse,
 )
 from app.models.user import User
@@ -28,12 +33,15 @@ def _get_user(current_user: dict, db: Session) -> User:
 
 def _require_admin(user: User):
     if user.role not in ["admin", "super_admin", "teacher"]:
-        raise HTTPException(status_code=403, detail="Not authorized to perform this action")
+        raise HTTPException(
+            status_code=403, detail="Not authorized to perform this action"
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # Student Attendance
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @router.get("/students", response_model=StudentAttendanceListResponse)
 def list_student_attendance(
@@ -48,12 +56,21 @@ def list_student_attendance(
     user = _get_user(current_user, db)
     service = AttendanceService(db)
     from datetime import date as dt_date
+
     target = dt_date.fromisoformat(date) if date else None
-    items, total = service.get_student_attendance(user.tenant_id, class_id, student_id, target, month, year)
-    return StudentAttendanceListResponse(records=[StudentAttendanceResponse(**r) for r in items], total=total)
+    items, total = service.get_student_attendance(
+        user.tenant_id, class_id, student_id, target, month, year
+    )
+    return StudentAttendanceListResponse(
+        records=[StudentAttendanceResponse(**r) for r in items], total=total
+    )
 
 
-@router.post("/students", response_model=StudentAttendanceResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/students",
+    response_model=StudentAttendanceResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def mark_student(
     data: StudentAttendanceCreate,
     current_user: dict = Depends(get_current_user),
@@ -77,7 +94,9 @@ def bulk_mark_students(
     _require_admin(user)
     service = AttendanceService(db)
     items = service.bulk_mark_student_attendance(data, user.tenant_id)
-    return StudentAttendanceListResponse(records=[StudentAttendanceResponse(**r) for r in items], total=len(items))
+    return StudentAttendanceListResponse(
+        records=[StudentAttendanceResponse(**r) for r in items], total=len(items)
+    )
 
 
 @router.delete("/students/{attendance_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -98,6 +117,7 @@ def delete_student_attendance(
 # Staff Attendance
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @router.get("/staff", response_model=StaffAttendanceListResponse)
 def list_staff_attendance(
     teacher_id: Optional[int] = None,
@@ -110,12 +130,21 @@ def list_staff_attendance(
     user = _get_user(current_user, db)
     service = AttendanceService(db)
     from datetime import date as dt_date
+
     target = dt_date.fromisoformat(date) if date else None
-    items, total = service.get_staff_attendance(user.tenant_id, teacher_id, target, month, year)
-    return StaffAttendanceListResponse(records=[StaffAttendanceResponse(**r) for r in items], total=total)
+    items, total = service.get_staff_attendance(
+        user.tenant_id, teacher_id, target, month, year
+    )
+    return StaffAttendanceListResponse(
+        records=[StaffAttendanceResponse(**r) for r in items], total=total
+    )
 
 
-@router.post("/staff", response_model=StaffAttendanceResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/staff",
+    response_model=StaffAttendanceResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def mark_staff(
     data: StaffAttendanceCreate,
     current_user: dict = Depends(get_current_user),
@@ -139,7 +168,9 @@ def bulk_mark_staff(
     _require_admin(user)
     service = AttendanceService(db)
     items = service.bulk_mark_staff_attendance(data, user.tenant_id)
-    return StaffAttendanceListResponse(records=[StaffAttendanceResponse(**r) for r in items], total=len(items))
+    return StaffAttendanceListResponse(
+        records=[StaffAttendanceResponse(**r) for r in items], total=len(items)
+    )
 
 
 @router.delete("/staff/{attendance_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -159,6 +190,7 @@ def delete_staff_attendance(
 # ═══════════════════════════════════════════════════════════════════════
 # Statistics & Reports
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @router.get("/students/stats/{student_id}", response_model=AttendanceStats)
 def student_stats(
@@ -195,7 +227,10 @@ def class_daily_report(
     user = _get_user(current_user, db)
     service = AttendanceService(db)
     from datetime import date as dt_date
-    return service.class_daily_report(class_id, dt_date.fromisoformat(date), user.tenant_id)
+
+    return service.class_daily_report(
+        class_id, dt_date.fromisoformat(date), user.tenant_id
+    )
 
 
 @router.get("/students/monthly/{student_id}", response_model=MonthlyAttendanceResponse)

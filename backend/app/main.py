@@ -9,7 +9,7 @@ from app.core.logging_config import setup_logging
 from app.core.middleware import (
     LoggingMiddleware,
     TenantMiddleware,
-    ExceptionHandlerMiddleware
+    ExceptionHandlerMiddleware,
 )
 from app.core.metrics import setup_metrics
 from app.core.tracing import setup_tracing
@@ -88,7 +88,8 @@ setup_security(app)
 # CORS middleware — must be added LAST so it runs FIRST in request pipeline
 # This ensures OPTIONS preflight requests are handled before any other middleware
 cors_origins = (
-    settings.CORS_ORIGINS if settings.APP_ENV == "development"
+    settings.CORS_ORIGINS
+    if settings.APP_ENV == "development"
     else settings.CORS_PRODUCTION_ORIGINS
 )
 app.add_middleware(
@@ -127,11 +128,13 @@ async def root():
     """Root endpoint — health check info only (no internal details in production)."""
     base = {"app": settings.APP_NAME, "status": "running"}
     if _is_dev:
-        base.update({
-            "version": settings.APP_VERSION,
-            "documentation": {"swagger": "/docs", "redoc": "/redoc"},
-            "api": {"v1": "/api/v1"},
-        })
+        base.update(
+            {
+                "version": settings.APP_VERSION,
+                "documentation": {"swagger": "/docs", "redoc": "/redoc"},
+                "api": {"v1": "/api/v1"},
+            }
+        )
     return base
 
 
@@ -139,50 +142,75 @@ async def root():
 def debug_test_modules():
     """Temporary debug endpoint to diagnose 500 errors."""
     from app.core.database import SessionLocal
+
     results = {}
     db = SessionLocal()
     try:
         # Test hostel
         try:
             from app.services.hostel_service import HostelService
+
             hostels, total = HostelService(db).get_hostels("demo-school")
             results["hostel"] = {"status": "OK", "count": total}
         except Exception as e:
-            results["hostel"] = {"status": "ERROR", "error": str(e), "type": type(e).__name__}
+            results["hostel"] = {
+                "status": "ERROR",
+                "error": str(e),
+                "type": type(e).__name__,
+            }
 
         # Test sports
         try:
             from app.services.sports_service import SportsService
+
             sports, total = SportsService(db).get_sports("demo-school")
             results["sports"] = {"status": "OK", "count": total}
         except Exception as e:
-            results["sports"] = {"status": "ERROR", "error": str(e), "type": type(e).__name__}
+            results["sports"] = {
+                "status": "ERROR",
+                "error": str(e),
+                "type": type(e).__name__,
+            }
 
         # Test library
         try:
             from app.services.library_service import LibraryService
+
             books, total = LibraryService(db).get_books("demo-school")
             results["library"] = {"status": "OK", "count": total}
         except Exception as e:
-            results["library"] = {"status": "ERROR", "error": str(e), "type": type(e).__name__}
+            results["library"] = {
+                "status": "ERROR",
+                "error": str(e),
+                "type": type(e).__name__,
+            }
 
         # Test transport
         try:
             from app.services.transport_service import TransportService
+
             stats = TransportService(db).get_stats("demo-school")
             results["transport"] = {"status": "OK", "stats": str(stats)[:200]}
         except Exception as e:
-            results["transport"] = {"status": "ERROR", "error": str(e), "type": type(e).__name__}
+            results["transport"] = {
+                "status": "ERROR",
+                "error": str(e),
+                "type": type(e).__name__,
+            }
 
         # Test payments
         try:
             from app.services.payment_service import PaymentService
+
             stats = PaymentService(db).get_stats("demo-school")
             results["payments"] = {"status": "OK"}
         except Exception as e:
-            results["payments"] = {"status": "ERROR", "error": str(e), "type": type(e).__name__}
+            results["payments"] = {
+                "status": "ERROR",
+                "error": str(e),
+                "type": type(e).__name__,
+            }
 
     finally:
         db.close()
     return results
-

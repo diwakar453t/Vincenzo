@@ -2,24 +2,50 @@
 File Upload & Management Service
 Local storage with validation, sharing, and metadata tracking.
 """
+
 import os
 import uuid
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from fastapi import UploadFile, HTTPException
-from app.models.uploaded_file import UploadedFile, FileShare, FileCategory, FileVisibility
+from app.models.uploaded_file import (
+    UploadedFile,
+    FileShare,
+    FileCategory,
+    FileVisibility,
+)
 import logging
 
 logger = logging.getLogger(__name__)
 
-UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "uploads")
+UPLOAD_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "uploads",
+)
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
 
 ALLOWED_EXTENSIONS = {
-    ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".csv", ".txt",
-    ".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp",
-    ".mp4", ".mp3", ".wav",
-    ".zip", ".rar", ".7z",
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".xls",
+    ".xlsx",
+    ".ppt",
+    ".pptx",
+    ".csv",
+    ".txt",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".gif",
+    ".svg",
+    ".webp",
+    ".mp4",
+    ".mp3",
+    ".wav",
+    ".zip",
+    ".rar",
+    ".7z",
 }
 
 MIME_CATEGORY_MAP = {
@@ -57,18 +83,30 @@ class FileService:
 
     # ─── Upload ──────────────────────────────────────────────────────────
 
-    def upload_file(self, file: UploadFile, tenant_id: str, user_id: int,
-                    description: str = None, entity_type: str = None,
-                    entity_id: int = None, visibility: str = "private") -> dict:
+    def upload_file(
+        self,
+        file: UploadFile,
+        tenant_id: str,
+        user_id: int,
+        description: str = None,
+        entity_type: str = None,
+        entity_id: int = None,
+        visibility: str = "private",
+    ) -> dict:
         # Validate extension
         ext = os.path.splitext(file.filename or "")[1].lower()
         if ext not in ALLOWED_EXTENSIONS:
-            raise HTTPException(status_code=400, detail=f"File type '{ext}' not allowed")
+            raise HTTPException(
+                status_code=400, detail=f"File type '{ext}' not allowed"
+            )
 
         # Read and validate size
         content = file.file.read()
         if len(content) > MAX_FILE_SIZE:
-            raise HTTPException(status_code=400, detail=f"File too large (max {MAX_FILE_SIZE // (1024*1024)} MB)")
+            raise HTTPException(
+                status_code=400,
+                detail=f"File too large (max {MAX_FILE_SIZE // (1024 * 1024)} MB)",
+            )
 
         # Generate unique filename
         unique_name = f"{uuid.uuid4().hex}{ext}"
@@ -99,14 +137,23 @@ class FileService:
         self.db.add(db_file)
         self.db.commit()
         self.db.refresh(db_file)
-        logger.info(f"📁 File uploaded: {file.filename} ({len(content)} bytes) by user {user_id}")
+        logger.info(
+            f"📁 File uploaded: {file.filename} ({len(content)} bytes) by user {user_id}"
+        )
         return self._file_dict(db_file)
 
     # ─── List ────────────────────────────────────────────────────────────
 
-    def list_files(self, tenant_id: str, user_id: int,
-                   category: str = None, entity_type: str = None,
-                   entity_id: int = None, limit: int = 50, offset: int = 0):
+    def list_files(
+        self,
+        tenant_id: str,
+        user_id: int,
+        category: str = None,
+        entity_type: str = None,
+        entity_id: int = None,
+        limit: int = 50,
+        offset: int = 0,
+    ):
         q = self.db.query(UploadedFile).filter(
             UploadedFile.tenant_id == tenant_id,
             UploadedFile.is_active,
@@ -119,24 +166,34 @@ class FileService:
             q = q.filter(UploadedFile.entity_id == entity_id)
 
         total = q.count()
-        files = q.order_by(UploadedFile.created_at.desc()).offset(offset).limit(limit).all()
+        files = (
+            q.order_by(UploadedFile.created_at.desc()).offset(offset).limit(limit).all()
+        )
         return [self._file_dict(f) for f in files], total
 
     def get_file(self, file_id: int, tenant_id: str) -> dict:
-        f = self.db.query(UploadedFile).filter(
-            UploadedFile.id == file_id,
-            UploadedFile.tenant_id == tenant_id,
-            UploadedFile.is_active,
-        ).first()
+        f = (
+            self.db.query(UploadedFile)
+            .filter(
+                UploadedFile.id == file_id,
+                UploadedFile.tenant_id == tenant_id,
+                UploadedFile.is_active,
+            )
+            .first()
+        )
         if not f:
             raise HTTPException(status_code=404, detail="File not found")
         return self._file_dict(f)
 
     def delete_file(self, file_id: int, tenant_id: str):
-        f = self.db.query(UploadedFile).filter(
-            UploadedFile.id == file_id,
-            UploadedFile.tenant_id == tenant_id,
-        ).first()
+        f = (
+            self.db.query(UploadedFile)
+            .filter(
+                UploadedFile.id == file_id,
+                UploadedFile.tenant_id == tenant_id,
+            )
+            .first()
+        )
         if not f:
             raise HTTPException(status_code=404, detail="File not found")
         f.is_active = False
@@ -144,11 +201,19 @@ class FileService:
 
     # ─── Share ───────────────────────────────────────────────────────────
 
-    def share_file(self, file_id: int, shared_with_user_id: int,
-                   tenant_id: str, shared_by: int, can_edit: bool = False) -> dict:
-        f = self.db.query(UploadedFile).filter(
-            UploadedFile.id == file_id, UploadedFile.tenant_id == tenant_id
-        ).first()
+    def share_file(
+        self,
+        file_id: int,
+        shared_with_user_id: int,
+        tenant_id: str,
+        shared_by: int,
+        can_edit: bool = False,
+    ) -> dict:
+        f = (
+            self.db.query(UploadedFile)
+            .filter(UploadedFile.id == file_id, UploadedFile.tenant_id == tenant_id)
+            .first()
+        )
         if not f:
             raise HTTPException(status_code=404, detail="File not found")
 
@@ -164,18 +229,25 @@ class FileService:
         self.db.commit()
         self.db.refresh(share)
         return {
-            "id": share.id, "file_id": share.file_id,
+            "id": share.id,
+            "file_id": share.file_id,
             "shared_with_user_id": share.shared_with_user_id,
-            "can_edit": share.can_edit, "shared_by": share.shared_by,
-            "is_active": share.is_active, "created_at": share.created_at,
+            "can_edit": share.can_edit,
+            "shared_by": share.shared_by,
+            "is_active": share.is_active,
+            "created_at": share.created_at,
         }
 
     def get_shared_files(self, user_id: int, tenant_id: str):
-        shares = self.db.query(FileShare).filter(
-            FileShare.shared_with_user_id == user_id,
-            FileShare.tenant_id == tenant_id,
-            FileShare.is_active,
-        ).all()
+        shares = (
+            self.db.query(FileShare)
+            .filter(
+                FileShare.shared_with_user_id == user_id,
+                FileShare.tenant_id == tenant_id,
+                FileShare.is_active,
+            )
+            .all()
+        )
         result = []
         for s in shares:
             f = self.db.query(UploadedFile).filter(UploadedFile.id == s.file_id).first()
@@ -196,11 +268,16 @@ class FileService:
         total = base.count()
         total_size = base.with_entities(func.sum(UploadedFile.file_size)).scalar() or 0
 
-        cat_breakdown = self.db.query(
-            UploadedFile.category, func.count(UploadedFile.id), func.sum(UploadedFile.file_size)
-        ).filter(
-            UploadedFile.tenant_id == tenant_id, UploadedFile.is_active
-        ).group_by(UploadedFile.category).all()
+        cat_breakdown = (
+            self.db.query(
+                UploadedFile.category,
+                func.count(UploadedFile.id),
+                func.sum(UploadedFile.file_size),
+            )
+            .filter(UploadedFile.tenant_id == tenant_id, UploadedFile.is_active)
+            .group_by(UploadedFile.category)
+            .all()
+        )
 
         recent = base.order_by(UploadedFile.created_at.desc()).limit(5).all()
 
@@ -208,7 +285,10 @@ class FileService:
             "total_files": total,
             "total_size_bytes": float(total_size),
             "total_size_mb": round(float(total_size) / (1024 * 1024), 2),
-            "by_category": [{"category": str(c), "count": cnt, "size_bytes": float(sz or 0)} for c, cnt, sz in cat_breakdown],
+            "by_category": [
+                {"category": str(c), "count": cnt, "size_bytes": float(sz or 0)}
+                for c, cnt, sz in cat_breakdown
+            ],
             "recent_uploads": [self._file_dict(f) for f in recent],
         }
 
@@ -216,15 +296,24 @@ class FileService:
 
     def _file_dict(self, f: UploadedFile) -> dict:
         return {
-            "id": f.id, "tenant_id": f.tenant_id,
-            "filename": f.filename, "original_name": f.original_name,
-            "file_path": f.file_path, "mime_type": f.mime_type,
+            "id": f.id,
+            "tenant_id": f.tenant_id,
+            "filename": f.filename,
+            "original_name": f.original_name,
+            "file_path": f.file_path,
+            "mime_type": f.mime_type,
             "file_size": f.file_size,
-            "category": f.category.value if hasattr(f.category, 'value') else str(f.category),
-            "visibility": f.visibility.value if hasattr(f.visibility, 'value') else str(f.visibility),
+            "category": f.category.value
+            if hasattr(f.category, "value")
+            else str(f.category),
+            "visibility": f.visibility.value
+            if hasattr(f.visibility, "value")
+            else str(f.visibility),
             "description": f.description,
             "uploaded_by": f.uploaded_by,
-            "entity_type": f.entity_type, "entity_id": f.entity_id,
+            "entity_type": f.entity_type,
+            "entity_id": f.entity_id,
             "is_active": f.is_active,
-            "created_at": f.created_at, "updated_at": f.updated_at,
+            "created_at": f.created_at,
+            "updated_at": f.updated_at,
         }

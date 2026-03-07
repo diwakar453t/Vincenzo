@@ -18,6 +18,7 @@ class ApplicantTypeEnum(str, Enum):
 
 # ─── Leave Type ──────────────────────────────────────────────────────────
 
+
 class LeaveTypeCreate(BaseModel):
     name: str
     code: Optional[str] = None
@@ -64,6 +65,7 @@ class LeaveTypeListResponse(BaseModel):
 
 
 # ─── Leave Application ──────────────────────────────────────────────────
+
 
 class LeaveApplicationCreate(BaseModel):
     applicant_type: ApplicantTypeEnum
@@ -114,6 +116,7 @@ class LeaveApplicationListResponse(BaseModel):
 
 # ─── Leave Balance ───────────────────────────────────────────────────────
 
+
 class LeaveBalanceItem(BaseModel):
     leave_type_id: int
     leave_type_name: str
@@ -133,6 +136,7 @@ class LeaveBalanceResponse(BaseModel):
 
 
 # ─── Calendar ────────────────────────────────────────────────────────────
+
 
 class LeaveCalendarEvent(BaseModel):
     id: int

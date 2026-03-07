@@ -19,16 +19,27 @@ class Syllabus(BaseModel):
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     academic_year = Column(String(20), nullable=False)
-    status = Column(String(20), default="draft", nullable=False)  # draft, active, completed
+    status = Column(
+        String(20), default="draft", nullable=False
+    )  # draft, active, completed
 
     # Relations
-    subject_id = Column(Integer, ForeignKey("subjects.id", ondelete="CASCADE"), nullable=False)
-    class_id = Column(Integer, ForeignKey("classes.id", ondelete="CASCADE"), nullable=False)
+    subject_id = Column(
+        Integer, ForeignKey("subjects.id", ondelete="CASCADE"), nullable=False
+    )
+    class_id = Column(
+        Integer, ForeignKey("classes.id", ondelete="CASCADE"), nullable=False
+    )
 
     # Relationships
     subject = relationship("Subject", backref="syllabi")
     class_ref = relationship("Class", backref="syllabi")
-    topics = relationship("SyllabusTopic", back_populates="syllabus", cascade="all, delete-orphan", order_by="SyllabusTopic.order")
+    topics = relationship(
+        "SyllabusTopic",
+        back_populates="syllabus",
+        cascade="all, delete-orphan",
+        order_by="SyllabusTopic.order",
+    )
 
     def __repr__(self):
         return f"<Syllabus(title='{self.title}')>"
@@ -53,7 +64,9 @@ class SyllabusTopic(BaseModel):
     document_name = Column(String(200), nullable=True)
 
     # FK
-    syllabus_id = Column(Integer, ForeignKey("syllabi.id", ondelete="CASCADE"), nullable=False)
+    syllabus_id = Column(
+        Integer, ForeignKey("syllabi.id", ondelete="CASCADE"), nullable=False
+    )
 
     # Relationships
     syllabus = relationship("Syllabus", back_populates="topics")
