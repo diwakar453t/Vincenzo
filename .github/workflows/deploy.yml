@@ -3,10 +3,14 @@ name: Deploy to Azure and Vercel
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   id-token: write
   contents: read
+
+env:
+  AZURE_BACKEND_URL: https://preskool-api-backend.azurewebsites.net
 
 jobs:
   validate-secrets:
@@ -23,6 +27,9 @@ jobs:
           [ -z "${{ secrets.VERCEL_TOKEN }}" ] && MISSING+=("VERCEL_TOKEN")
           [ -z "${{ secrets.VERCEL_ORG_ID }}" ] && MISSING+=("VERCEL_ORG_ID")
           [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ] && MISSING+=("VERCEL_PROJECT_ID")
+          [ -z "${{ secrets.DATABASE_URL }}" ] && MISSING+=("DATABASE_URL")
+          [ -z "${{ secrets.JWT_SECRET_KEY }}" ] && MISSING+=("JWT_SECRET_KEY")
+          [ -z "${{ secrets.ENCRYPTION_MASTER_KEY }}" ] && MISSING+=("ENCRYPTION_MASTER_KEY")
 
           if [ ${#MISSING[@]} -ne 0 ]; then
             echo "::error::Missing required secrets: ${MISSING[*]}"
@@ -56,31 +63,53 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy Backend to Azure App Service
-        uses: Wandalen/wretry.action@v1.3.0
+        uses: azure/webapps-deploy@v2
         with:
-          action: azure/webapps-deploy@v2
-          with: |
-            app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
-            package: ./backend
-          attempt_limit: 3
-          attempt_delay: 10000
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          package: ./backend
 
       - name: Verify Health Check
         run: |
-          # Wait up to 60 seconds for the app to start
           URL="https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net/api/v1/health"
           echo "Checking health at $URL..."
-          for i in {1..12}; do
+          for i in {1..15}; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" $URL || echo "000")
             if [ "$STATUS" = "200" ]; then
               echo "✅ Health check passed: 200 OK"
+              curl -s $URL | python3 -m json.tool
               exit 0
             fi
-            echo "Waiting for app to start... (Status: $STATUS)"
+            echo "Attempt $i: Status=$STATUS. Waiting..."
             sleep 5
           done
           echo "❌ Health check failed after deployment"
           exit 1
+
+      - name: Run Database Migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          ENCRYPTION_MASTER_KEY: ${{ secrets.ENCRYPTION_MASTER_KEY }}
+        working-directory: backend
+        run: |
+          echo "Running Alembic migrations..."
+          alembic upgrade head
+          echo "✅ Migrations complete."
+        continue-on-error: true  # Don't block if already applied
+
+      - name: Seed Initial Users
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          ENCRYPTION_MASTER_KEY: ${{ secrets.ENCRYPTION_MASTER_KEY }}
+          OTEL_ENABLED: "false"
+          APP_ENV: production
+        working-directory: backend
+        run: |
+          echo "Seeding initial demo accounts..."
+          python seeds/seed_data.py
+          echo "✅ Seeding complete."
+        continue-on-error: true  # Don't fail if data already exists
 
   deploy-frontend:
     name: Deploy Frontend to Vercel
@@ -100,15 +129,17 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Build Frontend with Production API URL
+        working-directory: frontend
+        env:
+          VITE_API_URL: https://preskool-api-backend.azurewebsites.net/api/v1
+        run: npm run build
+
       - name: Deploy to Vercel
-        uses: Wandalen/wretry.action@v1.3.0
+        uses: amondnet/vercel-action@v25
         with:
-          action: amondnet/vercel-action@v25
-          with: |
-            vercel-token: ${{ secrets.VERCEL_TOKEN }}
-            vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-            vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-            working-directory: frontend
-            vercel-args: "--prod"
-          attempt_limit: 3
-          attempt_delay: 10000
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: frontend
+          vercel-args: "--prod"
