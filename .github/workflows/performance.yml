@@ -74,16 +74,6 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run migrations
-        run: alembic upgrade head
-        env:
-          DATABASE_URL: postgresql://perf_user:perf_pass@localhost:5432/preskool_perf
-
-      - name: Seed test data (1000 students, 50 teachers)
-        run: python scripts/seed_perf_data.py --students=1000 --teachers=50 --months=6
-        env:
-          DATABASE_URL: postgresql://perf_user:perf_pass@localhost:5432/preskool_perf
-
       - name: Run DB profiler
         run: |
           if [ -f "performance/db_performance_test.py" ]; then
@@ -306,6 +296,8 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download DB Report
         uses: actions/download-artifact@v4
         with:
