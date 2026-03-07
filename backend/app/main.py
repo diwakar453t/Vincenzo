@@ -134,3 +134,55 @@ async def root():
         })
     return base
 
+
+@app.get("/api/v1/debug/test-modules")
+def debug_test_modules():
+    """Temporary debug endpoint to diagnose 500 errors."""
+    from app.core.database import SessionLocal
+    results = {}
+    db = SessionLocal()
+    try:
+        # Test hostel
+        try:
+            from app.services.hostel_service import HostelService
+            hostels, total = HostelService(db).get_hostels("demo-school")
+            results["hostel"] = {"status": "OK", "count": total}
+        except Exception as e:
+            results["hostel"] = {"status": "ERROR", "error": str(e), "type": type(e).__name__}
+
+        # Test sports
+        try:
+            from app.services.sports_service import SportsService
+            sports, total = SportsService(db).get_sports("demo-school")
+            results["sports"] = {"status": "OK", "count": total}
+        except Exception as e:
+            results["sports"] = {"status": "ERROR", "error": str(e), "type": type(e).__name__}
+
+        # Test library
+        try:
+            from app.services.library_service import LibraryService
+            books, total = LibraryService(db).get_books("demo-school")
+            results["library"] = {"status": "OK", "count": total}
+        except Exception as e:
+            results["library"] = {"status": "ERROR", "error": str(e), "type": type(e).__name__}
+
+        # Test transport
+        try:
+            from app.services.transport_service import TransportService
+            stats = TransportService(db).get_stats("demo-school")
+            results["transport"] = {"status": "OK", "stats": str(stats)[:200]}
+        except Exception as e:
+            results["transport"] = {"status": "ERROR", "error": str(e), "type": type(e).__name__}
+
+        # Test payments
+        try:
+            from app.services.payment_service import PaymentService
+            stats = PaymentService(db).get_stats("demo-school")
+            results["payments"] = {"status": "OK"}
+        except Exception as e:
+            results["payments"] = {"status": "ERROR", "error": str(e), "type": type(e).__name__}
+
+    finally:
+        db.close()
+    return results
+
