@@ -32,9 +32,13 @@ def upgrade() -> None:
     op.create_index(op.f('ix_tenants_id'), 'tenants', ['id'])
     op.create_index(op.f('ix_tenants_domain'), 'tenants', ['domain'])
 
-    # Create user_role enum
+    # Create user_role enum (idempotent)
     op.execute("""
-        CREATE TYPE userrole AS ENUM ('admin', 'teacher', 'student', 'parent')
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'userrole') THEN
+                CREATE TYPE userrole AS ENUM ('admin', 'teacher', 'student', 'parent');
+            END IF;
+        END $$;
     """)
 
     # Create users table

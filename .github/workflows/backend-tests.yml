@@ -17,15 +17,14 @@ on:
         required: false
         default: 'all'
 
-defaults:
-  run:
-    working-directory: backend
-
 jobs:
   # ── Linting & Type Checking ─────────────────────────────────────────
   lint:
     name: Lint & Type Check
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
 
@@ -55,6 +54,9 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
 
@@ -103,6 +105,9 @@ jobs:
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     services:
       # PostgreSQL service for integration tests
       postgres:
@@ -165,6 +170,9 @@ jobs:
   api-tests:
     name: API Tests
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
 
@@ -214,6 +222,9 @@ jobs:
     name: Full Test Suite & Coverage
     runs-on: ubuntu-latest
     needs: [unit-tests, integration-tests, api-tests]
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
 

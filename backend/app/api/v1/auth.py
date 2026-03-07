@@ -17,9 +17,8 @@ from app.core.security import (
     PasswordPolicy,
     account_lockout,
     audit,
-    InputSanitizer,
 )
-from app.models.user import User, Tenant, UserRole
+from app.models.user import User
 from app.schemas.user import (
     UserRegisterRequest,
     UserLoginRequest,

@@ -1,17 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 from typing import Optional
-from datetime import date
 
 from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.services.attendance_service import AttendanceService
 from app.schemas.attendance import (
-    StudentAttendanceCreate, StudentAttendanceBulk, StudentAttendanceUpdate,
+    StudentAttendanceCreate, StudentAttendanceBulk,
     StudentAttendanceResponse, StudentAttendanceListResponse,
-    StaffAttendanceCreate, StaffAttendanceBulk, StaffAttendanceUpdate,
+    StaffAttendanceCreate, StaffAttendanceBulk,
     StaffAttendanceResponse, StaffAttendanceListResponse,
-    AttendanceStats, StudentAttendanceReport, ClassAttendanceReport,
+    AttendanceStats, ClassAttendanceReport,
     MonthlyAttendanceResponse,
 )
 from app.models.user import User
