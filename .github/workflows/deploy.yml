@@ -69,12 +69,27 @@ jobs:
         working-directory: backend
         run: pip install -r requirements.txt
 
+      - name: Verify critical imports
+        working-directory: backend
+        run: |
+          python -c "import asyncpg; print(f'✅ asyncpg {asyncpg.__version__}')"
+          python -c "import pandas; print(f'✅ pandas {pandas.__version__}')"
+          python -c "import openpyxl; print(f'✅ openpyxl {openpyxl.__version__}')"
+          echo "All critical dependencies verified."
+
       - name: Azure Login (OIDC)
         uses: azure/login@v1
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Configure Azure App Service Startup Command
+        run: |
+          az webapp config set \
+            --name ${{ secrets.AZURE_WEBAPP_NAME }} \
+            --resource-group $(az webapp show --name ${{ secrets.AZURE_WEBAPP_NAME }} --query resourceGroup -o tsv) \
+            --startup-file "gunicorn app.main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 120 --keep-alive 5"
 
       - name: Deploy Backend to Azure App Service
         uses: azure/webapps-deploy@v2
