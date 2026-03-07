@@ -8,12 +8,11 @@ import uuid
 import os
 import logging
 from datetime import datetime
-from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from fastapi import HTTPException
 
-from app.models.payment import PaymentTransaction, TransactionStatus as PaymentStatus, TransactionPaymentMethod, PaymentPurpose
+from app.models.payment import PaymentTransaction, TransactionStatus as PaymentStatus
 
 logger = logging.getLogger(__name__)
 
@@ -289,7 +288,7 @@ class PaymentService:
                           purpose: str = None, limit: int = 50, offset: int = 0) -> dict:
         q = self.db.query(PaymentTransaction).filter(
             PaymentTransaction.tenant_id == tenant_id,
-            PaymentTransaction.is_active == True,
+            PaymentTransaction.is_active,
         )
         if status:
             q = q.filter(PaymentTransaction.status == status)
@@ -314,7 +313,7 @@ class PaymentService:
     def get_stats(self, tenant_id: str) -> dict:
         base = self.db.query(PaymentTransaction).filter(
             PaymentTransaction.tenant_id == tenant_id,
-            PaymentTransaction.is_active == True,
+            PaymentTransaction.is_active,
         )
 
         total_collected = base.filter(
@@ -338,7 +337,7 @@ class PaymentService:
         method_stats = self.db.query(
             PaymentTransaction.payment_method, func.count(), func.coalesce(func.sum(PaymentTransaction.amount), 0)
         ).filter(
-            PaymentTransaction.tenant_id == tenant_id, PaymentTransaction.is_active == True,
+            PaymentTransaction.tenant_id == tenant_id, PaymentTransaction.is_active,
             PaymentTransaction.status.in_([PaymentStatus.completed, PaymentStatus.captured])
         ).group_by(PaymentTransaction.payment_method).all()
 
@@ -346,7 +345,7 @@ class PaymentService:
         purpose_stats = self.db.query(
             PaymentTransaction.purpose, func.count(), func.coalesce(func.sum(PaymentTransaction.amount), 0)
         ).filter(
-            PaymentTransaction.tenant_id == tenant_id, PaymentTransaction.is_active == True,
+            PaymentTransaction.tenant_id == tenant_id, PaymentTransaction.is_active,
             PaymentTransaction.status.in_([PaymentStatus.completed, PaymentStatus.captured])
         ).group_by(PaymentTransaction.purpose).all()
 

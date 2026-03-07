@@ -126,6 +126,10 @@ jobs:
   trivy-container:
     name: Trivy Container Scan
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@v4
 

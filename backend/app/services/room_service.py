@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 
-from app.models.room import Room, RoomStatus
+from app.models.room import Room
 from app.models.class_model import Class
 from app.models.student import Student
 from app.schemas.room import RoomCreate, RoomUpdate

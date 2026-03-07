@@ -1,0 +1,6 @@
+# Ruff linter configuration for PreSkool ERP backend
+[lint]
+# Ignore style-only rules that require large refactors:
+# E701/E702 — multi-statement lines (semicolons / colons)
+# E402 — module-level import not at top of file
+ignore = ["E701", "E702", "E402"]

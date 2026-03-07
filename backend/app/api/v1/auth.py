@@ -255,7 +255,7 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
 
     if user:
         # Generate a short-lived reset token (15 min)
-        reset_token = create_access_token(
+        _reset_token = create_access_token(
             data={"sub": str(user.id), "email": user.email, "type": "password_reset"},
             expires_delta=timedelta(minutes=15)
         )

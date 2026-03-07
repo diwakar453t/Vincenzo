@@ -16,23 +16,20 @@ Endpoints:
   GET    /gdpr/audit-trail               — My audit trail (what we logged about me)
   POST   /gdpr/verify-audit-chain        — Admin: verify audit integrity
 """
-import json
 import hashlib
 import secrets
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Request, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
 from sqlalchemy.orm import Session
-from pydantic import BaseModel as PydanticModel, EmailStr
+from pydantic import BaseModel as PydanticModel
 
 from app.core.database import get_db
 from app.core.auth import get_current_user
-from app.core.encryption import anonymise
 from app.models.gdpr import (
-    UserConsent, DataSubjectRequest, PrivacyPolicyVersion,
-    ConsentType, ConsentStatus, DataRequestType, DataRequestStatus,
+    UserConsent, DataSubjectRequest, ConsentType, ConsentStatus, DataRequestType, DataRequestStatus,
 )
-from app.models.audit_log import AuditLog, AuditAction, AuditResource
+from app.models.audit_log import AuditLog, AuditAction
 from app.models.user import User
 from app.services.audit_service import audit_logger
 
@@ -495,7 +492,7 @@ def _process_portability_request(request_id: int, user_id: int, db: Session):
 
         # Generate export — in production, save to S3 and send email
         user = db.query(User).filter(User.id == user_id).first()
-        export = {
+        {
             "user_id": user_id,
             "email": user.email if user else "N/A",
             "exported_at": datetime.now(timezone.utc).isoformat(),

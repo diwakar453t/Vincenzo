@@ -3,7 +3,7 @@ Plugin Registry & Hook System
 Central registry for all plugins, hook management, and event dispatch.
 """
 import logging
-from typing import Dict, List, Callable, Any, Optional
+from typing import Dict, List, Callable, Optional
 from collections import defaultdict
 from app.plugins import PluginBase, PluginMetadata, PluginStatus, PluginContext
 

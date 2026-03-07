@@ -1,5 +1,4 @@
 """Role-based permission decorators for PreSkool ERP."""
-from functools import wraps
 from fastapi import HTTPException, status
 
 

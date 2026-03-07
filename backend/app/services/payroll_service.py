@@ -1,10 +1,9 @@
-from typing import Optional, List
+from typing import Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 
 from app.models.payroll import (
     PayrollComponent, SalaryStructure, SalaryStructureItem,
-    Payroll, PayrollItem, ComponentType, PayrollStatus,
+    Payroll, PayrollItem, PayrollStatus,
 )
 from app.models.teacher import Teacher
 from app.schemas.payroll import SalaryStructureCreate, PayrollProcessRequest, PayrollActionRequest
@@ -122,11 +121,11 @@ class PayrollService:
             structures = self.db.query(SalaryStructure).filter(
                 SalaryStructure.tenant_id == tenant_id,
                 SalaryStructure.teacher_id.in_(data.teacher_ids),
-                SalaryStructure.is_active == True).all()
+                SalaryStructure.is_active).all()
         else:
             structures = self.db.query(SalaryStructure).filter(
                 SalaryStructure.tenant_id == tenant_id,
-                SalaryStructure.is_active == True).all()
+                SalaryStructure.is_active).all()
 
         results = []
         for struct in structures:

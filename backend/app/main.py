@@ -20,7 +20,6 @@ from app.api.v1 import api_router
 logger = setup_logging()
 
 # Import all models so they register with Base
-from app.models.user import User, Tenant  # noqa: E402
 
 # Create database tables automatically for local dev
 Base.metadata.create_all(bind=engine)

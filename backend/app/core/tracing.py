@@ -18,7 +18,6 @@ Architecture:
 """
 import logging
 from typing import Optional
-from contextvars import ContextVar
 
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider

@@ -342,7 +342,7 @@ class ParentProfileService:
         # For simplicity, show first child's fees
         first_child = children[0]
         
-        today = date.today()
+        date.today()
         payment_items = [
             FeeItem(
                 fee_type="Tuition Fee (Term 1)",

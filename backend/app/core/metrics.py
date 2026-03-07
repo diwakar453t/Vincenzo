@@ -16,9 +16,7 @@ from typing import Callable
 from prometheus_client import (
     Counter, Histogram, Gauge, Summary, Info,
     generate_latest, CONTENT_TYPE_LATEST, REGISTRY,
-    CollectorRegistry,
 )
-from prometheus_client.multiprocess import MultiProcessCollector
 from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.routing import Match

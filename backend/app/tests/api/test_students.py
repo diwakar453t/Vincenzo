@@ -40,7 +40,7 @@ class TestStudentsList:
 
     def test_search_param(self, client: TestClient, admin_headers, test_student):
         response = client.get(
-            f"/api/v1/students?search=Alice",
+            "/api/v1/students?search=Alice",
             headers=admin_headers,
         )
         assert response.status_code == 200

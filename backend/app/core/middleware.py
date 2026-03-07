@@ -8,7 +8,6 @@ TenantMiddleware:
 - Rejects unknown tenants with 403
 """
 import time
-import logging
 from typing import Callable, Optional, Dict
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
@@ -189,7 +188,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
             try:
                 tenant = db.query(Tenant).filter(
                     Tenant.id == tenant_id,
-                    Tenant.is_active == True
+                    Tenant.is_active
                 ).first()
                 is_valid = tenant is not None
                 _cache_tenant(tenant_id, is_valid)

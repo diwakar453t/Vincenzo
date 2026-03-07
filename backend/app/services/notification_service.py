@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.models.notification import (
     Notification, NotificationPreference,
-    NotificationType, NotificationChannel, NotificationPriority,
 )
 from app.models.user import User
 import logging
@@ -52,7 +51,7 @@ class NotificationService:
     def broadcast(self, data: dict, tenant_id: str, sender_id: int) -> int:
         """Send notification to all active users in tenant."""
         users = self.db.query(User).filter(
-            User.tenant_id == tenant_id, User.is_active == True
+            User.tenant_id == tenant_id, User.is_active
         ).all()
         count = 0
         for user in users:
@@ -80,7 +79,7 @@ class NotificationService:
         q = self.db.query(Notification).filter(
             Notification.user_id == user_id,
             Notification.tenant_id == tenant_id,
-            Notification.is_active == True,
+            Notification.is_active,
         )
         if is_read is not None:
             q = q.filter(Notification.is_read == is_read)
@@ -91,8 +90,8 @@ class NotificationService:
         unread = self.db.query(Notification).filter(
             Notification.user_id == user_id,
             Notification.tenant_id == tenant_id,
-            Notification.is_active == True,
-            Notification.is_read == False,
+            Notification.is_active,
+            not Notification.is_read,
         ).count()
         notifications = q.order_by(Notification.created_at.desc()).offset(offset).limit(limit).all()
         return [self._notif_dict(n) for n in notifications], total, unread
@@ -115,8 +114,8 @@ class NotificationService:
         result = self.db.query(Notification).filter(
             Notification.user_id == user_id,
             Notification.tenant_id == tenant_id,
-            Notification.is_read == False,
-            Notification.is_active == True,
+            not Notification.is_read,
+            Notification.is_active,
         ).update({
             Notification.is_read: True,
             Notification.read_at: datetime.utcnow(),
@@ -139,7 +138,7 @@ class NotificationService:
         result = self.db.query(Notification).filter(
             Notification.user_id == user_id,
             Notification.tenant_id == tenant_id,
-            Notification.is_active == True,
+            Notification.is_active,
         ).update({Notification.is_active: False})
         self.db.commit()
         return result
@@ -150,17 +149,17 @@ class NotificationService:
         base = self.db.query(Notification).filter(
             Notification.user_id == user_id,
             Notification.tenant_id == tenant_id,
-            Notification.is_active == True,
+            Notification.is_active,
         )
         total = base.count()
-        unread = base.filter(Notification.is_read == False).count()
+        unread = base.filter(not Notification.is_read).count()
 
         type_breakdown = self.db.query(
             Notification.notification_type, func.count(Notification.id)
         ).filter(
             Notification.user_id == user_id,
             Notification.tenant_id == tenant_id,
-            Notification.is_active == True,
+            Notification.is_active,
         ).group_by(Notification.notification_type).all()
 
         priority_breakdown = self.db.query(
@@ -168,7 +167,7 @@ class NotificationService:
         ).filter(
             Notification.user_id == user_id,
             Notification.tenant_id == tenant_id,
-            Notification.is_active == True,
+            Notification.is_active,
         ).group_by(Notification.priority).all()
 
         return {

@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from typing import List, Optional
 from app.models.class_model import Class
 from app.models.student import Student

@@ -164,7 +164,7 @@ def get_platform_stats(
     _get_super_admin(current_user, db)
 
     total_institutions = db.query(func.count(Tenant.id)).scalar() or 0
-    active_institutions = db.query(func.count(Tenant.id)).filter(Tenant.is_active == True).scalar() or 0
+    active_institutions = db.query(func.count(Tenant.id)).filter(Tenant.is_active).scalar() or 0
     total_users = db.query(func.count(User.id)).scalar() or 0
     total_students = db.query(func.count(User.id)).filter(User.role == UserRole.STUDENT.value).scalar() or 0
     total_teachers = db.query(func.count(User.id)).filter(User.role == UserRole.TEACHER.value).scalar() or 0

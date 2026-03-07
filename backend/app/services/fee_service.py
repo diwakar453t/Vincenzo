@@ -1,12 +1,11 @@
-from typing import Optional, List
+from typing import Optional
 from datetime import date
 from sqlalchemy.orm import Session
-from sqlalchemy import func, extract
 import uuid
 
 from app.models.fee import (
     FeeGroup, FeeType, StudentFeeAssignment, FeeCollection,
-    PaymentStatus, PaymentMethod,
+    PaymentStatus,
 )
 from app.models.student import Student
 from app.models.class_model import Class

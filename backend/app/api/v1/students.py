@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, UploadFile, File
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import Optional
 
 from app.core.database import get_db
 from app.core.auth import get_current_user
@@ -203,7 +203,7 @@ async def import_students_excel(
     contents = await file.read()
     try:
         df = pd.read_excel(io.BytesIO(contents))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=400, detail="Invalid Excel file. Please ensure it is a valid .xlsx or .xls file.")
         
     service = StudentService(db)

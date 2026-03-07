@@ -71,7 +71,7 @@ class SettingsService:
     def list_academic_years(self, tenant_id: str):
         years = self.db.query(AcademicYear).filter(
             AcademicYear.tenant_id == tenant_id,
-            AcademicYear.is_active == True,
+            AcademicYear.is_active,
         ).order_by(AcademicYear.start_date.desc()).all()
         return [self._year_dict(y) for y in years]
 
@@ -115,7 +115,7 @@ class SettingsService:
     def get_current_academic_year(self, tenant_id: str) -> dict:
         year = self.db.query(AcademicYear).filter(
             AcademicYear.tenant_id == tenant_id,
-            AcademicYear.is_current == True,
+            AcademicYear.is_current,
         ).first()
         if not year:
             return None
@@ -129,7 +129,7 @@ class SettingsService:
         self._seed_defaults(tenant_id)
         q = self.db.query(SystemPreference).filter(
             SystemPreference.tenant_id == tenant_id,
-            SystemPreference.is_active == True,
+            SystemPreference.is_active,
         )
         if category:
             q = q.filter(SystemPreference.category == category)

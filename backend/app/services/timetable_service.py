@@ -1,10 +1,8 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
 from typing import List, Optional
 
 from app.models.timetable import Timetable, Period
 from app.models.class_model import Class
-from app.models.subject import Subject
 from app.models.teacher import Teacher
 from app.models.room import Room
 from app.schemas.timetable import (
@@ -92,7 +90,7 @@ class TimetableService:
             Timetable.tenant_id == tenant_id
         ).first()
         if existing:
-            raise ValueError(f"A timetable already exists for this class and academic year")
+            raise ValueError("A timetable already exists for this class and academic year")
 
         t = Timetable(**data.model_dump(), tenant_id=tenant_id)
         if not t.name:

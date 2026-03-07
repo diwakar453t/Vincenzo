@@ -4,9 +4,6 @@ Local storage with validation, sharing, and metadata tracking.
 """
 import os
 import uuid
-import shutil
-from datetime import datetime
-from pathlib import Path
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from fastapi import UploadFile, HTTPException
@@ -112,7 +109,7 @@ class FileService:
                    entity_id: int = None, limit: int = 50, offset: int = 0):
         q = self.db.query(UploadedFile).filter(
             UploadedFile.tenant_id == tenant_id,
-            UploadedFile.is_active == True,
+            UploadedFile.is_active,
         )
         if category:
             q = q.filter(UploadedFile.category == category)
@@ -129,7 +126,7 @@ class FileService:
         f = self.db.query(UploadedFile).filter(
             UploadedFile.id == file_id,
             UploadedFile.tenant_id == tenant_id,
-            UploadedFile.is_active == True,
+            UploadedFile.is_active,
         ).first()
         if not f:
             raise HTTPException(status_code=404, detail="File not found")
@@ -177,7 +174,7 @@ class FileService:
         shares = self.db.query(FileShare).filter(
             FileShare.shared_with_user_id == user_id,
             FileShare.tenant_id == tenant_id,
-            FileShare.is_active == True,
+            FileShare.is_active,
         ).all()
         result = []
         for s in shares:
@@ -194,7 +191,7 @@ class FileService:
     def get_stats(self, tenant_id: str) -> dict:
         base = self.db.query(UploadedFile).filter(
             UploadedFile.tenant_id == tenant_id,
-            UploadedFile.is_active == True,
+            UploadedFile.is_active,
         )
         total = base.count()
         total_size = base.with_entities(func.sum(UploadedFile.file_size)).scalar() or 0
@@ -202,7 +199,7 @@ class FileService:
         cat_breakdown = self.db.query(
             UploadedFile.category, func.count(UploadedFile.id), func.sum(UploadedFile.file_size)
         ).filter(
-            UploadedFile.tenant_id == tenant_id, UploadedFile.is_active == True
+            UploadedFile.tenant_id == tenant_id, UploadedFile.is_active
         ).group_by(UploadedFile.category).all()
 
         recent = base.order_by(UploadedFile.created_at.desc()).limit(5).all()

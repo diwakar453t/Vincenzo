@@ -12,6 +12,7 @@ from app.schemas.files import (
     FileUploadResponse, FileListResponse, FileShareCreate, FileShareResponse, FileStatsResponse,
 )
 from app.services.file_service import FileService
+from app.core.config import settings
 
 router = APIRouter()
 

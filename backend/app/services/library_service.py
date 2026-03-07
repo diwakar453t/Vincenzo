@@ -1,7 +1,7 @@
 """
 Library Management service
 """
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from app.models.library import Book, LibraryMember, IssueReturn, BookStatus, IssueStatus, MembershipStatus
@@ -306,11 +306,11 @@ class LibraryService:
     # ─── Library Stats ───────────────────────────────────────────────────
 
     def get_stats(self, tenant_id: str):
-        total_books = self.db.query(Book).filter(Book.tenant_id == tenant_id, Book.is_active == True).count()
+        total_books = self.db.query(Book).filter(Book.tenant_id == tenant_id, Book.is_active).count()
         total_copies = self.db.query(func.sum(Book.total_copies)).filter(
-            Book.tenant_id == tenant_id, Book.is_active == True).scalar() or 0
+            Book.tenant_id == tenant_id, Book.is_active).scalar() or 0
         available = self.db.query(func.sum(Book.available_copies)).filter(
-            Book.tenant_id == tenant_id, Book.is_active == True).scalar() or 0
+            Book.tenant_id == tenant_id, Book.is_active).scalar() or 0
         total_members = self.db.query(LibraryMember).filter(LibraryMember.tenant_id == tenant_id).count()
         active_members = self.db.query(LibraryMember).filter(
             LibraryMember.tenant_id == tenant_id, LibraryMember.status == MembershipStatus.active).count()
@@ -325,11 +325,11 @@ class LibraryService:
         total_fines = self.db.query(func.sum(IssueReturn.fine_amount)).filter(
             IssueReturn.tenant_id == tenant_id).scalar() or 0
         fines_collected = self.db.query(func.sum(IssueReturn.fine_amount)).filter(
-            IssueReturn.tenant_id == tenant_id, IssueReturn.fine_paid == True).scalar() or 0
+            IssueReturn.tenant_id == tenant_id, IssueReturn.fine_paid).scalar() or 0
 
         # Category breakdown
         cats = self.db.query(Book.category, func.count(Book.id)).filter(
-            Book.tenant_id == tenant_id, Book.is_active == True, Book.category.isnot(None)
+            Book.tenant_id == tenant_id, Book.is_active, Book.category.isnot(None)
         ).group_by(Book.category).all()
         category_breakdown = {c: n for c, n in cats}
 

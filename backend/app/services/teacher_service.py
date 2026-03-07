@@ -82,7 +82,7 @@ class TeacherService:
         # Check if user_id already has a teacher profile
         existing_user = self.get_teacher_by_user_id(teacher_data.user_id, tenant_id)
         if existing_user:
-            raise ValueError(f"User already has a teacher profile")
+            raise ValueError("User already has a teacher profile")
         
         teacher = Teacher(
             **teacher_data.model_dump(),

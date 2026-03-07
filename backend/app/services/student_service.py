@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from typing import List, Optional, Dict, Any
 from datetime import date
 import csv
@@ -9,9 +8,9 @@ import string
 import random
 
 from app.models.student import Student, StudentStatus
-from app.schemas.student import StudentCreate, StudentUpdate, StudentListItem
+from app.schemas.student import StudentCreate, StudentUpdate
 from app.models.user import User, UserRole
-from app.models.guardian import Guardian, guardian_students
+from app.models.guardian import Guardian
 from app.core.auth import get_password_hash
 
 

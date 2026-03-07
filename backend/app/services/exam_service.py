@@ -1,12 +1,8 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
 from typing import Optional, List
-from datetime import date
 
 from app.models.exam import Exam, ExamSchedule
 from app.models.class_model import Class
-from app.models.subject import Subject
-from app.models.room import Room
 from app.schemas.exam import ExamCreate, ExamUpdate, ExamScheduleCreate, ExamScheduleUpdate
 
 

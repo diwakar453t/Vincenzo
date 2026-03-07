@@ -2,8 +2,7 @@
 Settings & Configuration models
 """
 import enum
-from sqlalchemy import Column, String, Integer, Text, Boolean, Float, ForeignKey, DateTime, Enum, JSON
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, String, Integer, Text, Boolean, DateTime, Enum
 from app.models.base import BaseModel
 
 

@@ -3,7 +3,6 @@ Integration Tests — Audit Service
 Tests for: tamper-evident audit logging, chain integrity, GDPR actions.
 """
 import pytest
-from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 pytestmark = pytest.mark.integration
@@ -14,7 +13,7 @@ class TestAuditLogger:
 
     def test_log_creates_entry(self, db: Session, test_admin, test_tenant):
         from app.services.audit_service import audit_logger
-        from app.models.audit_log import AuditAction, AuditResource, AuditLog
+        from app.models.audit_log import AuditAction, AuditResource
 
         entry = audit_logger.log(
             db,
@@ -60,7 +59,7 @@ class TestAuditLogger:
 
     def test_chain_breaks_on_tampering(self, db: Session, test_admin, test_tenant):
         from app.services.audit_service import audit_logger
-        from app.models.audit_log import AuditAction, AuditResource, AuditLog
+        from app.models.audit_log import AuditAction, AuditResource
 
         entry = audit_logger.log(
             db, AuditAction.LOGIN, AuditResource.SESSION,
@@ -91,7 +90,7 @@ class TestAuditLogger:
 
     def test_gdpr_action_logged(self, db: Session, test_admin, test_tenant):
         from app.services.audit_service import audit_logger
-        from app.models.audit_log import AuditAction, AuditResource, AuditLog
+        from app.models.audit_log import AuditAction, AuditResource
         from unittest.mock import MagicMock
 
         # Create a mock request

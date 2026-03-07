@@ -3,7 +3,6 @@ Sports Management service
 """
 from datetime import date
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from app.models.sports import Sport, SportParticipation, SportAchievement, ParticipationStatus
 from app.models.student import Student
 

@@ -2,7 +2,7 @@
 File Upload models
 """
 import enum
-from sqlalchemy import Column, String, Integer, Text, Boolean, Float, ForeignKey, DateTime, Enum
+from sqlalchemy import Column, String, Integer, Text, Boolean, Float, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
 

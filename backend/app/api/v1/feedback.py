@@ -5,16 +5,13 @@ GET  /api/v1/feedback        — List feedback (admin only, with filters)
 GET  /api/v1/feedback/stats  — Aggregated stats by module/type/rating (admin only)
 """
 import uuid
-import json
 import logging
 from datetime import datetime
 from typing import Optional, Literal
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, status, Query
 
 from app.schemas.feedback import FeedbackCreate, FeedbackResponse, FeedbackListResponse
 from app.core.deps import get_current_user, require_admin
-from app.core.database import get_db
-from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/feedback", tags=["Feedback"])
 logger = logging.getLogger(__name__)

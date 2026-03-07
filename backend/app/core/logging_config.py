@@ -12,7 +12,6 @@ Features:
 import logging
 import json
 import sys
-import time
 import uuid
 from datetime import datetime, timezone
 from contextvars import ContextVar

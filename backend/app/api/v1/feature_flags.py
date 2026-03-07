@@ -1,5 +1,5 @@
 """Feature Flags API router — enable/disable platform modules per plan."""
-from typing import List, Optional
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel

@@ -13,14 +13,11 @@ Production-grade security hardening:
 import re
 import time
 import html
-import hashlib
 import secrets
 import logging
 from typing import Callable, Dict, Optional, Tuple
-from collections import defaultdict
-from datetime import datetime, timedelta
 
-from fastapi import Request, Response, HTTPException, status
+from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 

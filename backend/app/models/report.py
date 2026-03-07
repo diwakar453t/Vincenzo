@@ -2,7 +2,7 @@
 Reports model
 """
 import enum
-from sqlalchemy import Column, String, Integer, Text, Boolean, DateTime, Enum, JSON
+from sqlalchemy import Column, String, Integer, Text, Boolean, Enum, JSON
 from app.models.base import BaseModel
 
 

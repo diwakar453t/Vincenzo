@@ -4,7 +4,7 @@ Transport Management service
 from datetime import date
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from app.models.transport import TransportRoute, Vehicle, TransportAssignment, VehicleStatus, RouteStatus, AssignmentStatus
+from app.models.transport import TransportRoute, Vehicle, TransportAssignment, AssignmentStatus
 from app.models.student import Student
 
 
@@ -257,8 +257,8 @@ class TransportService:
     # ─── Stats ───────────────────────────────────────────────────────────
 
     def get_stats(self, tenant_id: str):
-        routes = self.db.query(TransportRoute).filter(TransportRoute.tenant_id == tenant_id, TransportRoute.is_active == True).all()
-        vehicles = self.db.query(Vehicle).filter(Vehicle.tenant_id == tenant_id, Vehicle.is_active == True).count()
+        routes = self.db.query(TransportRoute).filter(TransportRoute.tenant_id == tenant_id, TransportRoute.is_active).all()
+        vehicles = self.db.query(Vehicle).filter(Vehicle.tenant_id == tenant_id, Vehicle.is_active).count()
         active_assigns = self.db.query(TransportAssignment).filter(
             TransportAssignment.tenant_id == tenant_id, TransportAssignment.status == AssignmentStatus.active
         ).count()

@@ -4,7 +4,6 @@ from app.models.subject import Subject
 from app.models.subject_group import SubjectGroup
 from app.models.class_subject import ClassSubject
 from app.models.class_model import Class
-from app.models.teacher import Teacher
 from app.schemas.subject import SubjectCreate, SubjectUpdate, SubjectGroupCreate, SubjectGroupUpdate
 
 

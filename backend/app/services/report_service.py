@@ -5,10 +5,10 @@ Generates reports by querying existing data models — attendance, grades, fees,
 from datetime import date, datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from app.models.report import Report, ReportType, ReportFormat, ReportStatus
+from app.models.report import Report, ReportStatus
 from app.models.student import Student
 from app.models.teacher import Teacher
-from app.models.attendance import StudentAttendance, StaffAttendance, AttendanceStatus
+from app.models.attendance import StudentAttendance, StaffAttendance
 from app.models.fee import FeeCollection, StudentFeeAssignment, PaymentStatus
 
 
@@ -19,7 +19,7 @@ class ReportService:
     # ─── Saved reports CRUD ──────────────────────────────────────────────
 
     def get_saved_reports(self, tenant_id: str, report_type: str = None):
-        q = self.db.query(Report).filter(Report.tenant_id == tenant_id, Report.is_active == True)
+        q = self.db.query(Report).filter(Report.tenant_id == tenant_id, Report.is_active)
         if report_type:
             q = q.filter(Report.report_type == report_type)
         reports = q.order_by(Report.created_at.desc()).limit(50).all()
@@ -340,10 +340,10 @@ class ReportService:
 
     def get_dashboard(self, tenant_id: str) -> dict:
         reports = self.db.query(Report).filter(
-            Report.tenant_id == tenant_id, Report.is_active == True
+            Report.tenant_id == tenant_id, Report.is_active
         ).order_by(Report.created_at.desc()).limit(10).all()
         total = self.db.query(Report).filter(
-            Report.tenant_id == tenant_id, Report.is_active == True
+            Report.tenant_id == tenant_id, Report.is_active
         ).count()
 
         return {

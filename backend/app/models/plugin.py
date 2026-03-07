@@ -1,7 +1,7 @@
 """
 Plugin Model & DB persistence
 """
-from sqlalchemy import Column, String, Integer, Text, Boolean, JSON, DateTime
+from sqlalchemy import Column, String, Text, Boolean, JSON
 from app.models.base import BaseModel
 
 

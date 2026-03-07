@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta
 from app.models.student import Student
 from app.models.class_model import Class
 from app.models.teacher import Teacher

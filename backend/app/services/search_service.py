@@ -77,7 +77,7 @@ class SearchService:
                     "id": c.id, "type": "class",
                     "title": f"{c.name} - {c.section}",
                     "subtitle": f"Capacity: {c.capacity}",
-                    "link": f"/dashboard/classes",
+                    "link": "/dashboard/classes",
                     "icon": "class",
                 })
             facets["classes"] = len(classes)
@@ -95,7 +95,7 @@ class SearchService:
                     "id": s.id, "type": "subject",
                     "title": s.name,
                     "subtitle": f"Code: {s.code}",
-                    "link": f"/dashboard/subjects",
+                    "link": "/dashboard/subjects",
                     "icon": "subject",
                 })
             facets["subjects"] = len(subjects)

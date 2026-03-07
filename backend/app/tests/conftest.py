@@ -12,8 +12,7 @@ Test factories (Factory Boy):
 """
 import os
 import pytest
-from datetime import datetime, timezone
-from typing import Generator, Dict, Any
+from typing import Generator, Dict
 
 # Set test environment BEFORE any app imports
 os.environ.setdefault("APP_ENV", "test")

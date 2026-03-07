@@ -1,6 +1,6 @@
 """Custom exception classes for PreSkool ERP."""
 from typing import Any, Optional
-from fastapi import HTTPException, status
+from fastapi import status
 
 
 class PreSkoolException(Exception):

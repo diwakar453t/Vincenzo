@@ -6,8 +6,6 @@ Tests for: password policy, account lockout, rate limiter, input sanitizer,
 All pure unit tests — no DB, no network, no HTTP.
 """
 import pytest
-import time
-from unittest.mock import patch, MagicMock
 
 
 # ═══════════════════════════════════════════════════════════════════════

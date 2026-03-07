@@ -2,7 +2,7 @@
 Hostel Management models
 """
 import enum
-from sqlalchemy import Column, String, Integer, Float, Text, Boolean, Date, DateTime, Enum, ForeignKey
+from sqlalchemy import Column, String, Integer, Float, Text, Boolean, Date, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
 

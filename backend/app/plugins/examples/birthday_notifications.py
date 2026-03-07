@@ -3,7 +3,7 @@
 Sends birthday wishes to students and teachers on their birthdays.
 Hooks into: daily_morning, on_startup
 """
-from datetime import datetime, date
+from datetime import date
 import logging
 from app.plugins import PluginBase, PluginMetadata, PluginContext
 
@@ -96,11 +96,12 @@ class BirthdayNotificationsPlugin(PluginBase):
                             birthdays.append({"type": "teacher", "id": t.id, "name": name})
 
             if birthdays:
-                wish = ctx.get_config("birthday_notifications", "wish_message", "🎉 Happy Birthday, {name}!")
-                logger.info(
-                    "Birthday notification sent",
-                    extra={"entity_type": b["type"], "entity_id": b["id"], "event": "birthday_notification"},
-                )
+                _wish_msg = ctx.get_config("birthday_notifications", "wish_message", "🎉 Happy Birthday, {name}!")
+                for b in birthdays:
+                    logger.info(
+                        "Birthday notification sent",
+                        extra={"entity_type": b["type"], "entity_id": b["id"], "event": "birthday_notification"},
+                    )
 
                 logger.info(
                     "Birthday check complete",

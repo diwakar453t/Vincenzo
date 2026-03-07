@@ -1,12 +1,9 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
 from typing import Optional, List
 
 from app.models.grade import Grade, GradeCategory
 from app.models.student import Student
 from app.models.exam import Exam
-from app.models.subject import Subject
-from app.models.class_model import Class
 from app.schemas.grade import GradeCategoryCreate, GradeCategoryUpdate, GradeCreate, GradeUpdate, GradeBulkEntry
 
 

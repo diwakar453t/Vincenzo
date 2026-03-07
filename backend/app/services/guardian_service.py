@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 
 from app.models.guardian import Guardian, GuardianStatus
 from app.models.student import Student

@@ -1,10 +1,9 @@
 import calendar
-from datetime import date, timedelta
+from datetime import date
 from typing import Optional, List
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
 
-from app.models.attendance import StudentAttendance, StaffAttendance, AttendanceStatus
+from app.models.attendance import StudentAttendance, StaffAttendance
 from app.models.student import Student
 from app.models.teacher import Teacher
 from app.models.class_model import Class

@@ -1,7 +1,6 @@
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 from typing import Optional, Literal
 from datetime import datetime
-import uuid
 
 
 class FeedbackCreate(BaseModel):

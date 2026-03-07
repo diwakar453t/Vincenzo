@@ -38,7 +38,7 @@ class DashboardService:
     def _get_admin_dashboard(self, user: User) -> DashboardStatistics:
         """Get admin-specific dashboard data."""
         # Get counts from database (with tenant filtering)
-        total_users = (
+        (
             self.db.query(func.count(User.id))
             .filter(User.tenant_id == user.tenant_id)
             .scalar()
@@ -58,7 +58,7 @@ class DashboardService:
             .scalar()
         )
         
-        total_parents = (
+        (
             self.db.query(func.count(User.id))
             .filter(User.tenant_id == user.tenant_id)
             .filter(User.role == UserRole.PARENT.value)

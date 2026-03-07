@@ -260,7 +260,7 @@ class HostelService:
 
     def get_availability(self, tenant_id: str, hostel_id: int = None):
         q = self.db.query(HostelRoom).filter(
-            HostelRoom.tenant_id == tenant_id, HostelRoom.is_active == True
+            HostelRoom.tenant_id == tenant_id, HostelRoom.is_active
         )
         if hostel_id:
             q = q.filter(HostelRoom.hostel_id == hostel_id)
@@ -295,7 +295,7 @@ class HostelService:
     # ─── Stats ───────────────────────────────────────────────────────────
 
     def get_stats(self, tenant_id: str):
-        hostels = self.db.query(Hostel).filter(Hostel.tenant_id == tenant_id, Hostel.is_active == True).all()
+        hostels = self.db.query(Hostel).filter(Hostel.tenant_id == tenant_id, Hostel.is_active).all()
         total_rooms = sum(h.total_rooms for h in hostels)
         total_beds = sum(h.total_beds for h in hostels)
         occupied = sum(h.occupied_beds for h in hostels)

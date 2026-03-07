@@ -14,7 +14,6 @@ from app.schemas.room import (
     AssignedClassInfo,
 )
 from app.models.user import User
-from app.models.student import Student
 
 router = APIRouter()
 

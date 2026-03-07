@@ -1,12 +1,11 @@
-from datetime import date, timedelta
-from typing import Optional, List
+from datetime import date
+from typing import Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
+from sqlalchemy import func
 
-from app.models.leave import LeaveType, LeaveApplication, LeaveStatus, ApplicantType
+from app.models.leave import LeaveType, LeaveApplication, LeaveStatus
 from app.models.teacher import Teacher
 from app.models.student import Student
-from app.models.user import User
 from app.schemas.leave import LeaveApplicationCreate, LeaveActionRequest
 
 
@@ -147,7 +146,7 @@ class LeaveService:
         types = (self.db.query(LeaveType)
                  .filter(LeaveType.tenant_id == tenant_id,
                          LeaveType.applies_to == applicant_type,
-                         LeaveType.is_active == True)
+                         LeaveType.is_active)
                  .all())
 
         balances = []

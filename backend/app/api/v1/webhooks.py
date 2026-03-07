@@ -11,7 +11,7 @@ import logging
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 logger = logging.getLogger("preskool.alerts")

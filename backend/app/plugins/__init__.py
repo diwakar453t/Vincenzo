@@ -2,10 +2,13 @@
 Plugin system — base interface, lifecycle, and hooks
 """
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Dict, List, Optional, Callable, TYPE_CHECKING
 from dataclasses import dataclass, field
 from enum import Enum
 import logging
+
+if TYPE_CHECKING:
+    from app.plugins.registry import PluginRegistry
 
 logger = logging.getLogger(__name__)
 

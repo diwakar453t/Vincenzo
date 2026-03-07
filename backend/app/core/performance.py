@@ -11,14 +11,10 @@ Features:
   - Groups repeated slow patterns for N+1 detection
   - Configurable via environment variables
 """
-import asyncio
-import json
 import logging
 import os
 import time
 from collections import defaultdict
-from datetime import datetime, timezone
-from typing import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
