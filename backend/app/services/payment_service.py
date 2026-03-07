@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from fastapi import HTTPException
 
-from app.models.payment import PaymentTransaction, PaymentStatus, PaymentMethod, PaymentPurpose
+from app.models.payment import PaymentTransaction, TransactionStatus as PaymentStatus, TransactionPaymentMethod, PaymentPurpose
 
 logger = logging.getLogger(__name__)
 

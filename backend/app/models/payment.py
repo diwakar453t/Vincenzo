@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
 
 
-class PaymentStatus(str, enum.Enum):
+class TransactionStatus(str, enum.Enum):
     initiated = "initiated"
     pending = "pending"
     authorized = "authorized"
@@ -19,7 +19,7 @@ class PaymentStatus(str, enum.Enum):
     cancelled = "cancelled"
 
 
-class PaymentMethod(str, enum.Enum):
+class TransactionPaymentMethod(str, enum.Enum):
     upi = "upi"
     card = "card"
     netbanking = "netbanking"
@@ -52,8 +52,8 @@ class PaymentTransaction(BaseModel):
     # Transaction details
     amount = Column(Float, nullable=False)
     currency = Column(String(10), default="INR", nullable=False)
-    status = Column(Enum(PaymentStatus), default=PaymentStatus.initiated, nullable=False)
-    payment_method = Column(Enum(PaymentMethod), default=PaymentMethod.upi, nullable=False)
+    status = Column(Enum(TransactionStatus, name='transactionstatus', create_type=True), default=TransactionStatus.initiated, nullable=False)
+    payment_method = Column(Enum(TransactionPaymentMethod, name='transactionpaymentmethod', create_type=True), default=TransactionPaymentMethod.upi, nullable=False)
     purpose = Column(Enum(PaymentPurpose), default=PaymentPurpose.tuition_fee, nullable=False)
     description = Column(Text, nullable=True)
 

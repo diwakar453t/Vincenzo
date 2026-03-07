@@ -26,7 +26,7 @@ from app.models.report import Report, ReportType, ReportFormat, ReportStatus
 from app.models.notification import Notification, NotificationPreference, NotificationType, NotificationChannel, NotificationPriority
 from app.models.uploaded_file import UploadedFile, FileShare, FileCategory, FileVisibility
 from app.models.settings import SchoolSettings, AcademicYear, SystemPreference, SettingCategory
-from app.models.payment import PaymentTransaction, PaymentStatus, PaymentMethod, PaymentPurpose
+from app.models.payment import PaymentTransaction, TransactionStatus, TransactionPaymentMethod, PaymentPurpose
 from app.models.plugin import PluginRecord
 
 __all__ = [
@@ -131,8 +131,8 @@ __all__ = [
     "SystemPreference",
     "SettingCategory",
     "PaymentTransaction",
-    "PaymentStatus",
-    "PaymentMethod",
+    "TransactionStatus",
+    "TransactionPaymentMethod",
     "PaymentPurpose",
     "PluginRecord",
 ]
