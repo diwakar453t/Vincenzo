@@ -42,3 +42,24 @@ jobs:
       - name: Build
         working-directory: frontend
         run: npm run build
+
+  verify-backend-deps:
+    name: Verify Backend Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install backend dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+      - name: Verify critical imports
+        run: |
+          python -c "import asyncpg; print(f'✅ asyncpg {asyncpg.__version__} installed')"
+          python -c "import sqlalchemy; print(f'✅ sqlalchemy {sqlalchemy.__version__} installed')"
+          python -c "import fastapi; print(f'✅ fastapi {fastapi.__version__} installed')"
+          echo "All critical dependencies verified."
