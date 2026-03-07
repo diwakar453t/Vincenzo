@@ -9,38 +9,52 @@ permissions:
   id-token: write
   contents: read
 
-env:
-  AZURE_BACKEND_URL: https://preskool-api-backend.azurewebsites.net
-
 jobs:
   validate-secrets:
     name: Validate Required Secrets
     runs-on: ubuntu-latest
+    outputs:
+      has_azure: ${{ steps.check.outputs.has_azure }}
+      has_vercel: ${{ steps.check.outputs.has_vercel }}
+      has_db: ${{ steps.check.outputs.has_db }}
     steps:
       - name: Check Deployment Secrets
+        id: check
         run: |
-          MISSING=()
-          [ -z "${{ secrets.AZURE_CLIENT_ID }}" ] && MISSING+=("AZURE_CLIENT_ID")
-          [ -z "${{ secrets.AZURE_TENANT_ID }}" ] && MISSING+=("AZURE_TENANT_ID")
-          [ -z "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ] && MISSING+=("AZURE_SUBSCRIPTION_ID")
-          [ -z "${{ secrets.AZURE_WEBAPP_NAME }}" ] && MISSING+=("AZURE_WEBAPP_NAME")
-          [ -z "${{ secrets.VERCEL_TOKEN }}" ] && MISSING+=("VERCEL_TOKEN")
-          [ -z "${{ secrets.VERCEL_ORG_ID }}" ] && MISSING+=("VERCEL_ORG_ID")
-          [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ] && MISSING+=("VERCEL_PROJECT_ID")
-          [ -z "${{ secrets.DATABASE_URL }}" ] && MISSING+=("DATABASE_URL")
-          [ -z "${{ secrets.JWT_SECRET_KEY }}" ] && MISSING+=("JWT_SECRET_KEY")
-          [ -z "${{ secrets.ENCRYPTION_MASTER_KEY }}" ] && MISSING+=("ENCRYPTION_MASTER_KEY")
+          # Azure secrets
+          HAS_AZURE=true
+          [ -z "${{ secrets.AZURE_CLIENT_ID }}" ] && HAS_AZURE=false && echo "⚠️  Missing: AZURE_CLIENT_ID"
+          [ -z "${{ secrets.AZURE_TENANT_ID }}" ] && HAS_AZURE=false && echo "⚠️  Missing: AZURE_TENANT_ID"
+          [ -z "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ] && HAS_AZURE=false && echo "⚠️  Missing: AZURE_SUBSCRIPTION_ID"
+          [ -z "${{ secrets.AZURE_WEBAPP_NAME }}" ] && HAS_AZURE=false && echo "⚠️  Missing: AZURE_WEBAPP_NAME"
+          echo "has_azure=$HAS_AZURE" >> $GITHUB_OUTPUT
 
-          if [ ${#MISSING[@]} -ne 0 ]; then
-            echo "::error::Missing required secrets: ${MISSING[*]}"
+          # Vercel secrets
+          HAS_VERCEL=true
+          [ -z "${{ secrets.VERCEL_TOKEN }}" ] && HAS_VERCEL=false && echo "⚠️  Missing: VERCEL_TOKEN"
+          [ -z "${{ secrets.VERCEL_ORG_ID }}" ] && HAS_VERCEL=false && echo "⚠️  Missing: VERCEL_ORG_ID"
+          [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ] && HAS_VERCEL=false && echo "⚠️  Missing: VERCEL_PROJECT_ID"
+          echo "has_vercel=$HAS_VERCEL" >> $GITHUB_OUTPUT
+
+          # DB secrets (optional — only needed for migration+seeding)
+          HAS_DB=true
+          [ -z "${{ secrets.DATABASE_URL }}" ] && HAS_DB=false && echo "ℹ️  Missing: DATABASE_URL (migration/seeding will be skipped)"
+          [ -z "${{ secrets.JWT_SECRET_KEY }}" ] && HAS_DB=false && echo "ℹ️  Missing: JWT_SECRET_KEY"
+          [ -z "${{ secrets.ENCRYPTION_MASTER_KEY }}" ] && HAS_DB=false && echo "ℹ️  Missing: ENCRYPTION_MASTER_KEY"
+          echo "has_db=$HAS_DB" >> $GITHUB_OUTPUT
+
+          if [ "$HAS_AZURE" = "false" ] && [ "$HAS_VERCEL" = "false" ]; then
+            echo "::error::Both Azure and Vercel secrets are missing. Cannot proceed with deployment."
             exit 1
           fi
-          echo "✅ All required secrets are present."
+
+          echo "✅ Secret check complete."
 
   deploy-backend:
     name: Deploy Backend to Azure
     needs: validate-secrets
     runs-on: ubuntu-latest
+    if: needs.validate-secrets.outputs.has_azure == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -55,7 +69,7 @@ jobs:
         working-directory: backend
         run: pip install -r requirements.txt
 
-      - name: Azure Login
+      - name: Azure Login (OIDC)
         uses: azure/login@v1
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -68,36 +82,25 @@ jobs:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
           package: ./backend
 
-      - name: Verify Health Check
+      - name: Wait for App Service startup
         run: |
           URL="https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net/api/v1/health"
-          echo "Checking health at $URL..."
-          for i in {1..15}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" $URL || echo "000")
+          echo "Waiting for health at $URL..."
+          for i in {1..20}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
             if [ "$STATUS" = "200" ]; then
-              echo "✅ Health check passed: 200 OK"
-              curl -s $URL | python3 -m json.tool
+              echo "✅ Backend is healthy!"
+              curl -s "$URL" | python3 -m json.tool
               exit 0
             fi
-            echo "Attempt $i: Status=$STATUS. Waiting..."
+            echo "  Attempt $i: HTTP $STATUS — retrying in 5s..."
             sleep 5
           done
-          echo "❌ Health check failed after deployment"
+          echo "❌ Health check timed out."
           exit 1
 
       - name: Run Database Migrations
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-          ENCRYPTION_MASTER_KEY: ${{ secrets.ENCRYPTION_MASTER_KEY }}
-        working-directory: backend
-        run: |
-          echo "Running Alembic migrations..."
-          alembic upgrade head
-          echo "✅ Migrations complete."
-        continue-on-error: true  # Don't block if already applied
-
-      - name: Seed Initial Users
+        if: needs.validate-secrets.outputs.has_db == 'true'
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
@@ -106,15 +109,31 @@ jobs:
           APP_ENV: production
         working-directory: backend
         run: |
-          echo "Seeding initial demo accounts..."
+          echo "Running alembic upgrade head..."
+          alembic upgrade head
+          echo "✅ Migrations complete"
+        continue-on-error: true
+
+      - name: Seed Demo Accounts
+        if: needs.validate-secrets.outputs.has_db == 'true'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          ENCRYPTION_MASTER_KEY: ${{ secrets.ENCRYPTION_MASTER_KEY }}
+          OTEL_ENABLED: "false"
+          APP_ENV: production
+        working-directory: backend
+        run: |
+          echo "Seeding demo accounts..."
           python seeds/seed_data.py
-          echo "✅ Seeding complete."
-        continue-on-error: true  # Don't fail if data already exists
+          echo "✅ Seeding complete"
+        continue-on-error: true
 
   deploy-frontend:
     name: Deploy Frontend to Vercel
     needs: validate-secrets
     runs-on: ubuntu-latest
+    if: needs.validate-secrets.outputs.has_vercel == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -125,17 +144,18 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install Node Modules
+      - name: Install dependencies
         working-directory: frontend
         run: npm ci
 
-      - name: Build Frontend with Production API URL
+      - name: Build with Production API URL
         working-directory: frontend
         env:
           VITE_API_URL: https://preskool-api-backend.azurewebsites.net/api/v1
+          NODE_ENV: production
         run: npm run build
 
-      - name: Deploy to Vercel
+      - name: Deploy to Vercel (production)
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
