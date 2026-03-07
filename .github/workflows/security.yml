@@ -35,15 +35,15 @@ jobs:
           bandit -r backend/app/ -ll -ii -f json -o bandit.json || true
 
       - name: CodeQL Initialization
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: python, javascript
 
       - name: CodeQL Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@v4
 
       - name: CodeQL Analyze
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
 
       - name: Build Docker target for Trivy
         run: docker build -t preskool-backend:scan backend/
