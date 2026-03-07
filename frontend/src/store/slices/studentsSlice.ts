@@ -132,6 +132,22 @@ export const bulkImportStudents = createAsyncThunk(
     }
 );
 
+export const importStudentsExcel = createAsyncThunk(
+    'students/importExcel',
+    async (file: File, { rejectWithValue }) => {
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const response = await api.post('/students/import', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.detail || 'Failed to import students');
+        }
+    }
+);
+
 // Slice
 const studentsSlice = createSlice({
     name: 'students',
@@ -237,6 +253,18 @@ const studentsSlice = createSlice({
                 state.loading = false;
             })
             .addCase(bulkImportStudents.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            })
+            // Excel import
+            .addCase(importStudentsExcel.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(importStudentsExcel.fulfilled, (state) => {
+                state.loading = false;
+            })
+            .addCase(importStudentsExcel.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
             });

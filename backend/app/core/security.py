@@ -434,7 +434,7 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
         if request.url.path in self.EXCLUDED:
             return await call_next(request)
 
-        # Check query parameters
+        # Check query parameters for SQL injection, XSS, and path traversal
         for key, value in request.query_params.items():
             if not InputSanitizer.is_safe(value):
                 logger.warning(
@@ -446,10 +446,12 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
                     content={"error": "Invalid input detected", "detail": f"Suspicious content in parameter: {key}"},
                 )
 
-        # Check URL path
-        if not InputSanitizer.is_safe(request.url.path):
+        # Check URL path — ONLY for path traversal (not SQL/XSS patterns,
+        # which produce false positives on normal route names like
+        # "attendance" containing "end", "timetable" containing "table", etc.)
+        if InputSanitizer.check_path_traversal(request.url.path):
             logger.warning(
-                "Malicious path detected",
+                "Path traversal detected",
                 extra={"path": request.url.path},
             )
             return JSONResponse(

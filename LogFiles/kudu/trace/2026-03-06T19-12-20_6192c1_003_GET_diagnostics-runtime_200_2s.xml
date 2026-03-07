@@ -1,0 +1,5 @@
+<step title="Incoming Request" date="2026-03-06T19:12:20.092" instance="6192c1" url="/diagnostics/runtime" method="GET" type="request" pid="772,1,18" Host="preskool-api-backend.scm.azurewebsites.net" User-Agent="GITHUBACTIONS_DeployWebAppToAzure_c6e45782ccbb710af0da7cb31e6a9aa2dca63ce644ef5f34739b642e8af1de04_v3.0.7" Authorization="Bas..." Content-Type="application/json; charset=utf-8" Content-Length="0" X-ARR-LOG-ID="6f84e46a-8f0f-4a93-9162-46693466dce4" CLIENT-IP="20.3.166.83:28736" X-SITE-DEPLOYMENT-ID="preskool-api-backend" WAS-DEFAULT-HOSTNAME="preskool-api-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/diagnostics/runtime" X-Client-IP="20.3.166.83" X-Client-Port="28736" >
+  <step title="Cleanup Xml Logs" date="2026-03-06T19:12:20.102" /><!-- duration: 80ms -->
+  <step title="RuntimeController.GetRuntimeVersions" date="2026-03-06T19:12:20.746" /><!-- duration: 68ms -->
+  <step title="Outgoing response" date="2026-03-06T19:12:21.918" type="response" statusCode="200" statusText="OK" /><!-- duration: 19ms -->
+</step><!-- duration: 1854ms -->

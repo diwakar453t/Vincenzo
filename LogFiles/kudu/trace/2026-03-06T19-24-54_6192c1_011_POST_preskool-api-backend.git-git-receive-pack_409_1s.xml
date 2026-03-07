@@ -1,0 +1,9 @@
+<step title="Incoming Request" date="2026-03-06T19:24:54.447" instance="6192c1" url="/preskool-api-backend.git/git-receive-pack" method="POST" type="request" pid="776,1,7" Accept="application/x-git-receive-pack-result" Host="preskool-api-backend.scm.azurewebsites.net" User-Agent="git/2.50.1" Accept-Encoding="deflate, gzip" Authorization="Bas..." Content-Type="application/x-git-receive-pack-request" Content-Length="1101" X-ARR-LOG-ID="7058131b-12c9-44ee-8d9c-66950a127e0c" CLIENT-IP="152.59.190.239:58594" X-SITE-DEPLOYMENT-ID="preskool-api-backend" WAS-DEFAULT-HOSTNAME="preskool-api-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/preskool-api-backend.git/git-receive-pack" X-Client-IP="152.59.190.239" X-Client-Port="58594" >
+  <step title="RpcService.ReceivePack" date="2026-03-06T19:24:54.618" >
+    <step title="Executing external process" date="2026-03-06T19:24:54.665" type="process" path="git" arguments="rev-parse --git-dir" /><!-- duration: 72ms -->
+    <step title="Assuming git repository at /home/site/repository" date="2026-03-06T19:24:54.755" /><!-- duration: 19ms -->
+    <step title="Acquiring Deployment Lock" date="2026-03-06T19:24:54.837" /><!-- duration: 35ms -->
+    <step title="Cannot Acquire Deployment Lock already held" date="2026-03-06T19:24:54.937" /><!-- duration: 27ms -->
+  </step><!-- duration: 382ms -->
+  <step title="Outgoing response" date="2026-03-06T19:24:55.039" type="response" statusCode="409" statusText="Conflict" /><!-- duration: 44ms -->
+</step><!-- duration: 684ms -->

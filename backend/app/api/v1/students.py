@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -181,6 +181,33 @@ def bulk_import_students(
     
     service = StudentService(db)
     results = service.bulk_import_students(csv_content, user.tenant_id)
+    
+    return results
+    
+@router.post("/import")
+async def import_students_excel(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Bulk import students from Excel file"""
+    import pandas as pd
+    import io
+    
+    user_id = int(current_user.get("sub"))
+    user = db.query(User).filter(User.id == user_id).first()
+    
+    if not user or user.role not in ["admin", "super_admin"]:
+        raise HTTPException(status_code=403, detail="Only admins can import students")
+    
+    contents = await file.read()
+    try:
+        df = pd.read_excel(io.BytesIO(contents))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid Excel file. Please ensure it is a valid .xlsx or .xls file.")
+        
+    service = StudentService(db)
+    results = service.bulk_import_students_excel(df, user.tenant_id)
     
     return results
 

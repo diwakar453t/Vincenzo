@@ -1,0 +1,6 @@
+<step title="Incoming Request" date="2026-03-06T17:39:16.825" instance="6192c1" url="/logstream" method="GET" type="request" pid="772,1,27" Host="preskool-api-backend.scm.azurewebsites.net" User-Agent="AZURECLI/2.84.0 (HOMEBREW)" Accept-Encoding="identity" Authorization="Bea..." x-ms-client-request-id="5f2e34fe-1983-11f1-9498-f272c4ccda90" X-ARR-LOG-ID="5f2e34fe-1983-11f1-9498-f272c4ccda90" CLIENT-IP="152.59.190.239:55854" X-SITE-DEPLOYMENT-ID="preskool-api-backend" WAS-DEFAULT-HOSTNAME="preskool-api-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/logstream" X-Client-IP="152.59.190.239" X-Client-Port="55854" >
+  <step title="Cleanup Xml Logs" date="2026-03-06T17:39:16.860" /><!-- duration: 31ms -->
+  <step title="LogStreamHandlerMiddleware.Invoke" date="2026-03-06T17:39:16.951" /><!-- duration: 168ms -->
+  <step title="Error occurred" date="2026-03-06T17:40:17.124" type="error" text="LogStreamManager: ProcessRequest end" /><!-- duration: 27ms -->
+  <step title="Outgoing response" date="2026-03-06T17:40:17.222" type="response" statusCode="200" statusText="OK" /><!-- duration: 16ms -->
+</step><!-- duration: 60424ms -->

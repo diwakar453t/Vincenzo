@@ -51,7 +51,7 @@ const initialState: NotificationsState = {
 
 export const fetchNotifications = createAsyncThunk('notifications/fetchAll',
     async (params: { is_read?: boolean; notification_type?: string; limit?: number; offset?: number } = {}, { rejectWithValue }) => {
-        try { return (await api.get(`/notifications/`, { ...authHeader(), params })).data; }
+        try { return (await api.get(`/notifications`, { ...authHeader(), params })).data; }
         catch (e: any) { return rejectWithValue(e.response?.data?.detail || 'Failed'); }
     });
 

@@ -1,0 +1,18 @@
+<step title="Incoming Request" date="2026-03-06T17:41:22.696" instance="6192c1" url="/api/publish?type=zip&amp;async=True" method="POST" type="request" pid="768,1,5" Accept="*/*" Host="preskool-api-backend.scm.azurewebsites.net" User-Agent="AZURECLI/2.84.0 (HOMEBREW)" Accept-Encoding="gzip, deflate" Authorization="Bea..." Cache-Control="no-cache" Content-Type="application/octet-stream" Cookie="ARRAffinity=6192c1db74f2264222894c9db185c4804ec0d4d8c5ddc297a0a56d17fb5deb39; ARRAffinitySameSite=6192c1db74f2264222894c9db185c4804ec0d4d8c5ddc297a0a56d17fb5deb39" Content-Length="305821" x-ms-client-request-id="a6604d94-1983-11f1-9d5a-f272c4ccda90" x-ms-artifact-checksum="777273108ad60bdf0629aa3b99b96c7a80edb88bb46dc2a8f6f0e40714fd8081" X-ARR-LOG-ID="a6604d94-1983-11f1-9d5a-f272c4ccda90" CLIENT-IP="152.59.190.239:55929" X-SITE-DEPLOYMENT-ID="preskool-api-backend" WAS-DEFAULT-HOSTNAME="preskool-api-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/publish?type=zip&amp;async=True" X-Client-IP="152.59.190.239" X-Client-Port="55929" >
+  <step title="Cleanup Xml Logs" date="2026-03-06T17:41:22.709" /><!-- duration: 38ms -->
+  <step title="OneDeploy" date="2026-03-06T17:41:23.566" >
+    <step title="None repository commit" date="2026-03-06T17:41:23.775" >
+      <step title="Commit id: 4270cbe6-538f-482d-b642-196dbfe6ed03" date="2026-03-06T17:41:23.822" Message="N/A" AuthorName="N/A" AuthorEmail="N/A" /><!-- duration: 31ms -->
+    </step><!-- duration: 99ms -->
+    <step title="Starting PushDeployAsync" date="2026-03-06T17:41:23.902" /><!-- duration: 31ms -->
+    <step title="Writing artifact to /tmp/zipdeploy/c3419eec-4b47-4980-96f4-cc3f64145d8e.zip" date="2026-03-06T17:41:24.143" >
+      <step title="Writing multipart request body to /tmp/zipdeploy/c3419eec-4b47-4980-96f4-cc3f64145d8e.zip" date="2026-03-06T17:41:24.182" /><!-- duration: 29ms -->
+    </step><!-- duration: 292ms -->
+    <step title="Removing previous build artifact&apos;s manifest file" date="2026-03-06T17:41:24.456" >
+      <step title="Start deployment in the background" date="2026-03-06T17:41:24.506" >
+        <step title="Acquiring Deployment Lock" date="2026-03-06T17:41:24.594" /><!-- duration: 108ms -->
+        <step title="Acquired Deployment Lock" date="2026-03-06T17:41:25.173" /><!-- duration: 32ms -->
+      </step><!-- duration: 986ms -->
+    </step><!-- duration: 1103ms -->
+    <step title="Outgoing response" date="2026-03-06T17:41:25.707" type="response" statusCode="202" statusText="Accepted" /><!-- duration: 59ms -->
+  </step><!-- duration: 2222ms -->

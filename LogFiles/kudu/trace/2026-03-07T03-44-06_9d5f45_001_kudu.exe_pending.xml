@@ -1,0 +1,33 @@
+<step title="Executing external process" date="2026-03-07T03:44:06.425" instance="9d5f45" type="process" path="kudu.exe" arguments="/home/site /opt/Kudu/msbuild" >
+  <step title="Cleanup Xml Logs" date="2026-03-07T03:44:06.467" >
+    <step title="Cleanup Infos" date="2026-03-07T03:44:06.497" totalFiles="295" totalCleanup="135" /><!-- duration: 30ms -->
+  </step><!-- duration: 79ms -->
+  <step title="Deployment timer started" date="2026-03-07T03:44:06.588" >
+    <step title="Executing external process" date="2026-03-07T03:44:06.646" type="process" path="git" arguments="log -n 1 master --" /><!-- duration: 201ms -->
+    <step title="DeploymentManager.Deploy(id:d5454154009b01df2c58471f0267baa44784f0dd)" date="2026-03-07T03:44:06.866" >
+      <step title="Collecting changeset information" date="2026-03-07T03:44:06.922" /><!-- duration: 350ms -->
+      <step title="Updating to specific changeset" date="2026-03-07T03:44:07.331" >
+        <step title="Executing external process" date="2026-03-07T03:44:08.591" type="process" path="git" arguments="checkout master --force" /><!-- duration: 415ms -->
+      </step><!-- duration: 1677ms -->
+      <step title="Updating submodules" date="2026-03-07T03:44:09.010" /><!-- duration: 72ms -->
+      <step title="Determining deployment builder" date="2026-03-07T03:44:09.449" >
+        <step title="Builder is OryxBuilder" date="2026-03-07T03:44:09.527" /><!-- duration: 10ms -->
+      </step><!-- duration: 90ms -->
+      <step title="PreDeployment: context.CleanOutputPath False" date="2026-03-07T03:44:09.628" >
+        <step title="PreDeployment: context.OutputPath /home/site/wwwroot" date="2026-03-07T03:44:09.792" >
+          <step title="Building" date="2026-03-07T03:44:09.925" >
+            <step title="Executing external process" date="2026-03-07T03:44:10.335" type="process" path="bash" arguments="-c &quot;oryx build /home/site/repository -o /home/site/wwwroot --platform python --platform-version 3.11 -p virtualenv_name=antenv --log-file /tmp/build-debug.log  -i /tmp/8de7bfbca5fd201 --compress-destination-dir | tee /tmp/oryx-build.log ; exit $PIPESTATUS &quot;" /><!-- duration: 124099ms -->
+            <step title="Using PythonDeploymentLogParser" date="2026-03-07T03:46:15.986" /><!-- duration: 20ms -->
+            <step title="Triggering recycle (preview mode disabled)." date="2026-03-07T03:46:18.227" /><!-- duration: 11ms -->
+            <step title="Modified file to trigger a restart of the app container." date="2026-03-07T03:46:18.379" /><!-- duration: 18ms -->
+            <step title="Skip function trigger and logicapp sync because function is not enabled." date="2026-03-07T03:46:18.602" /><!-- duration: 1ms -->
+          </step><!-- duration: 130697ms -->
+        </step><!-- duration: 130840ms -->
+        <step title="Cleaning up temp files" date="2026-03-07T03:46:20.634" /><!-- duration: 15563ms -->
+        <step title="Cleaning up temp files" date="2026-03-07T03:46:36.209" /><!-- duration: 541ms -->
+        <step title="Reloading status file with latest updates" date="2026-03-07T03:46:36.994" >
+          <step title="WebHooksManager.PublishEventAsync: PostDeployment" date="2026-03-07T03:46:37.052" /><!-- duration: 997ms -->
+        </step><!-- duration: 1075ms -->
+        <step title="Executing external process" date="2026-03-07T03:46:38.210" type="process" path="git" arguments="log -n 1 master --" /><!-- duration: 412ms -->
+      </step><!-- duration: 149004ms -->
+      <step title="Perform deploy exiting successfully" date="2026-03-07T03:46:38.634" 

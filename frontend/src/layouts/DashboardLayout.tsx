@@ -175,7 +175,7 @@ function getNavItems(role?: string): NavItem[] {
         label: 'Institutions',
         icon: <Business />,
         children: [
-          { label: 'All Institutions', path: '/super-admin-dashboard' },
+          { label: 'All Institutions', path: '/super-admin/institutions' },
           { label: 'Domain Management', path: '/settings' },
         ],
       },
@@ -185,7 +185,6 @@ function getNavItems(role?: string): NavItem[] {
         children: [
           { label: 'All Students', path: '/students' },
           { label: 'All Teachers', path: '/teachers' },
-          { label: 'Guardians', path: '/guardians' },
         ],
       },
       {
@@ -331,7 +330,7 @@ export default function DashboardLayout() {
     }
   }, [isMobile, navigate]);
 
-  const isActive = useCallback((path: string) => location.pathname === path, [location.pathname]);
+  const isActive = useCallback((path: string) => location.pathname === path || (path !== '/' && location.pathname.startsWith(path + '/')), [location.pathname]);
   const isGroupActive = useCallback((item: NavItem) =>
     item.children?.some((c) => location.pathname === c.path || location.pathname.startsWith(c.path + '/')) || false,
     [location.pathname]);

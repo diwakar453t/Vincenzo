@@ -35,7 +35,7 @@ def list_guardians(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    if user.role not in ["admin"]:
+    if user.role not in ["admin", "teacher"]:
         raise HTTPException(status_code=403, detail="Not authorized")
     
     service = GuardianService(db)
@@ -81,8 +81,8 @@ def create_guardian(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role not in ["admin", "super_admin"]:
-        raise HTTPException(status_code=403, detail="Only admins can create guardians")
+    if not user or user.role not in ["admin", "teacher"]:
+        raise HTTPException(status_code=403, detail="Only admins or teachers can create guardians")
     
     service = GuardianService(db)
     
@@ -153,8 +153,8 @@ def update_guardian(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role not in ["admin", "super_admin"]:
-        raise HTTPException(status_code=403, detail="Only admins can update guardians")
+    if not user or user.role not in ["admin", "teacher"]:
+        raise HTTPException(status_code=403, detail="Only admins or teachers can update guardians")
     
     service = GuardianService(db)
     guardian = service.update_guardian(guardian_id, guardian_data, user.tenant_id)
@@ -188,7 +188,7 @@ def delete_guardian(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role not in ["admin", "super_admin"]:
+    if not user or user.role not in ["admin"]:
         raise HTTPException(status_code=403, detail="Only admins can delete guardians")
     
     service = GuardianService(db)
@@ -211,8 +211,8 @@ def link_student(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role not in ["admin", "super_admin"]:
-        raise HTTPException(status_code=403, detail="Only admins can link students")
+    if not user or user.role not in ["admin", "teacher"]:
+        raise HTTPException(status_code=403, detail="Only admins or teachers can link students")
     
     service = GuardianService(db)
     success = service.link_student(guardian_id, student_id, user.tenant_id)
@@ -234,8 +234,8 @@ def unlink_student(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role not in ["admin", "super_admin"]:
-        raise HTTPException(status_code=403, detail="Only admins can unlink students")
+    if not user or user.role not in ["admin", "teacher"]:
+        raise HTTPException(status_code=403, detail="Only admins or teachers can unlink students")
     
     service = GuardianService(db)
     success = service.unlink_student(guardian_id, student_id, user.tenant_id)

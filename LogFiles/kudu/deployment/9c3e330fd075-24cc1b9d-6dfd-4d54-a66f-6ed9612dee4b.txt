@@ -1,0 +1,186 @@
+2026-03-06T20:09:07  Updating branch 'master'.
+2026-03-06T20:09:08  Updating submodules.
+2026-03-06T20:09:08  Preparing deployment for commit id '723f8395f2'.
+2026-03-06T20:09:08  PreDeployment: context.CleanOutputPath False
+2026-03-06T20:09:09  PreDeployment: context.OutputPath /home/site/wwwroot
+2026-03-06T20:09:09  Repository path is /home/site/repository
+2026-03-06T20:09:09  Running oryx build...
+2026-03-06T20:09:09    Command: oryx build /home/site/repository -o /home/site/wwwroot --platform python --platform-version 3.11 -p virtualenv_name=antenv --log-file /tmp/build-debug.log  -i /tmp/8de7bbc39ce9ab4 --compress-destination-dir | tee /tmp/oryx-build.log
+2026-03-06T20:09:12    Operation performed by Microsoft Oryx, https://github.com/Microsoft/Oryx
+2026-03-06T20:09:12    You can report issues at https://github.com/Microsoft/Oryx/issues
+2026-03-06T20:09:12    
+2026-03-06T20:09:12    Oryx Version: 0.2.20260204.1+0fdbe200b286be083841ff7fa201c6c2316dc6b9, Commit: 0fdbe200b286be083841ff7fa201c6c2316dc6b9, ReleaseTagName: 20260204.1
+2026-03-06T20:09:12    
+2026-03-06T20:09:12    Build Operation ID: 007b8d4e2092987a
+2026-03-06T20:09:12    Repository Commit : 723f8395f2f8c44e5395b4924040c7f4b6c20be8
+2026-03-06T20:09:12    OS Type           : bullseye
+2026-03-06T20:09:12    Image Type        : githubactions
+2026-03-06T20:09:12    
+2026-03-06T20:09:12    Primary SDK Storage URL: https://oryx-cdn.microsoft.io
+2026-03-06T20:09:12    Backup SDK Storage URL: 
+2026-03-06T20:09:12    Detecting platforms...
+2026-03-06T20:09:12    External SDK provider is enabled.
+2026-03-06T20:09:12    Requesting metadata for platform python from external SDK provider
+2026-03-06T20:09:16    Requesting metadata for platform python from external SDK provider
+2026-03-06T20:09:19    Detected following platforms:
+2026-03-06T20:09:19      python: 3.11.14
+2026-03-06T20:09:20    
+2026-03-06T20:09:20    Using intermediate directory '/tmp/8de7bbc39ce9ab4'.
+2026-03-06T20:09:20    
+2026-03-06T20:09:20    Copying files to the intermediate directory...
+2026-03-06T20:09:21    Copying files to intermediate directory done in 1 sec(s).
+2026-03-06T20:09:21    
+2026-03-06T20:09:21    Source directory     : /tmp/8de7bbc39ce9ab4
+2026-03-06T20:09:21    Destination directory: /home/site/wwwroot
+2026-03-06T20:09:21    
+2026-03-06T20:09:22    Running build script snippets...
+2026-03-06T20:09:22    Python Version: /tmp/oryx/platforms/python/3.11.14/bin/python3.11
+2026-03-06T20:09:22    Creating directory for command manifest file if it does not exist
+2026-03-06T20:09:22    Removing existing manifest file
+2026-03-06T20:09:22    Python Virtual Environment: antenv
+2026-03-06T20:09:22    Creating virtual environment...
+2026-03-06T20:09:22    Executing: /tmp/oryx/platforms/python/3.11.14/bin/python3.11 -m venv antenv --copies --system-site-packages
+2026-03-06T20:09:44    Activating virtual environment...
+2026-03-06T20:09:44    Fast build is enabled
+2026-03-06T20:09:44    Installing uv...
+2026-03-06T20:09:48    Collecting uv
+2026-03-06T20:09:48      Using cached uv-0.10.8-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (11 kB)
+2026-03-06T20:09:48    Using cached uv-0.10.8-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (23.3 MB)
+2026-03-06T20:09:49    Installing collected packages: uv
+2026-03-06T20:09:51    Successfully installed uv-0.10.8
+2026-03-06T20:09:51    
+2026-03-06T20:09:51    [notice] A new release of pip is available: 24.0 -> 26.0.1
+2026-03-06T20:09:52    [notice] To update, run: pip install --upgrade pip
+2026-03-06T20:09:52    Running uv pip install...
+2026-03-06T20:10:32    Using Python 3.11.14 environment at: antenv
+2026-03-06T20:10:32    Resolved 100 packages in 1.82s
+2026-03-06T20:10:32    Installed 100 packages in 1.41s
+2026-03-06T20:10:32    Bytecode compiled 3974 files in 35.76s
+2026-03-06T20:10:32     + alembic==1.13.1
+2026-03-06T20:10:32     + amqp==5.3.1
+2026-03-06T20:10:32     + annotated-types==0.7.0
+2026-03-06T20:10:32     + anyio==4.12.1
+2026-03-06T20:10:32     + asgiref==3.11.1
+2026-03-06T20:10:32     + bcrypt==5.0.0
+2026-03-06T20:10:32     + billiard==4.2.4
+2026-03-06T20:10:32     + black==24.1.1
+2026-03-06T20:10:33     + celery==5.3.6
+2026-03-06T20:10:33     + certifi==2026.2.25
+2026-03-06T20:10:33     + cffi==2.0.0
+2026-03-06T20:10:33     + charset-normalizer==3.4.5
+2026-03-06T20:10:33     + click==8.3.1
+2026-03-06T20:10:33     + click-didyoumean==0.3.1
+2026-03-06T20:10:33     + click-plugins==1.1.1.2
+2026-03-06T20:10:33     + click-repl==0.3.0
+2026-03-06T20:10:33     + coverage==7.13.4
+2026-03-06T20:10:33     + cryptography==46.0.5
+2026-03-06T20:10:33     + deprecation==2.1.0
+2026-03-06T20:10:33     + dnspython==2.8.0
+2026-03-06T20:10:33     + ecdsa==0.19.1
+2026-03-06T20:10:33     + email-validator==2.3.0
+2026-03-06T20:10:33     + fastapi==0.109.0
+2026-03-06T20:10:33     + flake8==7.0.0
+2026-03-06T20:10:34     + googleapis-common-protos==1.72.0
+2026-03-06T20:10:34     + greenlet==3.3.2
+2026-03-06T20:10:34     + grpcio==1.78.0
+2026-03-06T20:10:34     + gunicorn==21.2.0
+2026-03-06T20:10:34     + h11==0.16.0
+2026-03-06T20:10:34     + httpcore==1.0.9
+2026-03-06T20:10:34     + httptools==0.7.1
+2026-03-06T20:10:34     + httpx==0.26.0
+2026-03-06T20:10:34     + idna==3.11
+2026-03-06T20:10:34     + importlib-metadata==8.7.1
+2026-03-06T20:10:34     + iniconfig==2.3.0
+2026-03-06T20:10:34     + kombu==5.6.2
+2026-03-06T20:10:34     + mako==1.3.10
+2026-03-06T20:10:34     + markupsafe==3.0.3
+2026-03-06T20:10:34     + mccabe==0.7.0
+2026-03-06T20:10:35     + mypy==1.8.0
+2026-03-06T20:10:35     + mypy-extensions==1.1.0
+2026-03-06T20:10:35     + opentelemetry-api==1.40.0
+2026-03-06T20:10:35     + opentelemetry-exporter-otlp-proto-common==1.40.0
+2026-03-06T20:10:35     + opentelemetry-exporter-otlp-proto-grpc==1.40.0
+2026-03-06T20:10:35     + opentelemetry-instrumentation==0.61b0
+2026-03-06T20:10:35     + opentelemetry-instrumentation-asgi==0.61b0
+2026-03-06T20:10:35     + opentelemetry-instrumentation-fastapi==0.61b0
+2026-03-06T20:10:35     + opentelemetry-instrumentation-logging==0.61b0
+2026-03-06T20:10:35     + opentelemetry-instrumentation-redis==0.61b0
+2026-03-06T20:10:35     + opentelemetry-instrumentation-requests==0.61b0
+2026-03-06T20:10:35     + opentelemetry-instrumentation-sqlalchemy==0.61b0
+2026-03-06T20:10:35     + opentelemetry-propagator-b3==1.40.0
+2026-03-06T20:10:35     + opentelemetry-proto==1.40.0
+2026-03-06T20:10:35     + opentelemetry-sdk==1.40.0
+2026-03-06T20:10:36     + opentelemetry-semantic-conventions==0.61b0
+2026-03-06T20:10:36     + opentelemetry-util-http==0.61b0
+2026-03-06T20:10:36     + packaging==26.0
+2026-03-06T20:10:36     + passlib==1.7.4
+2026-03-06T20:10:36     + pathspec==1.0.4
+2026-03-06T20:10:36     + platformdirs==4.9.4
+2026-03-06T20:10:36     + pluggy==1.6.0
+2026-03-06T20:10:36     + prometheus-client==0.24.1
+2026-03-06T20:10:36     + prompt-toolkit==3.0.52
+2026-03-06T20:10:36     + protobuf==6.33.5
+2026-03-06T20:10:36     + psycopg2-binary==2.9.9
+2026-03-06T20:10:36     + pyasn1==0.6.2
+2026-03-06T20:10:37     + pycodestyle==2.11.1
+2026-03-06T20:10:37     + pycparser==3.0
+2026-03-06T20:10:37     + pydantic==2.5.3
+2026-03-06T20:10:37     + pydantic-core==2.14.6
+2026-03-06T20:10:37     + pydantic-settings==2.1.0
+2026-03-06T20:10:37     + pyflakes==3.2.0
+2026-03-06T20:10:37     + pytest==7.4.4
+2026-03-06T20:10:37     + pytest-asyncio==0.23.3
+2026-03-06T20:10:37     + pytest-cov==4.1.0
+2026-03-06T20:10:37     + python-dateutil==2.9.0.post0
+2026-03-06T20:10:37     + python-dotenv==1.0.1
+2026-03-06T20:10:37     + python-jose==3.3.0
+2026-03-06T20:10:37     + python-keycloak==3.9.0
+2026-03-06T20:10:38     + python-multipart==0.0.6
+2026-03-06T20:10:38     + pyyaml==6.0.3
+2026-03-06T20:10:38     + redis==5.0.1
+2026-03-06T20:10:38     + requests==2.32.5
+2026-03-06T20:10:38     + requests-toolbelt==1.0.0
+2026-03-06T20:10:38     + rsa==4.9.1
+2026-03-06T20:10:38     + six==1.17.0
+2026-03-06T20:10:38     + sniffio==1.3.1
+2026-03-06T20:10:38     + sqlalchemy==2.0.25
+2026-03-06T20:10:38     + starlette==0.35.1
+2026-03-06T20:10:38     + typing-extensions==4.15.0
+2026-03-06T20:10:38     + tzdata==2025.3
+2026-03-06T20:10:38     + urllib3==2.6.3
+2026-03-06T20:10:38     + uvicorn==0.27.0
+2026-03-06T20:10:38     + uvloop==0.22.1
+2026-03-06T20:10:38     + vine==5.1.0
+2026-03-06T20:10:38     + watchfiles==1.1.1
+2026-03-06T20:10:38     + wcwidth==0.6.0
+2026-03-06T20:10:38     + websockets==16.0
+2026-03-06T20:10:39     + wrapt==1.17.3
+2026-03-06T20:10:39     + zipp==3.23.0
+2026-03-06T20:10:39    uv pip install done in 48 sec(s).
+2026-03-06T20:10:39    Not a vso image, so not writing build commands
+2026-03-06T20:10:39    Build script snippets done in 70 sec(s).
+2026-03-06T20:10:39    Preparing output...
+2026-03-06T20:10:39    Compressing source directory directly to destination (optimized path)...
+2026-03-06T20:10:39    Using zstd for compression
+2026-03-06T20:11:05    Copied the compressed output to '/home/site/wwwroot'
+2026-03-06T20:11:05    Direct compression with zstd done in 33 sec(s).
+2026-03-06T20:11:05    
+2026-03-06T20:11:05    Removing existing manifest file
+2026-03-06T20:11:06    Creating a manifest file...
+2026-03-06T20:11:06    Manifest file created.
+2026-03-06T20:11:06    Copying .ostype to manifest output directory.
+2026-03-06T20:11:06    
+2026-03-06T20:11:06    Total execution done in 106 sec(s).
+2026-03-06T20:11:08  Running post deployment command(s)...
+2026-03-06T20:11:09  
+2026-03-06T20:11:09  Generating summary of Oryx build
+2026-03-06T20:11:09  Parsing the build logs
+2026-03-06T20:11:09  Found 0 issue(s)
+2026-03-06T20:11:10  
+2026-03-06T20:11:10  Build Summary :
+2026-03-06T20:11:10  ===============
+2026-03-06T20:11:11  Errors (0)
+2026-03-06T20:11:11  Warnings (0)
+2026-03-06T20:11:11  
+2026-03-06T20:11:12  Triggering recycle (preview mode disabled).
+2026-03-06T20:11:12  Deployment successful. deployer =  deploymentPath =

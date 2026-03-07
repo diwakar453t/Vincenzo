@@ -1,0 +1,17 @@
+<step title="Incoming Request" date="2026-03-07T02:57:32.257" instance="9d5f45" url="/preskool-api-backend.git/git-receive-pack" method="POST" type="request" pid="770,1,7" Accept="application/x-git-receive-pack-result" Host="preskool-api-backend.scm.azurewebsites.net" User-Agent="git/2.50.1" Accept-Encoding="deflate, gzip" Authorization="Bas..." Content-Type="application/x-git-receive-pack-request" Content-Length="1029" X-ARR-LOG-ID="0b0a8fde-9791-42e6-97f0-46e59a1fcb0a" CLIENT-IP="152.59.190.166:61472" X-SITE-DEPLOYMENT-ID="preskool-api-backend" WAS-DEFAULT-HOSTNAME="preskool-api-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/preskool-api-backend.git/git-receive-pack" X-Client-IP="152.59.190.166" X-Client-Port="61472" >
+  <step title="Cleanup Xml Logs" date="2026-03-07T02:57:32.265" >
+    <step title="Cleanup Infos" date="2026-03-07T02:57:32.270" totalFiles="282" totalCleanup="122" /><!-- duration: 3ms -->
+  </step><!-- duration: 9ms -->
+  <step title="RpcService.ReceivePack" date="2026-03-07T02:57:32.301" >
+    <step title="Executing external process" date="2026-03-07T02:57:32.316" type="process" path="git" arguments="rev-parse --git-dir" /><!-- duration: 17ms -->
+    <step title="Assuming git repository at /home/site/repository" date="2026-03-07T02:57:32.334" /><!-- duration: 2ms -->
+    <step title="Acquiring Deployment Lock" date="2026-03-07T02:57:32.338" /><!-- duration: 4ms -->
+    <step title="Acquired Deployment Lock" date="2026-03-07T02:57:32.383" /><!-- duration: 2ms -->
+    <step title="Creating temporary deployment" date="2026-03-07T02:57:32.386" /><!-- duration: 95ms -->
+    <step title="GitExeServer.Receive" date="2026-03-07T02:57:32.485" >
+      <step title="Executing external process" date="2026-03-07T02:57:32.488" type="process" path="git" arguments="receive-pack --stateless-rpc &quot;/home/site/repository&quot;" /><!-- duration: 170658ms -->
+    </step><!-- duration: 170684ms -->
+    <step title="Releasing Deployment Lock" date="2026-03-07T03:00:23.712" /><!-- duration: 19ms -->
+  </step><!-- duration: 171448ms -->
+  <step title="Outgoing response" date="2026-03-07T03:00:23.810" type="response" statusCode="200" statusText="OK" /><!-- duration: 2ms -->
+</step><!-- duration: 171557ms -->

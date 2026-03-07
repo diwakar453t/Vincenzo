@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import type { AppDispatch, RootState } from '../../store/store';
@@ -9,6 +9,7 @@ import {
     setStatusFilter,
     setPage,
     clearError,
+    importStudentsExcel,
 } from '../../store/slices/studentsSlice';
 import {
     Box,
@@ -75,9 +76,10 @@ export default function StudentsListPage() {
     const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
     const [viewDialogOpen, setViewDialogOpen] = useState(false);
     const [viewStudent, setViewStudent] = useState<any>(null);
-    const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'info' | 'warning' }>({
         open: false, message: '', severity: 'success',
     });
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const loadStudents = useCallback(() => {
         dispatch(fetchStudents({
@@ -127,6 +129,29 @@ export default function StudentsListPage() {
         setDeleteDialogOpen(false);
     };
 
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            setSnackbar({ open: true, message: 'Uploading file...', severity: 'info' });
+            const result = await dispatch(importStudentsExcel(file));
+            if (importStudentsExcel.fulfilled.match(result)) {
+                setSnackbar({
+                    open: true,
+                    message: `Import successful: ${result.payload.success} added, ${result.payload.failed} failed.`,
+                    severity: 'success'
+                });
+                loadStudents();
+            } else {
+                setSnackbar({ open: true, message: result.payload as string, severity: 'error' });
+            }
+        }
+        if (event.target) event.target.value = ''; // Reset input
+    };
+
     const handleViewStudent = (student: any) => {
         setViewStudent(student);
         setViewDialogOpen(true);
@@ -174,7 +199,14 @@ export default function StudentsListPage() {
                 ]}
                 actions={
                     <>
-                        <Button variant="outlined" startIcon={<Upload />} sx={{ borderColor: 'divider', color: 'text.secondary' }}>Import</Button>
+                        <input
+                            type="file"
+                            accept=".xlsx, .xls"
+                            style={{ display: 'none' }}
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                        />
+                        <Button variant="outlined" startIcon={<Upload />} sx={{ borderColor: 'divider', color: 'text.secondary' }} onClick={handleImportClick}>Import</Button>
                         <Button variant="outlined" startIcon={<FileDownload />} sx={{ borderColor: 'divider', color: 'text.secondary' }}>Export</Button>
                         <Button
                             variant="contained" startIcon={<Add />}

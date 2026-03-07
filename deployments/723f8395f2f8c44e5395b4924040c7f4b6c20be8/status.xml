@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<deployment>
+  <id>723f8395f2f8c44e5395b4924040c7f4b6c20be8</id>
+  <author>diwakar453t</author>
+  <deployer>$preskool-api-backend</deployer>
+  <authorEmail>diwakar453t@gmail.com</authorEmail>
+  <message>revert: remove redirect_slashes=False (caused 404s) — global Axios interceptor handles tenant headers instead</message>
+  <progress></progress>
+  <status>Success</status>
+  <statusText></statusText>
+  <lastSuccessEndTime>2026-03-06T20:11:13.0799149Z</lastSuccessEndTime>
+  <receivedTime>2026-03-06T20:09:06.377977Z</receivedTime>
+  <startTime>2026-03-06T20:09:08.5882599Z</startTime>
+  <endTime>2026-03-06T20:11:13.0799149Z</endTime>
+  <complete>True</complete>
+  <is_temp>False</is_temp>
+  <is_readonly>False</is_readonly>
+  <containerId>9c3e330fd075</containerId>
+  <buildSummary />
+</deployment>

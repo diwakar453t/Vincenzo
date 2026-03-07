@@ -1,0 +1,15 @@
+<step title="Incoming Request" date="2026-03-06T18:57:00.314" instance="6192c1" url="/preskool-api-backend.git/git-receive-pack" method="POST" type="request" pid="770,1,7" Accept="application/x-git-receive-pack-result" Host="preskool-api-backend.scm.azurewebsites.net" User-Agent="git/2.50.1" Accept-Encoding="deflate, gzip" Authorization="Bas..." Content-Type="application/x-git-receive-pack-request" Content-Length="721" X-ARR-LOG-ID="a2b36302-3b21-46a6-8b36-ebc875df35b7" CLIENT-IP="152.59.190.239:13546" X-SITE-DEPLOYMENT-ID="preskool-api-backend" WAS-DEFAULT-HOSTNAME="preskool-api-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/preskool-api-backend.git/git-receive-pack" X-Client-IP="152.59.190.239" X-Client-Port="13546" >
+  <step title="Cleanup Xml Logs" date="2026-03-06T18:57:00.324" /><!-- duration: 42ms -->
+  <step title="RpcService.ReceivePack" date="2026-03-06T18:57:00.451" >
+    <step title="Executing external process" date="2026-03-06T18:57:00.492" type="process" path="git" arguments="rev-parse --git-dir" /><!-- duration: 125ms -->
+    <step title="Assuming git repository at /home/site/repository" date="2026-03-06T18:57:00.637" /><!-- duration: 26ms -->
+    <step title="Acquiring Deployment Lock" date="2026-03-06T18:57:00.694" /><!-- duration: 28ms -->
+    <step title="Acquired Deployment Lock" date="2026-03-06T18:57:00.820" /><!-- duration: 28ms -->
+    <step title="Creating temporary deployment" date="2026-03-06T18:57:01.012" /><!-- duration: 177ms -->
+    <step title="GitExeServer.Receive" date="2026-03-06T18:57:01.216" >
+      <step title="Executing external process" date="2026-03-06T18:57:01.298" type="process" path="git" arguments="receive-pack --stateless-rpc &quot;/home/site/repository&quot;" /><!-- duration: 221287ms -->
+    </step><!-- duration: 221383ms -->
+    <step title="Releasing Deployment Lock" date="2026-03-06T19:00:42.710" /><!-- duration: 8ms -->
+  </step><!-- duration: 222280ms -->
+  <step title="Outgoing response" date="2026-03-06T19:00:42.742" type="response" statusCode="200" statusText="OK" /><!-- duration: 5ms -->
+</step><!-- duration: 222439ms -->

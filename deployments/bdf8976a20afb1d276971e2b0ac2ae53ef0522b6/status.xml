@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<deployment>
+  <id>bdf8976a20afb1d276971e2b0ac2ae53ef0522b6</id>
+  <author>diwakar453t</author>
+  <deployer>$preskool-api-backend</deployer>
+  <authorEmail>diwakar453t@gmail.com</authorEmail>
+  <message>fix alembic url interpolation issue</message>
+  <progress></progress>
+  <status>Success</status>
+  <statusText></statusText>
+  <lastSuccessEndTime>2026-03-06T19:00:37.7306938Z</lastSuccessEndTime>
+  <receivedTime>2026-03-06T18:57:14.3726091Z</receivedTime>
+  <startTime>2026-03-06T18:57:31.2241001Z</startTime>
+  <endTime>2026-03-06T19:00:37.7306938Z</endTime>
+  <complete>True</complete>
+  <is_temp>False</is_temp>
+  <is_readonly>False</is_readonly>
+  <containerId>64cf0404dcc4</containerId>
+  <buildSummary />
+</deployment>

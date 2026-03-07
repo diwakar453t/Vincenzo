@@ -1,0 +1,5 @@
+<step title="Startup Request" date="2026-03-06T19:53:43.911" instance="6192c1" url="/preskool-api-backend.git/info/refs?service=git-receive-pack" method="GET" type="request" pid="770,1,5" ScmType="LocalGit" SCM_DO_BUILD_DURING_DEPLOYMENT="true" >
+  <step title="Cleanup Xml Logs" date="2026-03-06T19:53:43.919" >
+    <step title="Cleanup Infos" date="2026-03-06T19:53:43.934" totalFiles="270" totalCleanup="110" /><!-- duration: 7ms -->
+  </step><!-- duration: 38ms -->
+</step><!-- duration: 51ms -->

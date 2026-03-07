@@ -1,0 +1,14 @@
+<step title="Incoming Request" date="2026-03-06T19:53:45.388" instance="6192c1" url="/preskool-api-backend.git/git-receive-pack" method="POST" type="request" pid="770,1,5" Accept="application/x-git-receive-pack-result" Host="preskool-api-backend.scm.azurewebsites.net" User-Agent="git/2.50.1" Accept-Encoding="deflate, gzip" Authorization="Bas..." Content-Type="application/x-git-receive-pack-request" Content-Length="742" X-ARR-LOG-ID="3deb2885-8b12-4605-80e2-e5370c41ac39" CLIENT-IP="152.59.190.239:59713" X-SITE-DEPLOYMENT-ID="preskool-api-backend" WAS-DEFAULT-HOSTNAME="preskool-api-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/preskool-api-backend.git/git-receive-pack" X-Client-IP="152.59.190.239" X-Client-Port="59713" >
+  <step title="RpcService.ReceivePack" date="2026-03-06T19:53:45.437" >
+    <step title="Executing external process" date="2026-03-06T19:53:45.445" type="process" path="git" arguments="rev-parse --git-dir" /><!-- duration: 22ms -->
+    <step title="Assuming git repository at /home/site/repository" date="2026-03-06T19:53:45.471" /><!-- duration: 6ms -->
+    <step title="Acquiring Deployment Lock" date="2026-03-06T19:53:45.485" /><!-- duration: 6ms -->
+    <step title="Acquired Deployment Lock" date="2026-03-06T19:53:45.640" /><!-- duration: 4ms -->
+    <step title="Creating temporary deployment" date="2026-03-06T19:53:45.649" /><!-- duration: 108ms -->
+    <step title="GitExeServer.Receive" date="2026-03-06T19:53:45.762" >
+      <step title="Executing external process" date="2026-03-06T19:53:45.767" type="process" path="git" arguments="receive-pack --stateless-rpc &quot;/home/site/repository&quot;" /><!-- duration: 189816ms -->
+    </step><!-- duration: 189906ms -->
+    <step title="Releasing Deployment Lock" date="2026-03-06T19:56:56.929" /><!-- duration: 29ms -->
+  </step><!-- duration: 191561ms -->
+  <step title="Outgoing response" date="2026-03-06T19:56:57.123" type="response" statusCode="200" statusText="OK" /><!-- duration: 30ms -->
+</step><!-- duration: 191777ms -->

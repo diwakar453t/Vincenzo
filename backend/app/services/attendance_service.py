@@ -267,9 +267,9 @@ class AttendanceService:
         for s in students:
             stats = self.student_attendance_stats(s.id, tenant_id, academic_year)
             result.append({
-                "student_id": s.id,
+                "student_db_id": s.id,
                 "student_name": f"{s.first_name} {s.last_name}",
-                "admission_number": s.admission_number,
+                "student_id": s.student_id,
                 "class_name": cls.name if cls else None,
                 "stats": stats,
             })
@@ -296,7 +296,7 @@ class AttendanceService:
             "id": a.id, "tenant_id": a.tenant_id,
             "student_id": a.student_id,
             "student_name": f"{a.student.first_name} {a.student.last_name}" if a.student else None,
-            "admission_number": a.student.admission_number if a.student else None,
+            "student_code": a.student.student_id if a.student else None,
             "class_id": a.class_id,
             "class_name": a.class_ref.name if a.class_ref else None,
             "date": a.date,

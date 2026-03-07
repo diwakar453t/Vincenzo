@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<deployment>
+  <id>d5454154009b01df2c58471f0267baa44784f0dd</id>
+  <author>diwakar453t</author>
+  <deployer>preskool_deploy</deployer>
+  <authorEmail>diwakar453t@gmail.com</authorEmail>
+  <message>feat: disable self-registration (login-only system)
+    
+    - Backend /auth/register now returns 403 Forbidden
+    - Frontend /register route redirects to /login
+    - Login page 'Sign Up' link replaced with admin contact notice
+    - Users can only be created by authorized admins (hierarchy enforced)</message>
+  <progress></progress>
+  <status>Success</status>
+  <statusText></statusText>
+  <lastSuccessEndTime>2026-03-07T04:10:34.4395314Z</lastSuccessEndTime>
+  <receivedTime>2026-03-07T02:57:34.9891722Z</receivedTime>
+  <startTime>2026-03-07T04:08:53.7880832Z</startTime>
+  <endTime>2026-03-07T04:10:34.4395314Z</endTime>
+  <complete>True</complete>
+  <is_temp>False</is_temp>
+  <is_readonly>False</is_readonly>
+  <containerId>010bba739e39</containerId>
+  <buildSummary />
+</deployment>

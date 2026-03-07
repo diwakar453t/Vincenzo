@@ -26,11 +26,11 @@ class SearchService:
         if "students" in search_modules:
             students = self.db.query(Student).filter(
                 Student.tenant_id == tenant_id,
-                Student.is_active == True,
+                Student.status == "active",
                 or_(
                     func.lower(Student.first_name).like(q),
                     func.lower(Student.last_name).like(q),
-                    func.lower(Student.admission_number).like(q),
+                    func.lower(Student.student_id).like(q),
                     func.lower(Student.email).like(q),
                 )
             ).limit(limit).all()
@@ -38,7 +38,7 @@ class SearchService:
                 results.append({
                     "id": s.id, "type": "student",
                     "title": f"{s.first_name} {s.last_name}",
-                    "subtitle": f"Adm: {s.admission_number}",
+                    "subtitle": f"ID: {s.student_id}",
                     "link": f"/dashboard/students/{s.id}",
                     "icon": "student",
                 })
@@ -47,12 +47,11 @@ class SearchService:
         if "teachers" in search_modules:
             teachers = self.db.query(Teacher).filter(
                 Teacher.tenant_id == tenant_id,
-                Teacher.is_active == True,
+                Teacher.status == "active",
                 or_(
                     func.lower(Teacher.first_name).like(q),
                     func.lower(Teacher.last_name).like(q),
                     func.lower(Teacher.employee_id).like(q),
-                    func.lower(Teacher.email).like(q),
                 )
             ).limit(limit).all()
             for t in teachers:
@@ -68,7 +67,6 @@ class SearchService:
         if "classes" in search_modules:
             classes = self.db.query(Class).filter(
                 Class.tenant_id == tenant_id,
-                Class.is_active == True,
                 or_(
                     func.lower(Class.name).like(q),
                     func.lower(Class.section).like(q),
@@ -87,7 +85,6 @@ class SearchService:
         if "subjects" in search_modules:
             subjects = self.db.query(Subject).filter(
                 Subject.tenant_id == tenant_id,
-                Subject.is_active == True,
                 or_(
                     func.lower(Subject.name).like(q),
                     func.lower(Subject.code).like(q),
@@ -117,7 +114,7 @@ class SearchService:
 
         # Students
         students = self.db.query(Student.first_name, Student.last_name, Student.id).filter(
-            Student.tenant_id == tenant_id, Student.is_active == True,
+            Student.tenant_id == tenant_id, Student.status == "active",
             or_(func.lower(Student.first_name).like(q), func.lower(Student.last_name).like(q))
         ).limit(4).all()
         for s in students:
@@ -125,7 +122,7 @@ class SearchService:
 
         # Teachers
         teachers = self.db.query(Teacher.first_name, Teacher.last_name, Teacher.id).filter(
-            Teacher.tenant_id == tenant_id, Teacher.is_active == True,
+            Teacher.tenant_id == tenant_id, Teacher.status == "active",
             or_(func.lower(Teacher.first_name).like(q), func.lower(Teacher.last_name).like(q))
         ).limit(4).all()
         for t in teachers:

@@ -78,9 +78,9 @@ class ReportService:
         sd = date.fromisoformat(start_date) if start_date else date.today() - timedelta(days=30)
         ed = date.fromisoformat(end_date) if end_date else date.today()
 
-        q = self.db.query(Student).filter(Student.tenant_id == tenant_id, Student.is_active == True)
+        q = self.db.query(Student).filter(Student.tenant_id == tenant_id, Student.status == "active")
         if class_id:
-            q = q.filter(Student.current_class_id == class_id)
+            q = q.filter(Student.class_id == class_id)
         if student_id:
             q = q.filter(Student.id == student_id)
         students = q.all()
@@ -99,8 +99,8 @@ class ReportService:
             total_days = len(att)
             pct = round((present / total_days) * 100, 1) if total_days > 0 else 0
             rows.append({
-                "student_id": s.id, "name": f"{s.first_name} {s.last_name}",
-                "admission_number": s.admission_number,
+                "student_db_id": s.id, "name": f"{s.first_name} {s.last_name}",
+                "student_id": s.student_id,
                 "total_days": total_days, "present": present, "absent": absent,
                 "late": late, "attendance_pct": pct,
             })
@@ -117,7 +117,7 @@ class ReportService:
                 "total_late": total_late,
                 "avg_attendance_pct": round(sum(r["attendance_pct"] for r in rows) / max(len(rows), 1), 1),
             },
-            "columns": ["student_id", "name", "admission_number", "total_days", "present", "absent", "late", "attendance_pct"],
+            "columns": ["student_id", "name", "student_id", "total_days", "present", "absent", "late", "attendance_pct"],
             "data": rows, "record_count": len(rows),
         }
 
@@ -126,7 +126,7 @@ class ReportService:
         sd = date.fromisoformat(start_date) if start_date else date.today() - timedelta(days=30)
         ed = date.fromisoformat(end_date) if end_date else date.today()
 
-        q = self.db.query(Teacher).filter(Teacher.tenant_id == tenant_id, Teacher.is_active == True)
+        q = self.db.query(Teacher).filter(Teacher.tenant_id == tenant_id, Teacher.status == "active")
         if teacher_id:
             q = q.filter(Teacher.id == teacher_id)
         teachers = q.all()
@@ -166,9 +166,9 @@ class ReportService:
                                        student_id: int = None) -> dict:
         from app.models.grade import Grade
 
-        q = self.db.query(Student).filter(Student.tenant_id == tenant_id, Student.is_active == True)
+        q = self.db.query(Student).filter(Student.tenant_id == tenant_id, Student.status == "active")
         if class_id:
-            q = q.filter(Student.current_class_id == class_id)
+            q = q.filter(Student.class_id == class_id)
         if student_id:
             q = q.filter(Student.id == student_id)
         students = q.all()
@@ -181,8 +181,8 @@ class ReportService:
             total_exams = len(grades)
             if total_exams == 0:
                 rows.append({
-                    "student_id": s.id, "name": f"{s.first_name} {s.last_name}",
-                    "admission_number": s.admission_number,
+                    "student_db_id": s.id, "name": f"{s.first_name} {s.last_name}",
+                    "student_id": s.student_id,
                     "total_exams": 0, "avg_marks": 0, "highest": 0, "lowest": 0, "grade_summary": "N/A",
                 })
                 continue
@@ -196,8 +196,8 @@ class ReportService:
             grade_summary = ", ".join(set(str(gv) for gv in grade_vals[:5])) if grade_vals else "N/A"
 
             rows.append({
-                "student_id": s.id, "name": f"{s.first_name} {s.last_name}",
-                "admission_number": s.admission_number,
+                "student_db_id": s.id, "name": f"{s.first_name} {s.last_name}",
+                "student_id": s.student_id,
                 "total_exams": total_exams, "avg_marks": avg_marks,
                 "highest": highest, "lowest": lowest, "grade_summary": grade_summary,
             })
@@ -212,7 +212,7 @@ class ReportService:
                 "avg_performance": round(sum(r["avg_marks"] for r in rows) / max(len(rows), 1), 1),
                 "students_with_grades": sum(1 for r in rows if r["total_exams"] > 0),
             },
-            "columns": ["student_id", "name", "admission_number", "total_exams", "avg_marks", "highest", "lowest", "grade_summary"],
+            "columns": ["student_id", "name", "student_id", "total_exams", "avg_marks", "highest", "lowest", "grade_summary"],
             "data": rows, "record_count": len(rows),
         }
 
@@ -285,13 +285,13 @@ class ReportService:
         for c in collections:
             student = self.db.query(Student).filter(Student.id == c.student_id).first()
 
-            if class_id and student and student.current_class_id != class_id:
+            if class_id and student and student.class_id != class_id:
                 continue
 
             rows.append({
                 "collection_id": c.id,
                 "student_name": f"{student.first_name} {student.last_name}" if student else "N/A",
-                "admission_number": student.admission_number if student else "N/A",
+                "student_id": student.student_id if student else "N/A",
                 "amount_paid": c.amount,
                 "payment_date": str(c.payment_date),
                 "payment_method": c.payment_method.value if hasattr(c.payment_method, 'value') else str(c.payment_method),
@@ -308,7 +308,7 @@ class ReportService:
                 "total_collections": len(rows),
                 "total_amount": sum(r["amount_paid"] for r in rows),
             },
-            "columns": ["collection_id", "student_name", "admission_number", "amount_paid", "payment_date", "payment_method", "receipt_number"],
+            "columns": ["collection_id", "student_name", "student_id", "amount_paid", "payment_date", "payment_method", "receipt_number"],
             "data": rows, "record_count": len(rows),
         }
 

@@ -1,0 +1,11 @@
+<step title="Incoming Request" date="2026-03-06T19:14:50.371" instance="6192c1" url="/api/deployments/latest?deployer=OneDeploy&amp;time=2026-03-06_19-12-29Z" method="GET" type="request" pid="772,1,19" Host="preskool-api-backend.scm.azurewebsites.net" User-Agent="GITHUBACTIONS_DeployWebAppToAzure_c6e45782ccbb710af0da7cb31e6a9aa2dca63ce644ef5f34739b642e8af1de04_v3.0.7" Authorization="Bas..." Content-Type="application/json; charset=utf-8" Cookie="ARRAffinity=6192c1db74f2264222894c9db185c4804ec0d4d8c5ddc297a0a56d17fb5deb39;Path=/;HttpOnly;Secure;Domain=preskool-api-backend.scm.azurewebsites.net; ARRAffinitySameSite=6192c1db74f2264222894c9db185c4804ec0d4d8c5ddc297a0a56d17fb5deb39;Path=/;HttpOnly;SameSite=None;Secure;Domain=preskool-api-backend.scm.azurewebsites.net" Content-Length="0" X-ARR-LOG-ID="f53681ea-6410-423f-ac58-70ec88e1e558" CLIENT-IP="20.3.166.83:28751" X-SITE-DEPLOYMENT-ID="preskool-api-backend" WAS-DEFAULT-HOSTNAME="preskool-api-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/deployments/latest?deployer=OneDeploy&amp;time=2026-03-06_19-12-29Z" X-Client-IP="20.3.166.83" X-Client-Port="28751" >
+  <step title="Cleanup Xml Logs" date="2026-03-06T19:14:50.379" >
+    <step title="Cleanup Infos" date="2026-03-06T19:14:50.410" totalFiles="218" totalCleanup="58" /><!-- duration: 47ms -->
+  </step><!-- duration: 88ms -->
+  <step title="DeploymentService.GetResult" date="2026-03-06T19:14:50.506" >
+    <step title="DeploymentService.GetLatestDeployment" date="2026-03-06T19:14:50.516" >
+      <step title="DeploymentManager.GetResults" date="2026-03-06T19:14:50.526" /><!-- duration: 1073ms -->
+    </step><!-- duration: 1106ms -->
+  </step><!-- duration: 1124ms -->
+  <step title="Outgoing response" date="2026-03-06T19:14:51.642" type="response" statusCode="202" statusText="Accepted" /><!-- duration: 10ms -->
+</step><!-- duration: 1290ms -->

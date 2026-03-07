@@ -1,0 +1,4 @@
+<step title="Incoming Request" date="2026-03-06T18:55:32.675" instance="6192c1" url="/dump" method="GET" type="request" pid="770,1,3" Host="preskool-api-backend.scm.azurewebsites.net" User-Agent="AZURECLI/2.84.0 (HOMEBREW)" Accept-Encoding="identity" Authorization="Bas..." x-ms-client-request-id="094a8604-198e-11f1-93eb-f272c4ccda90" X-ARR-LOG-ID="094a8604-198e-11f1-93eb-f272c4ccda90" CLIENT-IP="152.59.190.239:57250" X-SITE-DEPLOYMENT-ID="preskool-api-backend" WAS-DEFAULT-HOSTNAME="preskool-api-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/dump" X-Client-IP="152.59.190.239" X-Client-Port="57250" >
+  <step title="Cleanup Xml Logs" date="2026-03-06T18:55:32.685" /><!-- duration: 29ms -->
+  <step title="Outgoing response" date="2026-03-06T18:55:36.384" type="response" statusCode="200" statusText="OK" /><!-- duration: 11ms -->
+</step><!-- duration: 3729ms -->

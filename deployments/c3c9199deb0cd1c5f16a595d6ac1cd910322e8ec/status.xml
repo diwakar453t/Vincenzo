@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<deployment>
+  <id>c3c9199deb0cd1c5f16a595d6ac1cd910322e8ec</id>
+  <author>diwakar453t</author>
+  <deployer>$preskool-api-backend</deployer>
+  <authorEmail>diwakar453t@gmail.com</authorEmail>
+  <message>fix: disable redirect_slashes to prevent 307 dropping X-Tenant-ID header, causing 403 on data endpoints</message>
+  <progress></progress>
+  <status>Success</status>
+  <statusText></statusText>
+  <lastSuccessEndTime>2026-03-06T19:56:37.7330169Z</lastSuccessEndTime>
+  <receivedTime>2026-03-06T19:53:48.6253643Z</receivedTime>
+  <startTime>2026-03-06T19:53:52.3387552Z</startTime>
+  <endTime>2026-03-06T19:56:37.7330169Z</endTime>
+  <complete>True</complete>
+  <is_temp>False</is_temp>
+  <is_readonly>False</is_readonly>
+  <containerId>9c3e330fd075</containerId>
+  <buildSummary />
+</deployment>

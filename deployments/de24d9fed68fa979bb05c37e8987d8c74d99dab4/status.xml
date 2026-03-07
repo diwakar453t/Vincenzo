@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<deployment>
+  <id>de24d9fed68fa979bb05c37e8987d8c74d99dab4</id>
+  <author>diwakar453t</author>
+  <deployer>$preskool-api-backend</deployer>
+  <authorEmail>diwakar453t@gmail.com</authorEmail>
+  <message>fix: add global Axios interceptor for X-Tenant-ID + refactor slices to use api instance
+    
+    - Global axios interceptor in main.tsx injects Authorization and X-Tenant-ID
+      headers on ALL requests (covers 23+ slices using raw axios)
+    - Refactored studentsSlice.ts and teachersSlice.ts to use api instance
+      with proper trailing slashes
+    - Set redirect_slashes=False on api_router to prevent 307 header drops</message>
+  <progress></progress>
+  <status>Success</status>
+  <statusText></statusText>
+  <lastSuccessEndTime>2026-03-06T20:05:33.078433Z</lastSuccessEndTime>
+  <receivedTime>2026-03-06T20:03:35.7566516Z</receivedTime>
+  <startTime>2026-03-06T20:03:38.2942927Z</startTime>
+  <endTime>2026-03-06T20:05:33.078433Z</endTime>
+  <complete>True</complete>
+  <is_temp>False</is_temp>
+  <is_readonly>False</is_readonly>
+  <containerId>9c3e330fd075</containerId>
+  <buildSummary />
+</deployment>

@@ -1,0 +1,14 @@
+<step title="Incoming Request" date="2026-03-07T03:36:39.921" instance="9d5f45" url="/preskool-api-backend.git/git-receive-pack" method="POST" type="request" pid="770,1,30" Accept="application/x-git-receive-pack-result" Host="preskool-api-backend.scm.azurewebsites.net" User-Agent="git/2.50.1" Accept-Encoding="deflate, gzip" Authorization="Bas..." Content-Type="application/x-git-receive-pack-request" Content-Length="947" X-ARR-LOG-ID="06b01512-b9d3-4254-93c8-ab11afcacaa8" CLIENT-IP="152.59.190.166:62109" X-SITE-DEPLOYMENT-ID="preskool-api-backend" WAS-DEFAULT-HOSTNAME="preskool-api-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/preskool-api-backend.git/git-receive-pack" X-Client-IP="152.59.190.166" X-Client-Port="62109" >
+  <step title="RpcService.ReceivePack" date="2026-03-07T03:36:39.955" >
+    <step title="Executing external process" date="2026-03-07T03:36:39.961" type="process" path="git" arguments="rev-parse --git-dir" /><!-- duration: 12ms -->
+    <step title="Assuming git repository at /home/site/repository" date="2026-03-07T03:36:39.975" /><!-- duration: 6ms -->
+    <step title="Acquiring Deployment Lock" date="2026-03-07T03:36:39.984" /><!-- duration: 1ms -->
+    <step title="Acquired Deployment Lock" date="2026-03-07T03:36:40.014" /><!-- duration: 2ms -->
+    <step title="Creating temporary deployment" date="2026-03-07T03:36:40.018" /><!-- duration: 48ms -->
+    <step title="GitExeServer.Receive" date="2026-03-07T03:36:40.068" >
+      <step title="Executing external process" date="2026-03-07T03:36:40.280" type="process" path="git" arguments="receive-pack --stateless-rpc &quot;/home/site/repository&quot;" /><!-- duration: 160522ms -->
+    </step><!-- duration: 160737ms -->
+    <step title="Releasing Deployment Lock" date="2026-03-07T03:39:20.910" /><!-- duration: 7ms -->
+  </step><!-- duration: 160999ms -->
+  <step title="Outgoing response" date="2026-03-07T03:39:20.985" type="response" statusCode="200" statusText="OK" /><!-- duration: 19ms -->
+</step><!-- duration: 161094ms -->

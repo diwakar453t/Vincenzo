@@ -166,7 +166,7 @@ const hostelSlice = createSlice({
             .addCase(fetchHostels.fulfilled, (s, a) => { s.loading = false; s.hostels = a.payload.hostels; })
             .addCase(fetchHostels.rejected, failed)
 
-            .addCase(createHostel.pending, loading).addCase(createHostel.fulfilled, (s) => { s.loading = false; }).addCase(createHostel.rejected, failed)
+            .addCase(createHostel.pending, loading).addCase(createHostel.fulfilled, (s, a) => { s.loading = false; if (a.payload) s.hostels.push(a.payload); }).addCase(createHostel.rejected, failed)
             .addCase(updateHostel.pending, loading).addCase(updateHostel.fulfilled, (s) => { s.loading = false; }).addCase(updateHostel.rejected, failed)
             .addCase(deleteHostel.pending, loading)
             .addCase(deleteHostel.fulfilled, (s, a) => { s.loading = false; s.hostels = s.hostels.filter(h => h.id !== a.payload); })
@@ -176,7 +176,7 @@ const hostelSlice = createSlice({
             .addCase(fetchRooms.fulfilled, (s, a) => { s.loading = false; s.rooms = a.payload.rooms; })
             .addCase(fetchRooms.rejected, failed)
 
-            .addCase(createRoom.pending, loading).addCase(createRoom.fulfilled, (s) => { s.loading = false; }).addCase(createRoom.rejected, failed)
+            .addCase(createRoom.pending, loading).addCase(createRoom.fulfilled, (s, a) => { s.loading = false; if (a.payload) s.rooms.push(a.payload); }).addCase(createRoom.rejected, failed)
             .addCase(updateRoom.pending, loading).addCase(updateRoom.fulfilled, (s) => { s.loading = false; }).addCase(updateRoom.rejected, failed)
             .addCase(deleteRoom.pending, loading)
             .addCase(deleteRoom.fulfilled, (s, a) => { s.loading = false; s.rooms = s.rooms.filter(r => r.id !== a.payload); })

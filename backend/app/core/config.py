@@ -122,8 +122,8 @@ class Settings(BaseSettings):
     TENANT_CACHE_TTL: int = 300              # Cache tenant info for 5 min (seconds)
 
     # ── Rate Limiting ─────────────────────────────────────────────────
-    RATE_LIMIT_PER_MINUTE: int = 120         # Per tenant, per minute
-    RATE_LIMIT_BURST: int = 30               # Burst allowance
+    RATE_LIMIT_PER_MINUTE: int = 10000       # Per tenant, per minute (set lower in production via env)
+    RATE_LIMIT_BURST: int = 500              # Burst allowance (set lower in production via env)
 
     # ── Background Tasks / Celery ─────────────────────────────────────
     CELERY_BROKER_URL: str = "redis://localhost:6379/1"

@@ -88,7 +88,7 @@ class FeeService:
         t = self.db.query(FeeType).filter(FeeType.id == tid, FeeType.tenant_id == tenant_id).first()
         if not t:
             return False
-        self.db.delete(t)
+        t.is_active = False  # Soft delete to preserve FK integrity constraints
         self.db.commit()
         return True
 

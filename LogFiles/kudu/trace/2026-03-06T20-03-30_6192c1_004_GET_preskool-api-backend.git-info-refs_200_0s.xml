@@ -1,0 +1,18 @@
+<step title="Incoming Request" date="2026-03-06T20:03:30.159" instance="6192c1" url="/preskool-api-backend.git/info/refs?service=git-receive-pack" method="GET" type="request" pid="770,1,27" Accept="*/*" Host="preskool-api-backend.scm.azurewebsites.net" User-Agent="git/2.50.1" Accept-Encoding="deflate, gzip" Authorization="Bas..." Pragma="no-cache" X-ARR-LOG-ID="b3d8d807-9f63-4ddf-bc56-340d8070d89b" CLIENT-IP="152.59.190.239:60128" X-SITE-DEPLOYMENT-ID="preskool-api-backend" WAS-DEFAULT-HOSTNAME="preskool-api-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/preskool-api-backend.git/info/refs?service=git-receive-pack" X-Client-IP="152.59.190.239" X-Client-Port="60128" >
+  <step title="Cleanup Xml Logs" date="2026-03-06T20:03:30.164" >
+    <step title="Cleanup Infos" date="2026-03-06T20:03:30.179" totalFiles="274" totalCleanup="114" /><!-- duration: 16ms -->
+  </step><!-- duration: 36ms -->
+  <step title="InfoRefsService.Execute" date="2026-03-06T20:03:30.240" >
+    <step title="Executing external process" date="2026-03-06T20:03:30.253" type="process" path="git" arguments="rev-parse --git-dir" /><!-- duration: 52ms -->
+    <step title="Assuming git repository at /home/site/repository" date="2026-03-06T20:03:30.309" /><!-- duration: 4ms -->
+    <step title="InfoRefsService.SmartInfoRefs" date="2026-03-06T20:03:30.320" >
+      <step title="Executing external process" date="2026-03-06T20:03:30.337" type="process" path="git" arguments="rev-parse --git-dir" /><!-- duration: 17ms -->
+      <step title="Assuming git repository at /home/site/repository" date="2026-03-06T20:03:30.361" /><!-- duration: 5ms -->
+      <step title="GitExeServer.AdvertiseReceivePack" date="2026-03-06T20:03:30.373" >
+        <step title="Executing external process" date="2026-03-06T20:03:30.377" type="process" path="git" arguments="receive-pack --stateless-rpc --advertise-refs &quot;/home/site/repository&quot;" /><!-- duration: 63ms -->
+      </step><!-- duration: 72ms -->
+      <step title="Writing 218 bytes" date="2026-03-06T20:03:30.449" /><!-- duration: 4ms -->
+    </step><!-- duration: 138ms -->
+  </step><!-- duration: 222ms -->
+  <step title="Outgoing response" date="2026-03-06T20:03:30.471" type="response" statusCode="200" statusText="OK" /><!-- duration: 4ms -->
+</step><!-- duration: 320ms -->

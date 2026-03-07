@@ -4,9 +4,15 @@ from typing import List, Optional, Dict, Any
 from datetime import date
 import csv
 import io
+import pandas as pd
+import string
+import random
 
 from app.models.student import Student, StudentStatus
 from app.schemas.student import StudentCreate, StudentUpdate, StudentListItem
+from app.models.user import User, UserRole
+from app.models.guardian import Guardian, guardian_students
+from app.core.security import get_password_hash
 
 
 class StudentService:
@@ -170,6 +176,103 @@ class StudentService:
                     "error": str(e)
                 })
         
+        return results
+        
+    def bulk_import_students_excel(
+        self,
+        df: pd.DataFrame,
+        tenant_id: str
+    ) -> Dict[str, Any]:
+        """
+        Bulk import students from Excel DataFrame
+        Creates users, students, and parents
+        """
+        results = {
+            "success": 0,
+            "failed": 0,
+            "errors": []
+        }
+        
+        for index, row in df.iterrows():
+            try:
+                roll_number = str(row.get('roll_number', '')).strip()
+                student_name = str(row.get('student_name', '')).strip()
+                parent_name = str(row.get('parent_name', '')).strip()
+                parent_phone = str(row.get('parent_phone', '')).strip()
+                
+                if not roll_number or roll_number == 'nan':
+                    raise ValueError("Missing roll_number")
+                if not student_name or student_name == 'nan':
+                    raise ValueError("Missing student_name")
+                    
+                parts = student_name.split(' ', 1)
+                first_name = parts[0]
+                last_name = parts[1] if len(parts) > 1 else ""
+                
+                # Check if student exists
+                if self.get_student_by_student_id(roll_number, tenant_id):
+                    raise ValueError(f"Student with ID {roll_number} already exists")
+                    
+                password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+                
+                # 1. Create User
+                user = User(
+                    email=f"{roll_number.lower()}@student.local",
+                    username=roll_number,
+                    hashed_password=get_password_hash(password),
+                    full_name=student_name,
+                    role=UserRole.STUDENT,
+                    tenant_id=tenant_id,
+                    is_active=True
+                )
+                self.db.add(user)
+                self.db.flush()
+                
+                # 2. Create Student
+                student = Student(
+                    student_id=roll_number,
+                    first_name=first_name,
+                    last_name=last_name,
+                    full_name=student_name,
+                    date_of_birth=date.today(), # Placeholder
+                    gender="Other",
+                    user_id=user.id,
+                    enrollment_date=date.today(),
+                    tenant_id=tenant_id,
+                    status=StudentStatus.ACTIVE.value
+                )
+                self.db.add(student)
+                self.db.flush()
+                
+                # 3. Create Parent
+                if parent_name and parent_name != 'nan':
+                    p_parts = parent_name.split(' ', 1)
+                    p_first = p_parts[0]
+                    p_last = p_parts[1] if len(p_parts) > 1 else ""
+                    parent = Guardian(
+                        first_name=p_first,
+                        last_name=p_last,
+                        full_name=parent_name,
+                        phone=parent_phone if parent_phone != 'nan' else None,
+                        relationship_type="Parent",
+                        tenant_id=tenant_id
+                    )
+                    self.db.add(parent)
+                    self.db.flush()
+                    
+                    student.guardians.append(parent)
+                
+                self.db.commit()
+                results["success"] += 1
+                
+            except Exception as e:
+                self.db.rollback()
+                results["failed"] += 1
+                results["errors"].append({
+                    "row": index + 2, # Excel row (1-indexed + header)
+                    "error": str(e)
+                })
+                
         return results
     
     def export_students(self, tenant_id: str) -> str:
