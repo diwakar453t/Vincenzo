@@ -26,7 +26,7 @@ def _get_user(current_user: dict, db: Session) -> User:
 
 
 def _require_admin(user: User):
-    if user.role.value != "admin":
+    if user.role.value not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Admin access required")
 
 

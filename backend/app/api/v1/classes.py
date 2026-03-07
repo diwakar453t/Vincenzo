@@ -85,7 +85,7 @@ def create_class(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can create classes")
     
     service = ClassService(db)
@@ -135,7 +135,7 @@ def update_class(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can update classes")
     
     service = ClassService(db)
@@ -161,7 +161,7 @@ def delete_class(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can delete classes")
     
     service = ClassService(db)
@@ -220,7 +220,7 @@ def assign_students_to_class(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can assign students")
     
     service = ClassService(db)

@@ -84,7 +84,7 @@ def create_room(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
 
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can create rooms")
 
     service = RoomService(db)
@@ -146,7 +146,7 @@ def update_room(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
 
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can update rooms")
 
     service = RoomService(db)
@@ -171,7 +171,7 @@ def delete_room(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
 
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can delete rooms")
 
     service = RoomService(db)
@@ -196,7 +196,7 @@ def assign_room_to_class(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
 
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can assign rooms")
 
     service = RoomService(db)
@@ -219,7 +219,7 @@ def unassign_room_from_class(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
 
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can unassign rooms")
 
     service = RoomService(db)

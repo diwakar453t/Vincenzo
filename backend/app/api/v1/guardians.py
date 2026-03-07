@@ -81,7 +81,7 @@ def create_guardian(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can create guardians")
     
     service = GuardianService(db)
@@ -153,7 +153,7 @@ def update_guardian(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can update guardians")
     
     service = GuardianService(db)
@@ -188,7 +188,7 @@ def delete_guardian(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can delete guardians")
     
     service = GuardianService(db)
@@ -211,7 +211,7 @@ def link_student(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can link students")
     
     service = GuardianService(db)
@@ -234,7 +234,7 @@ def unlink_student(
     user_id = int(current_user.get("sub"))
     user = db.query(User).filter(User.id == user_id).first()
     
-    if not user or user.role != "admin":
+    if not user or user.role not in ["admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Only admins can unlink students")
     
     service = GuardianService(db)
