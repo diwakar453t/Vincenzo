@@ -12,7 +12,7 @@ from app.models.student import Student, StudentStatus
 from app.schemas.student import StudentCreate, StudentUpdate, StudentListItem
 from app.models.user import User, UserRole
 from app.models.guardian import Guardian, guardian_students
-from app.core.security import get_password_hash
+from app.core.auth import get_password_hash
 
 
 class StudentService:

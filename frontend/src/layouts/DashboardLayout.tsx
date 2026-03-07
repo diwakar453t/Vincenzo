@@ -90,7 +90,6 @@ function getNavItems(role?: string): NavItem[] {
           { label: 'My Results', path: '/grades' },
         ],
       },
-      { label: 'Attendance', icon: <CalendarMonth />, path: '/attendance/students' },
       {
         label: 'Fees',
         icon: <AttachMoney />,
@@ -151,7 +150,6 @@ function getNavItems(role?: string): NavItem[] {
   if (role === 'parent') {
     return [
       { label: 'My Dashboard', icon: <Dashboard />, path: '/parent-dashboard' },
-      { label: 'My Child', icon: <People />, path: '/students' },
       { label: 'Timetable', icon: <CalendarMonth />, path: '/timetable' },
       { label: 'Attendance', icon: <CalendarMonth />, path: '/attendance/students' },
       {

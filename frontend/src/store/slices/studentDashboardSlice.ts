@@ -102,7 +102,7 @@ export const fetchStudentResults = createAsyncThunk(
     'studentDashboard/fetchResults',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await api.get('/student-profile/me/results');
+            const response = await api.get('/student-profile/me/grades');
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to fetch results');
