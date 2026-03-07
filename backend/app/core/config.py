@@ -95,13 +95,11 @@ class Settings(BaseSettings):
         "https://frontend-three-rho-19.vercel.app",  # Exact Vercel URL
         "https://*.azurewebsites.net", # Azure App Service
         "https://preskool-api-backend.azurewebsites.net",
+        "*"
     ]
-    CORS_ALLOW_CREDENTIALS: bool = True
-    CORS_ALLOW_METHODS: list = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
-    CORS_ALLOW_HEADERS: list = [
-        "Authorization", "Content-Type", "X-Tenant-ID",
-        "X-Request-ID", "X-CSRF-Token", "Accept",
-    ]
+    CORS_ALLOW_CREDENTIALS: bool = False
+    CORS_ALLOW_METHODS: list = ["*"]
+    CORS_ALLOW_HEADERS: list = ["*"]
     CORS_MAX_AGE: int = 600  # Preflight cache: 10 minutes
     # ── File Uploads (S3 in production, local in dev) ─────────────────
     UPLOAD_DIR: str = "uploads"
