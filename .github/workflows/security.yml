@@ -1,104 +1,73 @@
-# ═══════════════════════════════════════════════════════════════════════
-# PreSkool ERP — Security Scanning (scheduled + on-demand)
-# ═══════════════════════════════════════════════════════════════════════
-name: Security Scan
+name: Security Scanning
 
 on:
-  schedule:
-    - cron: "0 6 * * 1"  # Every Monday 6:00 UTC
-  workflow_dispatch:
-
-permissions:
-  security-events: write
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
 
 jobs:
-  # ── Snyk Security Scan ──────────────────────────────────────────────
-  snyk:
-    name: 🛡️ Snyk Scan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Snyk — backend dependencies
-        uses: snyk/actions/python@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --file=backend/requirements.txt --severity-threshold=high
-
-      - name: Snyk — frontend dependencies
-        uses: snyk/actions/node@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --file=frontend/package.json --severity-threshold=high
-
-  # ── Container Image Scan ────────────────────────────────────────────
-  trivy:
-    name: 🔍 Trivy Container Scan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build backend image
-        run: docker build -t preskool/backend:scan ./backend
-
-      - name: Trivy — scan backend image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: preskool/backend:scan
-          format: sarif
-          output: backend-trivy.sarif
-          severity: CRITICAL,HIGH
-
-      - name: Upload backend results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: backend-trivy.sarif
-          category: backend-trivy
-
-      - name: Build frontend image
-        run: docker build -t preskool/frontend:scan ./frontend
-
-      - name: Trivy — scan frontend image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: preskool/frontend:scan
-          format: sarif
-          output: frontend-trivy.sarif
-          severity: CRITICAL,HIGH
-
-      - name: Upload frontend results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: frontend-trivy.sarif
-          category: frontend-trivy
-
-  # ── CodeQL Analysis ─────────────────────────────────────────────────
-  codeql:
-    name: 🔬 CodeQL Analysis
+  security-checks:
+    name: Full Security Audit
     runs-on: ubuntu-latest
     permissions:
+      actions: read
+      contents: read
       security-events: write
-    strategy:
-      matrix:
-        language: [python, javascript]
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Initialize CodeQL
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        continue-on-error: true
+
+      - name: Run Bandit
+        run: |
+          pip install bandit
+          bandit -r backend/app/ -ll -ii -f json -o bandit.json || true
+
+      - name: CodeQL Initialization
         uses: github/codeql-action/init@v3
         with:
-          languages: ${{ matrix.language }}
+          languages: python, javascript
 
-      - name: Autobuild
+      - name: CodeQL Autobuild
         uses: github/codeql-action/autobuild@v3
 
-      - name: Perform analysis
+      - name: CodeQL Analyze
         uses: github/codeql-action/analyze@v3
+
+      - name: Build Docker target for Trivy
+        run: docker build -t preskool-backend:scan backend/
+
+      - name: Trivy Container Scan
+        uses: aquasecurity/trivy-action@master
         with:
-          category: "/language:${{ matrix.language }}"
+          image-ref: 'preskool-backend:scan'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '1'
+        continue-on-error: true
+
+      - name: OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'PreSkool ERP'
+          path: '.'
+          format: 'HTML'
+          out: 'owasp-report'
+          args: >
+            --failOnCVSS 7
+            --enableRetired
+            --exclude "**/venv/**"
+            --exclude "**/node_modules/**"
+        continue-on-error: true

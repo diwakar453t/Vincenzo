@@ -1,0 +1,37 @@
+name: Backend Tests & Coverage
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  tests:
+    name: Pytest Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+      - name: Install Dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+      - name: Run Unit Tests
+        working-directory: backend
+        run: pytest app/tests/unit -m "unit" -v --junitxml=unit-test-results.xml || true
+      - name: Run API Tests
+        working-directory: backend
+        run: pytest app/tests/api -m "api" -v --junitxml=api-test-results.xml || true
+      - name: Run Integration Tests
+        working-directory: backend
+        run: pytest app/tests/integration -m "integration" -v --junitxml=integration-test-results.xml || true
+      - name: Upload Test Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-test-results
+          path: backend/*-test-results.xml

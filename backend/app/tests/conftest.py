@@ -10,6 +10,7 @@ Fixture hierarchy:
 Test factories (Factory Boy):
   UserFactory, StudentFactory, TenantFactory, etc.
 """
+
 import os
 import pytest
 from typing import Generator, Dict
@@ -21,6 +22,8 @@ os.environ.setdefault("JWT_SECRET_KEY", "test-secret-key-for-testing-only-32byte
 os.environ.setdefault("ENCRYPTION_MASTER_KEY", "test-encryption-key-for-testing-only!!")
 os.environ.setdefault("OTEL_ENABLED", "False")
 os.environ.setdefault("RATE_LIMIT_PER_MINUTE", "100000")
+os.environ.setdefault("DEBUG", "True")
+os.environ.setdefault("ALLOWED_HOSTS", '["*"]')
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
@@ -38,6 +41,7 @@ from app.models.student import Student, StudentStatus, Gender
 # DATABASE FIXTURES
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @pytest.fixture(scope="session")
 def engine():
     """Session-scoped SQLite engine for fast in-memory tests."""
@@ -51,6 +55,7 @@ def engine():
     engine.dispose()
     # Cleanup test DB file
     import os
+
     try:
         os.remove("./test_preskool.db")
     except FileNotFoundError:
@@ -79,6 +84,7 @@ def db(engine) -> Generator[Session, None, None]:
 # ═══════════════════════════════════════════════════════════════════════
 # TEST DATA FACTORIES
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @pytest.fixture
 def test_tenant(db: Session) -> Tenant:
@@ -149,6 +155,7 @@ def test_student_user(db: Session, test_tenant: Tenant) -> User:
 def test_student(db: Session, test_tenant: Tenant) -> Student:
     """Create a student record."""
     from datetime import date
+
     student = Student(
         student_id="STU001",
         first_name="Alice",
@@ -170,14 +177,17 @@ def test_student(db: Session, test_tenant: Tenant) -> Student:
 # AUTH FIXTURES
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def _make_token(user: User) -> str:
     """Generate a real JWT for a user."""
-    return create_access_token({
-        "sub": str(user.id),
-        "email": user.email,
-        "role": user.role,
-        "tenant_id": user.tenant_id,
-    })
+    return create_access_token(
+        {
+            "sub": str(user.id),
+            "email": user.email,
+            "role": user.role,
+            "tenant_id": user.tenant_id,
+        }
+    )
 
 
 @pytest.fixture
@@ -226,12 +236,14 @@ def student_headers(student_token: str, test_tenant: Tenant) -> Dict[str, str]:
 # HTTP CLIENT FIXTURES
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @pytest.fixture
 def client(db: Session) -> Generator[TestClient, None, None]:
     """
     Synchronous TestClient with DB dependency override.
     Auth headers injected per-test via admin_headers fixture.
     """
+
     def override_get_db():
         try:
             yield db
@@ -247,6 +259,7 @@ def client(db: Session) -> Generator[TestClient, None, None]:
 @pytest.fixture
 async def async_client(db: Session) -> AsyncClient:
     """Async HTTP client for async endpoint testing."""
+
     def override_get_db():
         try:
             yield db
@@ -263,10 +276,12 @@ async def async_client(db: Session) -> AsyncClient:
 # UTILITY FIXTURES
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @pytest.fixture
 def faker_instance():
     """Faker instance for generating realistic test data."""
     from faker import Faker
+
     return Faker("en_IN")  # Indian locale for realistic data
 
 
@@ -284,6 +299,7 @@ def mock_redis(mocker):
 def reset_security_state():
     """Reset rate limiter and lockout state between tests."""
     from app.core.security import _rate_limiter, account_lockout
+
     _rate_limiter._ip_buckets.clear()
     _rate_limiter._tenant_buckets.clear()
     _rate_limiter._endpoint_buckets.clear()

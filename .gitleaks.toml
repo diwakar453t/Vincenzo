@@ -1,0 +1,22 @@
+[allowlist]
+description = "Allow known fake/test secrets and specific patterns"
+paths = [
+    '''backend/tests/.*''',
+    '''backend/app/tests/.*''',
+    '''backend/README\.md''',
+]
+
+[[rules]]
+id = "generic-api-key"
+[rules.allowlist]
+regexes = [
+    '''test-secret-key-for-testing-only-32bytes!''',
+    '''test-encryption-key-for-testing-only!!''',
+    '''perf-test-jwt-secret-32chars-long!''',
+    '''perf-test-encryption-key-for-ci!''',
+    '''smoke-test-secret-32chars-long!!!''',
+    '''smoke-test-encryption-key-for-ci!''',
+    '''ci-test-secret-key-32bytes-long!!''',
+    '''ci-encryption-key-for-testing-only!''',
+    '''some-fake-secret-key''',
+]
