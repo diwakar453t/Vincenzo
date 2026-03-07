@@ -1,4 +1,5 @@
 """Database seeding utilities for PreSkool ERP."""
+
 import asyncio
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
@@ -12,13 +13,13 @@ async def seed_tenants(db: Session):
         {"id": "demo-school", "name": "Demo School", "domain": "demo.preskool.local"},
         {"id": "test-college", "name": "Test College", "domain": "test.preskool.local"},
     ]
-    
+
     for tenant_data in tenants_data:
         existing = db.query(Tenant).filter_by(id=tenant_data["id"]).first()
         if not existing:
             tenant = Tenant(**tenant_data, is_active=True)
             db.add(tenant)
-    
+
     db.commit()
     print("✓ Tenants seeded successfully")
 
@@ -41,7 +42,7 @@ async def seed_admin_users(db: Session):
             "role": UserRole.ADMIN,
         },
     ]
-    
+
     for user_data in users_data:
         existing = db.query(User).filter_by(email=user_data["email"]).first()
         if not existing:
@@ -53,7 +54,7 @@ async def seed_admin_users(db: Session):
                 is_verified=True,
             )
             db.add(user)
-    
+
     db.commit()
     print("✓ Admin users seeded successfully")
 

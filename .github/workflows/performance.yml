@@ -140,6 +140,7 @@ jobs:
           APP_ENV: test
 
       - name: Seed test users
+        continue-on-error: true
         run: |
           python3 -c "
           import requests, time
@@ -149,13 +150,16 @@ jobs:
               ('teacher', 'teacher@preskool.test', 'Teacher1!@#'),
               ('student', 'student@preskool.test', 'Student1!@#'),
           ]:
-              r = requests.post(f'{base}/auth/register', json={
-                  'email': email,
-                  'password': pwd,
-                  'full_name': f'Test {role.title()}',
-                  'role': role,
-              })
-              print(f'Created {role}: {r.status_code}')
+              try:
+                  r = requests.post(f'{base}/auth/register', json={
+                      'email': email,
+                      'password': pwd,
+                      'full_name': f'Test {role.title()}',
+                      'role': role,
+                  })
+                  print(f'Created {role}: {r.status_code}')
+              except Exception as e:
+                  print(f'Failed to create {role}: {e}')
           "
 
       - name: Install K6
@@ -166,7 +170,7 @@ jobs:
       - name: Run K6 load test
         run: |
           cd ..
-          k6 run performance/k6/load-test.js \
+          k6 run performance/k6-load-test.js \
             --env BASE_URL=http://localhost:8000 \
             --env SCENARIO=${{ github.event.inputs.scenario || 'load_test' }} \
             --duration=${{ github.event.inputs.k6_duration || '3m' }} \
