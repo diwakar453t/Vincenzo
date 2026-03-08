@@ -17,8 +17,19 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# ── URL Normalization ──────────────────────────────────────────────────────
+# Azure PostgreSQL requires DATABASE_URL=postgresql+asyncpg://...
+# BUT this app uses sync SQLAlchemy throughout (not async).
+# We transparently rewrite the driver portion so the sync engine works correctly.
+# asyncpg is still installed and used by Alembic for direct PostgreSQL access.
+_raw_url = settings.DATABASE_URL
+if "+asyncpg" in _raw_url:
+    _sync_url = _raw_url.replace("+asyncpg", "+psycopg2", 1)
+else:
+    _sync_url = _raw_url
+
 # Determine engine configuration based on database type
-is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+is_sqlite = _sync_url.startswith("sqlite")
 
 engine_kwargs = {}
 if is_sqlite:
@@ -50,7 +61,7 @@ else:
     engine_kwargs["echo_pool"] = settings.DB_ECHO
 
 # Create database engine
-engine = create_engine(settings.DATABASE_URL, **engine_kwargs)
+engine = create_engine(_sync_url, **engine_kwargs)
 
 # Enable WAL mode for SQLite (better concurrency in dev)
 if is_sqlite:

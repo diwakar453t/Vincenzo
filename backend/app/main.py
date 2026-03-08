@@ -20,10 +20,7 @@ from app.api.v1 import api_router
 logger = setup_logging()
 
 # Import all models so they register with Base
-
-# Create database tables automatically for local dev
-Base.metadata.create_all(bind=engine)
-logger.info("💾 Database tables created/verified")
+import app.models  # noqa: F401 — registers all ORM models with Base.metadata
 
 # Initialize Plugin System
 from app.plugins.loader import PluginLoader
@@ -112,6 +109,15 @@ async def startup_event():
     """Run on application startup."""
     # Validate security configuration before accepting traffic
     settings.validate_jwt_secret()
+
+    # Auto-create tables for local SQLite development only.
+    # In production (PostgreSQL), Alembic handles schema via `alembic upgrade head`.
+    is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+    if is_sqlite:
+        from app.core.database import engine, Base
+        Base.metadata.create_all(bind=engine)
+        logger.info("💾 SQLite tables created/verified (dev mode)")
+
     logger.info(f"🚀 {settings.APP_NAME} v{settings.APP_VERSION} starting up...")
     logger.info(f"📝 API docs: {'enabled' if _is_dev else 'DISABLED (production)'}")
     logger.info(f"🔧 Environment: {'Development' if settings.DEBUG else 'Production'}")

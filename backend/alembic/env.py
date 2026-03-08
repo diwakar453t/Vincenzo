@@ -12,13 +12,22 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.core.config import settings
 from app.core.database import Base
+import app.models  # noqa: F401 — import all models so Alembic autogenerate sees them
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-# Override sqlalchemy.url with our settings, escaping % for configparser
-escaped_url = settings.DATABASE_URL.replace("%", "%%")
+# Override sqlalchemy.url with our settings, normalising asyncpg -> psycopg2
+# Alembic uses a sync engine, so asyncpg (async driver) is not compatible.
+_db_url = settings.DATABASE_URL
+if "+asyncpg" in _db_url:
+    _db_url = _db_url.replace("+asyncpg", "+psycopg2", 1)
+# Remove ssl query param that asyncpg accepts but psycopg2 may not handle in URL
+# SSL for psycopg2 is configured via connect_args, not URL query string.
+import re as _re
+_db_url = _re.sub(r'\?ssl=require$', '', _db_url)
+escaped_url = _db_url.replace("%", "%%")
 config.set_main_option("sqlalchemy.url", escaped_url)
 
 # Interpret the config file for Python logging.
