@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.validate-secrets.outputs.has_azure == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -150,7 +150,7 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.validate-secrets.outputs.has_vercel == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
