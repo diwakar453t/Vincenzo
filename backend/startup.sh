@@ -8,6 +8,10 @@ echo "🚀 Starting PreSkool ERP backend..."
 echo "Python: $(python --version)"
 echo "Working directory: $(pwd)"
 
+# Step 0: Ensure dependencies are installed
+echo "📦 Installing dependencies from requirements.txt..."
+pip install --no-cache-dir -r requirements.txt || echo "⚠️  Pip install failed — continuing"
+
 # Step 1: Run database migrations to ensure schema is current
 echo "📦 Running database migrations..."
 alembic upgrade head && echo "✅ Migrations complete" || echo "⚠️  Migration step failed — continuing"
