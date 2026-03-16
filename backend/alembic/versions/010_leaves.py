@@ -38,8 +38,8 @@ def upgrade() -> None:
         sa.Column(
             "max_days_per_year", sa.Integer(), nullable=False, server_default="12"
         ),
-        sa.Column("is_paid", sa.Boolean(), nullable=False, server_default="1"),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_paid", sa.Boolean(), nullable=False, server_default="true"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column(
             "applies_to",
             sa.Enum("teacher", "student", name="applicanttype"),

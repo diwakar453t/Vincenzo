@@ -35,7 +35,7 @@ def upgrade() -> None:
         sa.Column("name", sa.String(100), nullable=False),
         sa.Column("code", sa.String(20), nullable=True),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -63,12 +63,12 @@ def upgrade() -> None:
         sa.Column("code", sa.String(20), nullable=True),
         sa.Column("amount", sa.Float(), nullable=False, server_default="0"),
         sa.Column("due_date", sa.Date(), nullable=True),
-        sa.Column("is_recurring", sa.Boolean(), nullable=False, server_default="0"),
+        sa.Column("is_recurring", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column("frequency", sa.String(20), nullable=True),
         sa.Column(
             "academic_year", sa.String(20), nullable=False, server_default="'2025-26'"
         ),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("class_id", sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"]),

@@ -37,7 +37,7 @@ def upgrade() -> None:
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("head_teacher_id", sa.Integer(), nullable=True),
         sa.Column("parent_id", sa.Integer(), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column("order", sa.Integer(), nullable=False, server_default="0"),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"]),
         sa.ForeignKeyConstraint(
@@ -70,7 +70,7 @@ def upgrade() -> None:
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("department_id", sa.Integer(), nullable=True),
         sa.Column("level", sa.Integer(), nullable=False, server_default="1"),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column("order", sa.Integer(), nullable=False, server_default="0"),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"]),
         sa.ForeignKeyConstraint(

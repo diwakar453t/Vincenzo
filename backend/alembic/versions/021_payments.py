@@ -64,7 +64,7 @@ def upgrade():
         # Receipt
         sa.Column("receipt_number", sa.String(50), nullable=True, unique=True),
         sa.Column(
-            "receipt_generated", sa.Boolean(), nullable=False, server_default="0"
+            "receipt_generated", sa.Boolean(), nullable=False, server_default="false"
         ),
         sa.Column("receipt_url", sa.String(500), nullable=True),
         # Refund
@@ -80,7 +80,7 @@ def upgrade():
         # Timestamps
         sa.Column("paid_at", sa.DateTime(), nullable=True),
         sa.Column("verified_at", sa.DateTime(), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
     )
     op.create_index(
         "ix_payment_transactions_tenant", "payment_transactions", ["tenant_id"]

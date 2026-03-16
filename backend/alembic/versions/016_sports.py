@@ -42,10 +42,10 @@ def upgrade():
         sa.Column("season", sa.String(50), nullable=True),
         sa.Column("registration_fee", sa.Float(), nullable=False, server_default="0"),
         sa.Column(
-            "equipment_provided", sa.Boolean(), nullable=False, server_default="0"
+            "equipment_provided", sa.Boolean(), nullable=False, server_default="false"
         ),
         sa.Column("status", sa.String(20), nullable=False, server_default="active"),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
     )
     op.create_index("ix_sports_id", "sports", ["id"])
     op.create_index("ix_sports_tenant_id", "sports", ["tenant_id"])
@@ -78,7 +78,7 @@ def upgrade():
         sa.Column("end_date", sa.Date(), nullable=True),
         sa.Column("position", sa.String(50), nullable=True),
         sa.Column("jersey_number", sa.String(10), nullable=True),
-        sa.Column("fee_paid", sa.Boolean(), nullable=False, server_default="0"),
+        sa.Column("fee_paid", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column("status", sa.String(20), nullable=False, server_default="registered"),
         sa.Column("remarks", sa.Text(), nullable=True),
     )

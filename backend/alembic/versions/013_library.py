@@ -43,7 +43,7 @@ def upgrade():
         sa.Column("cover_image", sa.String(500), nullable=True),
         sa.Column("publication_year", sa.Integer(), nullable=True),
         sa.Column("status", sa.String(20), nullable=False, server_default="available"),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
     )
     op.create_index("ix_books_id", "books", ["id"])
     op.create_index("ix_books_tenant_id", "books", ["tenant_id"])
@@ -127,7 +127,7 @@ def upgrade():
         sa.Column("return_date", sa.Date(), nullable=True),
         sa.Column("status", sa.String(20), nullable=False, server_default="issued"),
         sa.Column("fine_amount", sa.Float(), nullable=False, server_default="0"),
-        sa.Column("fine_paid", sa.Boolean(), nullable=False, server_default="0"),
+        sa.Column("fine_paid", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column("fine_per_day", sa.Float(), nullable=False, server_default="2"),
         sa.Column("remarks", sa.Text(), nullable=True),
     )

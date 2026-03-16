@@ -23,6 +23,9 @@ logger = logging.getLogger(__name__)
 # We transparently rewrite the driver portion so the sync engine works correctly.
 # asyncpg is still installed and used by Alembic for direct PostgreSQL access.
 _raw_url = settings.DATABASE_URL
+if "ssl=require" in _raw_url:
+    _raw_url = _raw_url.replace("ssl=require", "sslmode=require")
+
 if "+asyncpg" in _raw_url:
     _sync_url = _raw_url.replace("+asyncpg", "+psycopg2", 1)
 else:

@@ -20,6 +20,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # Drop existing type if its causing collisions (cascades nothing if tables don't exist)
+    op.execute("DROP TYPE IF EXISTS userrole CASCADE;")
+
     # Create tenants table
     op.create_table(
         "tenants",
@@ -64,7 +67,7 @@ def upgrade() -> None:
         sa.Column("full_name", sa.String(length=255), nullable=False),
         sa.Column(
             "role",
-            sa.Enum("admin", "teacher", "student", "parent", name="userrole"),
+            sa.String(length=50),
             nullable=False,
         ),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
@@ -75,6 +78,9 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
+    # Cast column to Enum safely now that table is created
+    op.execute("ALTER TABLE users ALTER COLUMN role TYPE userrole USING role::userrole;")
+
     op.create_index(op.f("ix_users_id"), "users", ["id"])
     op.create_index(op.f("ix_users_tenant_id"), "users", ["tenant_id"])
     op.create_index(op.f("ix_users_email"), "users", ["email"], unique=True)

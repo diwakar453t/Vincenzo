@@ -25,7 +25,9 @@ class StudentAttendance(BaseModel):
     )
     date = Column(Date, nullable=False)
     status = Column(
-        Enum(AttendanceStatus), default=AttendanceStatus.PRESENT, nullable=False
+        Enum(AttendanceStatus, values_callable=lambda x: [e.value for e in x]), 
+        default=AttendanceStatus.PRESENT, 
+        nullable=False
     )
     remarks = Column(Text, nullable=True)
     academic_year = Column(String(20), nullable=False, default="2025-26")
@@ -48,7 +50,9 @@ class StaffAttendance(BaseModel):
     )
     date = Column(Date, nullable=False)
     status = Column(
-        Enum(AttendanceStatus), default=AttendanceStatus.PRESENT, nullable=False
+        Enum(AttendanceStatus, values_callable=lambda x: [e.value for e in x]), 
+        default=AttendanceStatus.PRESENT, 
+        nullable=False
     )
     check_in = Column(String(10), nullable=True)  # HH:MM
     check_out = Column(String(10), nullable=True)  # HH:MM

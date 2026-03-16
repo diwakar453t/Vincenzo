@@ -74,7 +74,7 @@ def upgrade() -> None:
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("order", sa.Integer(), nullable=False, server_default="0"),
         sa.Column(
-            "is_completed", sa.Boolean(), nullable=False, server_default=sa.text("0")
+            "is_completed", sa.Boolean(), nullable=False, server_default="false"
         ),
         sa.Column("completed_date", sa.Date(), nullable=True),
         sa.Column("document_path", sa.String(length=500), nullable=True),

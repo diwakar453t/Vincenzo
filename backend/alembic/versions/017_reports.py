@@ -33,7 +33,7 @@ def upgrade():
         sa.Column("summary", sa.Text(), nullable=True),
         sa.Column("record_count", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("generated_by", sa.Integer(), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
     )
     op.create_index("ix_reports_id", "reports", ["id"])
     op.create_index("ix_reports_tenant_id", "reports", ["tenant_id"])

@@ -43,7 +43,7 @@ def upgrade():
         ),
         sa.Column("entity_type", sa.String(50), nullable=True),
         sa.Column("entity_id", sa.Integer(), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
     )
     op.create_index("ix_uploaded_files_tenant", "uploaded_files", ["tenant_id"])
     op.create_index(
@@ -74,14 +74,14 @@ def upgrade():
             sa.ForeignKey("users.id", ondelete="CASCADE"),
             nullable=False,
         ),
-        sa.Column("can_edit", sa.Boolean(), nullable=False, server_default="0"),
+        sa.Column("can_edit", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column(
             "shared_by",
             sa.Integer(),
             sa.ForeignKey("users.id", ondelete="SET NULL"),
             nullable=True,
         ),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
     )
     op.create_index("ix_file_shares_file_id", "file_shares", ["file_id"])
     op.create_index("ix_file_shares_user", "file_shares", ["shared_with_user_id"])

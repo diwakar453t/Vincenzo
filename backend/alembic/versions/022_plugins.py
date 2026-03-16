@@ -33,9 +33,9 @@ def upgrade():
         sa.Column("icon", sa.String(10), server_default="🔌"),
         sa.Column("status", sa.String(20), nullable=False, server_default="installed"),
         sa.Column("config", sa.JSON(), nullable=True),
-        sa.Column("is_builtin", sa.Boolean(), nullable=False, server_default="0"),
+        sa.Column("is_builtin", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column("error_message", sa.Text(), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
     )
     op.create_index("ix_plugin_records_name", "plugin_records", ["name"])
 

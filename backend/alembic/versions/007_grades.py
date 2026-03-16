@@ -37,7 +37,7 @@ def upgrade() -> None:
         sa.Column("max_percentage", sa.Float(), nullable=False),
         sa.Column("grade_point", sa.Float(), nullable=False),
         sa.Column("description", sa.String(length=100), nullable=True),
-        sa.Column("is_passing", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_passing", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column("order", sa.Integer(), nullable=False, server_default="0"),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"]),
         sa.PrimaryKeyConstraint("id"),

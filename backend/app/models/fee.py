@@ -95,7 +95,11 @@ class StudentFeeAssignment(BaseModel):
     net_amount = Column(Float, nullable=False, default=0)  # amount - discount
     paid_amount = Column(Float, nullable=False, default=0)
     balance = Column(Float, nullable=False, default=0)  # net_amount - paid_amount
-    status = Column(Enum(PaymentStatus), default=PaymentStatus.UNPAID, nullable=False)
+    status = Column(
+        Enum(PaymentStatus, values_callable=lambda x: [e.value for e in x]), 
+        default=PaymentStatus.UNPAID, 
+        nullable=False
+    )
     due_date = Column(Date, nullable=True)
     academic_year = Column(String(20), nullable=False, default="2025-26")
 
@@ -125,7 +129,9 @@ class FeeCollection(BaseModel):
     receipt_number = Column(String(50), nullable=True)
     amount = Column(Float, nullable=False)
     payment_method = Column(
-        Enum(PaymentMethod), default=PaymentMethod.CASH, nullable=False
+        Enum(PaymentMethod, values_callable=lambda x: [e.value for e in x]), 
+        default=PaymentMethod.CASH, 
+        nullable=False
     )
     payment_date = Column(Date, nullable=False)
     transaction_id = Column(String(100), nullable=True)

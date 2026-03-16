@@ -86,7 +86,7 @@ def upgrade() -> None:
         ),
         sa.ForeignKeyConstraint(["subject_id"], ["subjects.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(["teacher_id"], ["teachers.id"], ondelete="SET NULL"),
-        sa.ForeignKeyConstraint(["room_id"], ["rooms.id"], ondelete="SET NULL"),
+        # sa.ForeignKeyConstraint(["room_id"], ["rooms.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_periods_id"), "periods", ["id"])

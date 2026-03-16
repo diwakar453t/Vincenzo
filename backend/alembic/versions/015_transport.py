@@ -40,10 +40,10 @@ def upgrade():
         sa.Column("insurance_expiry", sa.Date(), nullable=True),
         sa.Column("fitness_expiry", sa.Date(), nullable=True),
         sa.Column("fuel_type", sa.String(20), nullable=True, server_default="diesel"),
-        sa.Column("gps_enabled", sa.Boolean(), nullable=False, server_default="0"),
+        sa.Column("gps_enabled", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column("status", sa.String(20), nullable=False, server_default="active"),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
     )
     op.create_index("ix_vehicles_id", "vehicles", ["id"])
     op.create_index("ix_vehicles_tenant_id", "vehicles", ["tenant_id"])
@@ -83,7 +83,7 @@ def upgrade():
         ),
         sa.Column("status", sa.String(20), nullable=False, server_default="active"),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
     )
     op.create_index("ix_transport_routes_id", "transport_routes", ["id"])
     op.create_index("ix_transport_routes_tenant_id", "transport_routes", ["tenant_id"])

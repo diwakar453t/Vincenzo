@@ -38,12 +38,12 @@ def upgrade():
         ),
         sa.Column("priority", sa.String(10), nullable=False, server_default="medium"),
         sa.Column("channel", sa.String(10), nullable=False, server_default="in_app"),
-        sa.Column("is_read", sa.Boolean(), nullable=False, server_default="0"),
+        sa.Column("is_read", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column("read_at", sa.DateTime(), nullable=True),
         sa.Column("link", sa.String(500), nullable=True),
         sa.Column("metadata_json", sa.JSON(), nullable=True),
         sa.Column("sender_id", sa.Integer(), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
     )
     op.create_index("ix_notifications_user_id", "notifications", ["user_id"])
     op.create_index("ix_notifications_tenant_id", "notifications", ["tenant_id"])
@@ -68,16 +68,16 @@ def upgrade():
             nullable=False,
             unique=True,
         ),
-        sa.Column("email_enabled", sa.Boolean(), nullable=False, server_default="1"),
-        sa.Column("sms_enabled", sa.Boolean(), nullable=False, server_default="0"),
-        sa.Column("push_enabled", sa.Boolean(), nullable=False, server_default="1"),
-        sa.Column("in_app_enabled", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("email_enabled", sa.Boolean(), nullable=False, server_default="true"),
+        sa.Column("sms_enabled", sa.Boolean(), nullable=False, server_default="false"),
+        sa.Column("push_enabled", sa.Boolean(), nullable=False, server_default="true"),
+        sa.Column("in_app_enabled", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column(
-            "attendance_alerts", sa.Boolean(), nullable=False, server_default="1"
+            "attendance_alerts", sa.Boolean(), nullable=False, server_default="true"
         ),
-        sa.Column("fee_reminders", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("fee_reminders", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column(
-            "exam_notifications", sa.Boolean(), nullable=False, server_default="1"
+            "exam_notifications", sa.Boolean(), nullable=False, server_default="true"
         ),
         sa.Column(
             "announcement_notifications",
@@ -86,10 +86,10 @@ def upgrade():
             server_default="1",
         ),
         sa.Column(
-            "leave_notifications", sa.Boolean(), nullable=False, server_default="1"
+            "leave_notifications", sa.Boolean(), nullable=False, server_default="true"
         ),
         sa.Column(
-            "report_notifications", sa.Boolean(), nullable=False, server_default="1"
+            "report_notifications", sa.Boolean(), nullable=False, server_default="true"
         ),
     )
     op.create_index(

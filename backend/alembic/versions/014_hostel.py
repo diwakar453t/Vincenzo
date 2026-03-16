@@ -38,7 +38,7 @@ def upgrade():
         sa.Column("occupied_beds", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("monthly_fee", sa.Float(), nullable=False, server_default="0"),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
     )
     op.create_index("ix_hostels_id", "hostels", ["id"])
     op.create_index("ix_hostels_tenant_id", "hostels", ["tenant_id"])
@@ -69,13 +69,13 @@ def upgrade():
         sa.Column("occupied", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("status", sa.String(25), nullable=False, server_default="available"),
         sa.Column(
-            "has_attached_bathroom", sa.Boolean(), nullable=False, server_default="0"
+            "has_attached_bathroom", sa.Boolean(), nullable=False, server_default="false"
         ),
-        sa.Column("has_ac", sa.Boolean(), nullable=False, server_default="0"),
-        sa.Column("has_wifi", sa.Boolean(), nullable=False, server_default="0"),
+        sa.Column("has_ac", sa.Boolean(), nullable=False, server_default="false"),
+        sa.Column("has_wifi", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column("monthly_rent", sa.Float(), nullable=True, server_default="0"),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
     )
     op.create_index("ix_hostel_rooms_id", "hostel_rooms", ["id"])
     op.create_index("ix_hostel_rooms_tenant_id", "hostel_rooms", ["tenant_id"])
