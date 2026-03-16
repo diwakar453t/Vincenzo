@@ -86,14 +86,17 @@ jobs:
 
       - name: Configure Azure App Service Startup Command & Settings
         run: |
+          RG=$(az webapp list --query "[?name=='${{ secrets.AZURE_WEBAPP_NAME }}'].resourceGroup | [0]" -o tsv)
+          echo "Found Resource Group: $RG"
+          
           az webapp config set \
             --name ${{ secrets.AZURE_WEBAPP_NAME }} \
-            --resource-group $(az webapp show --name ${{ secrets.AZURE_WEBAPP_NAME }} --query resourceGroup -o tsv) \
+            --resource-group $RG \
             --startup-file "gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --workers 2 --bind 0.0.0.0:8000 --timeout 120"
           
           az webapp config appsettings set \
             --name ${{ secrets.AZURE_WEBAPP_NAME }} \
-            --resource-group $(az webapp show --name ${{ secrets.AZURE_WEBAPP_NAME }} --query resourceGroup -o tsv) \
+            --resource-group $RG \
             --settings WEBSITES_PORT=8000
 
       - name: Deploy Backend to Azure App Service
