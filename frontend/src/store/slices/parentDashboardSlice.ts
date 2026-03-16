@@ -20,9 +20,19 @@ export interface FeeStatus {
     payment_history: { date: string; amount: number; receipt_no: string }[];
 }
 
+export interface NotificationItem {
+    id: number;
+    title: string;
+    message: string;
+    category: string;
+    date: string;
+    is_read: boolean;
+}
+
 interface ParentDashboardState {
     children: ChildInfo[];
     feeStatus: FeeStatus | null;
+    notifications: NotificationItem[];
     loading: boolean;
     error: string | null;
 }
@@ -30,6 +40,7 @@ interface ParentDashboardState {
 const initialState: ParentDashboardState = {
     children: [],
     feeStatus: null,
+    notifications: [],
     loading: false,
     error: null,
 };
@@ -58,6 +69,18 @@ export const fetchParentFeeStatus = createAsyncThunk(
     }
 );
 
+export const fetchParentNotifications = createAsyncThunk(
+    'parentDashboard/fetchNotifications',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await api.get('/parent-profile/me/notifications');
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.detail || 'Failed to fetch notifications');
+        }
+    }
+);
+
 const parentDashboardSlice = createSlice({
     name: 'parentDashboard',
     initialState,
@@ -76,7 +99,22 @@ const parentDashboardSlice = createSlice({
                 state.error = action.payload as string;
             })
             .addCase(fetchParentFeeStatus.fulfilled, (state, action) => {
-                state.feeStatus = action.payload;
+                const data = action.payload;
+                // Map from backend schema (total_fee/paid_amount/pending_amount) to our FeeStatus shape
+                state.feeStatus = {
+                    total_fees: data.total_fee ?? data.total_fees ?? 0,
+                    paid: data.paid_amount ?? data.paid ?? 0,
+                    pending: data.pending_amount ?? data.pending ?? 0,
+                    due_date: data.due_date,
+                    payment_history: data.payment_items?.map((i: any) => ({
+                        date: i.paid_date || i.due_date,
+                        amount: i.amount,
+                        receipt_no: i.receipt_number || '',
+                    })) || data.payment_history || [],
+                };
+            })
+            .addCase(fetchParentNotifications.fulfilled, (state, action) => {
+                state.notifications = action.payload.notifications || action.payload || [];
             });
     },
 });

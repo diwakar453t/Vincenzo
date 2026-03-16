@@ -89,6 +89,25 @@ class StudentService:
                 f"Student with ID {student_data.student_id} already exists"
             )
 
+        # 1. Create a corresponding User account for login
+        email = student_data.email or f"{student_data.student_id.lower()}@student.local"
+        existing_user = self.db.query(User).filter(User.email == email).first()
+        if existing_user:
+            raise ValueError(f"User with email {email} already exists")
+
+        user = User(
+            email=email,
+            hashed_password=get_password_hash("Student@1234"),
+            full_name=f"{student_data.first_name} {student_data.last_name}",
+            role=UserRole.STUDENT.value,
+            tenant_id=tenant_id,
+            is_active=True,
+            is_verified=True,
+        )
+        self.db.add(user)
+        self.db.flush()  # Ensures user gets an ID and triggers commit cycle on relations
+
+        # 2. Create Student
         student = Student(**student_data.model_dump(), tenant_id=tenant_id)
 
         self.db.add(student)

@@ -4,6 +4,8 @@ from typing import List, Optional
 from app.models.guardian import Guardian, GuardianStatus
 from app.models.student import Student
 from app.schemas.guardian import GuardianCreate, GuardianUpdate
+from app.models.user import User, UserRole
+from app.core.auth import get_password_hash
 
 
 class GuardianService:
@@ -59,7 +61,26 @@ class GuardianService:
         data = guardian_data.model_dump(exclude={"student_ids"})
         student_ids = guardian_data.student_ids or []
 
-        guardian = Guardian(**data, tenant_id=tenant_id)
+        # 1. Create a corresponding User account for login
+        email = guardian_data.email or f"{guardian_data.phone}@parent.local"
+        existing_user = self.db.query(User).filter(User.email == email).first()
+        if existing_user:
+            raise ValueError(f"User with email {email} already exists")
+
+        user = User(
+            email=email,
+            hashed_password=get_password_hash("Parent@1234"),
+            full_name=f"{guardian_data.first_name} {guardian_data.last_name}",
+            role=UserRole.PARENT.value,
+            tenant_id=tenant_id,
+            is_active=True,
+            is_verified=True,
+        )
+        self.db.add(user)
+        self.db.flush()  # Get user.id
+
+        # 2. Create Guardian
+        guardian = Guardian(**data, tenant_id=tenant_id, user_id=user.id)
 
         # Link students if provided
         if student_ids:

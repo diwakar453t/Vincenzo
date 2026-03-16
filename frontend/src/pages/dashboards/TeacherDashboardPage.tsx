@@ -5,6 +5,8 @@ import {
     fetchTeacherProfile,
     fetchTeacherClasses,
     fetchTeacherStudents,
+    fetchTeacherAssignments,
+    fetchTeacherSchedule,
 } from '../../store/slices/teacherDashboardSlice';
 import {
     Box, Typography, Grid, Card, CardContent, Chip, Tab, Tabs,
@@ -19,24 +21,6 @@ import {
     Class, AttachFile, BarChart, CalendarToday, Star, Warning,
     Add, Edit, Visibility, Refresh,
 } from '@mui/icons-material';
-
-// Static mock data for items not yet wired to API (assignments, marks, announcements)
-// These will be replaced as those endpoints are built out.
-const mockAssignments = [
-    { id: 1, title: 'Algebra Problem Set', class: 'Class 10-A', dueDate: '2026-03-05', submitted: 28, total: 32 },
-    { id: 2, title: 'Calculus Practice', class: 'Class 10-B', dueDate: '2026-03-07', submitted: 20, total: 30 },
-    { id: 3, title: 'Statistics Project', class: 'Class 9-A', dueDate: '2026-03-10', submitted: 15, total: 28 },
-];
-const mockInternalMarks = [
-    { id: 1, student: 'Student 1', marks: 87, total: 100, grade: 'A' },
-    { id: 2, student: 'Student 2', marks: 74, total: 100, grade: 'B+' },
-    { id: 3, student: 'Student 3', marks: 65, total: 100, grade: 'B' },
-    { id: 4, student: 'Student 4', marks: 95, total: 100, grade: 'A+' },
-];
-const mockAnnouncements = [
-    { id: 1, title: 'Extra class for Class 10-A', date: '2026-02-27', audience: 'Class 10-A' },
-    { id: 2, title: 'Exam guidelines shared', date: '2026-02-25', audience: 'All Classes' },
-];
 
 const COLORS = {
     blue: { bg: 'rgba(61,94,225,0.1)', fg: '#3D5EE1' },
@@ -62,12 +46,14 @@ export default function TeacherDashboardPage() {
     const [attendanceData, setAttendanceData] = useState<Record<number, string>>({});
     const dispatch = useDispatch<AppDispatch>();
     const user = useSelector((state: RootState) => state.auth.user);
-    const { profile, classes, students, loading, error } = useSelector((state: RootState) => state.teacherDashboard);
+    const { profile, classes, students, assignments, schedule, loading, error } = useSelector((state: RootState) => state.teacherDashboard);
 
     useEffect(() => {
         dispatch(fetchTeacherProfile());
         dispatch(fetchTeacherClasses());
         dispatch(fetchTeacherStudents());
+        dispatch(fetchTeacherAssignments());
+        dispatch(fetchTeacherSchedule());
     }, [dispatch]);
 
     useEffect(() => {
@@ -109,7 +95,7 @@ export default function TeacherDashboardPage() {
                     </Box>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                    <IconButton onClick={() => { dispatch(fetchTeacherProfile()); dispatch(fetchTeacherClasses()); dispatch(fetchTeacherStudents()); }} title="Refresh">
+                    <IconButton onClick={() => { dispatch(fetchTeacherProfile()); dispatch(fetchTeacherClasses()); dispatch(fetchTeacherStudents()); dispatch(fetchTeacherAssignments()); dispatch(fetchTeacherSchedule()); }} title="Refresh">
                         <Refresh />
                     </IconButton>
                     <Badge badgeContent={2} color="error">
@@ -130,7 +116,7 @@ export default function TeacherDashboardPage() {
                 {[
                     { icon: <Class />, label: 'Assigned Classes', value: classes.length || '—', color: 'blue' as const },
                     { icon: <People />, label: 'Total Students', value: totalStudents || students.length || '—', color: 'green' as const },
-                    { icon: <Assignment />, label: 'Active Assignments', value: mockAssignments.length, color: 'amber' as const },
+                    { icon: <Assignment />, label: 'Active Assignments', value: assignments.length || '—', color: 'amber' as const },
                     { icon: <CheckCircle />, label: "Today's Attendance", value: students.length > 0 ? `${presentCount}/${students.length}` : '—', color: 'purple' as const },
                 ].map(s => (
                     <Grid size={{ xs: 6, sm: 6, md: 3 }} key={s.label}>
@@ -186,6 +172,33 @@ export default function TeacherDashboardPage() {
                                 </Grid>
                             )}
 
+                            {/* Schedule (Live from DB) */}
+                            {schedule.length > 0 && (
+                                <>
+                                    <Typography variant="h6" fontWeight={700} mt={4} mb={2}>🕐 My Schedule</Typography>
+                                    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                                        <Table size="small">
+                                            <TableHead>
+                                                <TableRow sx={{ bgcolor: 'rgba(61,94,225,0.05)' }}>
+                                                    {['Day', 'Time', 'Class', 'Subject', 'Room'].map(h => <TableCell key={h} sx={{ fontWeight: 700 }}>{h}</TableCell>)}
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                                {schedule.map((s, i) => (
+                                                    <TableRow key={i} sx={{ '&:hover': { bgcolor: 'rgba(61,94,225,0.03)' } }}>
+                                                        <TableCell><Typography fontWeight={600}>{s.day}</Typography></TableCell>
+                                                        <TableCell><Typography variant="body2">{s.start_time} – {s.end_time}</Typography></TableCell>
+                                                        <TableCell><Chip label={s.class_name} size="small" sx={{ bgcolor: 'rgba(40,167,69,0.1)', color: '#28A745' }} /></TableCell>
+                                                        <TableCell><Typography variant="body2">{s.subject_name}</Typography></TableCell>
+                                                        <TableCell><Typography variant="body2" color="text.secondary">{s.room_number || '—'}</Typography></TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </TableContainer>
+                                </>
+                            )}
+
                             <Typography variant="h6" fontWeight={700} mt={4} mb={2}>👥 Student List (Live)</Typography>
                             {students.length === 0 ? (
                                 <Alert severity="info" sx={{ borderRadius: 2 }}>No students found for your classes.</Alert>
@@ -194,7 +207,7 @@ export default function TeacherDashboardPage() {
                                     <Table size="small">
                                         <TableHead>
                                             <TableRow sx={{ bgcolor: 'rgba(40,167,69,0.05)' }}>
-                                                {['Student ID', 'Student', 'Class', 'Grade', 'Attendance'].map(h => <TableCell key={h} sx={{ fontWeight: 700 }}>{h}</TableCell>)}
+                                                {['Student ID', 'Student', 'Class', 'Status'].map(h => <TableCell key={h} sx={{ fontWeight: 700 }}>{h}</TableCell>)}
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
@@ -203,14 +216,7 @@ export default function TeacherDashboardPage() {
                                                     <TableCell><Typography variant="body2" color="text.secondary">{s.student_id}</Typography></TableCell>
                                                     <TableCell><Typography fontWeight={600}>{s.full_name}</Typography></TableCell>
                                                     <TableCell><Typography variant="body2">{s.class_name}</Typography></TableCell>
-                                                    <TableCell><Chip label={s.grade || '—'} size="small" color={s.grade?.startsWith('A') ? 'success' : 'primary'} /></TableCell>
-                                                    <TableCell>
-                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                            <LinearProgress variant="determinate" value={s.attendance_percentage || 0}
-                                                                sx={{ flex: 1, height: 6, borderRadius: 3, '& .MuiLinearProgress-bar': { bgcolor: (s.attendance_percentage || 0) >= 75 ? '#28A745' : '#DC3545', borderRadius: 3 } }} />
-                                                            <Typography variant="caption">{s.attendance_percentage || 0}%</Typography>
-                                                        </Box>
-                                                    </TableCell>
+                                                    <TableCell><Chip label={s.grade || s.attendance_percentage ? `${s.attendance_percentage}%` : '—'} size="small" color="primary" /></TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>
@@ -278,41 +284,45 @@ export default function TeacherDashboardPage() {
                         </Box>
                     )}
 
-                    {/* 2: Assignments */}
+                    {/* 2: Assignments — LIVE DATA */}
                     {tab === 2 && (
                         <Box>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                 <Typography variant="h6" fontWeight={700}>📝 Assignment Management</Typography>
                                 <Button variant="contained" startIcon={<Add />} sx={{ borderRadius: 2 }}>Create Assignment</Button>
                             </Box>
-                            <Grid container spacing={2}>
-                                {mockAssignments.map(a => (
-                                    <Grid size={{ xs: 12 }} key={a.id}>
-                                        <Card variant="outlined" sx={{ borderRadius: 2 }}>
-                                            <CardContent>
-                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1 }}>
-                                                    <Box>
-                                                        <Typography fontWeight={700}>{a.title}</Typography>
-                                                        <Typography variant="caption" color="text.secondary">{a.class} • Due: {a.dueDate}</Typography>
+                            {assignments.length === 0 ? (
+                                <Alert severity="info" sx={{ borderRadius: 2 }}>No assignments yet. Create one to get started.</Alert>
+                            ) : (
+                                <Grid container spacing={2}>
+                                    {assignments.map(a => (
+                                        <Grid size={{ xs: 12 }} key={a.id}>
+                                            <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                                                <CardContent>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1 }}>
+                                                        <Box>
+                                                            <Typography fontWeight={700}>{a.title}</Typography>
+                                                            <Typography variant="caption" color="text.secondary">{a.class_name} · {a.subject_name} · Due: {a.due_date}</Typography>
+                                                        </Box>
+                                                        <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
+                                                            <Button size="small" startIcon={<Visibility />} sx={{ borderRadius: 2 }}>View Submissions</Button>
+                                                            <Button size="small" variant="outlined" startIcon={<Grade />} sx={{ borderRadius: 2 }}>Grade</Button>
+                                                        </Box>
                                                     </Box>
-                                                    <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
-                                                        <Button size="small" startIcon={<Visibility />} sx={{ borderRadius: 2 }}>View Submissions</Button>
-                                                        <Button size="small" variant="outlined" startIcon={<Grade />} sx={{ borderRadius: 2 }}>Grade</Button>
+                                                    <Box sx={{ mt: 2 }}>
+                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                                            <Typography variant="caption">Submissions: {a.submission_count}/{a.submission_count + a.pending_count}</Typography>
+                                                            <Typography variant="caption">{a.submission_count + a.pending_count > 0 ? Math.round((a.submission_count / (a.submission_count + a.pending_count)) * 100) : 0}%</Typography>
+                                                        </Box>
+                                                        <LinearProgress variant="determinate" value={a.submission_count + a.pending_count > 0 ? (a.submission_count / (a.submission_count + a.pending_count)) * 100 : 0}
+                                                            sx={{ height: 6, borderRadius: 3, '& .MuiLinearProgress-bar': { bgcolor: '#28A745', borderRadius: 3 } }} />
                                                     </Box>
-                                                </Box>
-                                                <Box sx={{ mt: 2 }}>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                                        <Typography variant="caption">Submissions: {a.submitted}/{a.total}</Typography>
-                                                        <Typography variant="caption">{Math.round((a.submitted / a.total) * 100)}%</Typography>
-                                                    </Box>
-                                                    <LinearProgress variant="determinate" value={(a.submitted / a.total) * 100}
-                                                        sx={{ height: 6, borderRadius: 3, '& .MuiLinearProgress-bar': { bgcolor: '#28A745', borderRadius: 3 } }} />
-                                                </Box>
-                                            </CardContent>
-                                        </Card>
-                                    </Grid>
-                                ))}
-                            </Grid>
+                                                </CardContent>
+                                            </Card>
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                            )}
                             <Box sx={{ mt: 2 }}>
                                 <Button variant="outlined" startIcon={<AttachFile />} sx={{ borderRadius: 2 }}>Upload Study Material</Button>
                             </Box>
@@ -326,25 +336,29 @@ export default function TeacherDashboardPage() {
                                 <Typography variant="h6" fontWeight={700}>📊 Enter Internal Marks</Typography>
                                 <Chip label="Mid Term" color="primary" />
                             </Box>
-                            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-                                <Table>
-                                    <TableHead>
-                                        <TableRow sx={{ bgcolor: 'rgba(61,94,225,0.05)' }}>
-                                            {['Student', 'Marks Obtained', 'Total Marks', 'Grade'].map(h => <TableCell key={h} sx={{ fontWeight: 700 }}>{h}</TableCell>)}
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {mockInternalMarks.map(m => (
-                                            <TableRow key={m.id}>
-                                                <TableCell><Typography fontWeight={600}>{m.student}</Typography></TableCell>
-                                                <TableCell><Typography fontWeight={700}>{m.marks}</Typography></TableCell>
-                                                <TableCell><Typography color="text.secondary">{m.total}</Typography></TableCell>
-                                                <TableCell><Chip label={m.grade} size="small" color={m.grade.startsWith('A') ? 'success' : 'primary'} /></TableCell>
+                            {students.length === 0 ? (
+                                <Alert severity="info" sx={{ borderRadius: 2 }}>No students loaded. Ensure you have classes assigned.</Alert>
+                            ) : (
+                                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                                    <Table>
+                                        <TableHead>
+                                            <TableRow sx={{ bgcolor: 'rgba(61,94,225,0.05)' }}>
+                                                {['Student', 'Student ID', 'Class', 'Status'].map(h => <TableCell key={h} sx={{ fontWeight: 700 }}>{h}</TableCell>)}
                                             </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </TableContainer>
+                                        </TableHead>
+                                        <TableBody>
+                                            {students.map(s => (
+                                                <TableRow key={s.id}>
+                                                    <TableCell><Typography fontWeight={600}>{s.full_name}</Typography></TableCell>
+                                                    <TableCell><Typography color="text.secondary">{s.student_id}</Typography></TableCell>
+                                                    <TableCell><Typography variant="body2">{s.class_name}</Typography></TableCell>
+                                                    <TableCell><Chip label={s.grade || '—'} size="small" color="primary" /></TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                            )}
                             <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
                                 <Button variant="contained" startIcon={<Edit />} sx={{ borderRadius: 2 }}>Edit & Save Marks</Button>
                                 <Button variant="outlined" sx={{ borderRadius: 2 }}>Auto-Calculate Results</Button>
@@ -399,30 +413,33 @@ export default function TeacherDashboardPage() {
                                 <Grid size={{ xs: 12, sm: 6 }}>
                                     <Card variant="outlined" sx={{ borderRadius: 2 }}>
                                         <CardContent>
-                                            <Typography fontWeight={700} mb={2}>📋 My Announcements</Typography>
-                                            <List disablePadding>
-                                                {mockAnnouncements.map((a, i) => (
-                                                    <Box key={a.id}>
-                                                        <ListItem sx={{ px: 0 }}>
-                                                            <ListItemAvatar><Avatar sx={{ bgcolor: '#28A745', width: 36, height: 36 }}><Notifications sx={{ fontSize: 18 }} /></Avatar></ListItemAvatar>
-                                                            <ListItemText primary={<Typography variant="body2" fontWeight={600}>{a.title}</Typography>} secondary={`${a.date} • ${a.audience}`} />
-                                                        </ListItem>
-                                                        {i < mockAnnouncements.length - 1 && <Divider />}
-                                                    </Box>
-                                                ))}
-                                            </List>
-                                            <Button variant="outlined" startIcon={<Add />} fullWidth sx={{ mt: 2, borderRadius: 2 }}>Post Announcement</Button>
+                                            <Typography fontWeight={700} mb={2}>💬 Message Students / Parents</Typography>
+                                            <Typography variant="body2" color="text.secondary" mb={2}>Send direct messages to students or notify parents about academic progress.</Typography>
+                                            <Button variant="contained" startIcon={<Message />} fullWidth sx={{ mb: 1.5, borderRadius: 2 }}>Message a Student</Button>
+                                            <Button variant="outlined" fullWidth sx={{ mb: 1.5, borderRadius: 2 }}>Notify Parents</Button>
+                                            <Button variant="outlined" startIcon={<CalendarToday />} fullWidth sx={{ borderRadius: 2 }}>Schedule Extra Class</Button>
                                         </CardContent>
                                     </Card>
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 6 }}>
                                     <Card variant="outlined" sx={{ borderRadius: 2 }}>
                                         <CardContent>
-                                            <Typography fontWeight={700} mb={2}>💬 Message Students / Parents</Typography>
-                                            <Typography variant="body2" color="text.secondary" mb={2}>Send direct messages to students or notify parents about academic progress.</Typography>
-                                            <Button variant="contained" startIcon={<Message />} fullWidth sx={{ mb: 1.5, borderRadius: 2 }}>Message a Student</Button>
-                                            <Button variant="outlined" fullWidth sx={{ mb: 1.5, borderRadius: 2 }}>Notify Parents</Button>
-                                            <Button variant="outlined" startIcon={<CalendarToday />} fullWidth sx={{ borderRadius: 2 }}>Schedule Extra Class</Button>
+                                            <Typography fontWeight={700} mb={2}>📋 Assignments Summary</Typography>
+                                            {assignments.length === 0 ? (
+                                                <Typography variant="body2" color="text.secondary">No assignments created yet.</Typography>
+                                            ) : (
+                                                <List disablePadding>
+                                                    {assignments.slice(0, 3).map((a, i) => (
+                                                        <Box key={a.id}>
+                                                            <ListItem sx={{ px: 0 }}>
+                                                                <ListItemAvatar><Avatar sx={{ bgcolor: '#28A745', width: 36, height: 36 }}><Assignment sx={{ fontSize: 18 }} /></Avatar></ListItemAvatar>
+                                                                <ListItemText primary={<Typography variant="body2" fontWeight={600}>{a.title}</Typography>} secondary={`${a.class_name} • Due: ${a.due_date}`} />
+                                                            </ListItem>
+                                                            {i < Math.min(assignments.length, 3) - 1 && <Divider />}
+                                                        </Box>
+                                                    ))}
+                                                </List>
+                                            )}
                                         </CardContent>
                                     </Card>
                                 </Grid>

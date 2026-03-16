@@ -166,115 +166,52 @@ class StudentProfileService:
     def get_student_schedule(
         self, student_id: int, tenant_id: str
     ) -> List[StudentScheduleItem]:
-        """Get weekly schedule/timetable - MOCK DATA"""
-        # Mock schedule data
-        schedule = [
-            # Monday
-            StudentScheduleItem(
-                day="Monday",
-                period=1,
-                start_time="08:00",
-                end_time="09:00",
-                subject_name="Mathematics",
-                subject_code="MATH101",
-                teacher_name="Mr. Smith",
-                room_number="101",
-            ),
-            StudentScheduleItem(
-                day="Monday",
-                period=2,
-                start_time="09:00",
-                end_time="10:00",
-                subject_name="Science",
-                subject_code="SCI101",
-                teacher_name="Mrs. Johnson",
-                room_number="205",
-            ),
-            StudentScheduleItem(
-                day="Monday",
-                period=3,
-                start_time="10:30",
-                end_time="11:30",
-                subject_name="English",
-                subject_code="ENG101",
-                teacher_name="Ms. Davis",
-                room_number="102",
-            ),
-            StudentScheduleItem(
-                day="Monday",
-                period=4,
-                start_time="11:30",
-                end_time="12:30",
-                subject_name="Social Studies",
-                subject_code="SOC101",
-                teacher_name="Mr. Wilson",
-                room_number="203",
-            ),
-            StudentScheduleItem(
-                day="Monday",
-                period=5,
-                start_time="13:30",
-                end_time="14:30",
-                subject_name="Computer Science",
-                subject_code="CS101",
-                teacher_name="Dr. Brown",
-                room_number="Lab-1",
-            ),
-            # Tuesday
-            StudentScheduleItem(
-                day="Tuesday",
-                period=1,
-                start_time="08:00",
-                end_time="09:00",
-                subject_name="Science",
-                subject_code="SCI101",
-                teacher_name="Mrs. Johnson",
-                room_number="205",
-            ),
-            StudentScheduleItem(
-                day="Tuesday",
-                period=2,
-                start_time="09:00",
-                end_time="10:00",
-                subject_name="Mathematics",
-                subject_code="MATH101",
-                teacher_name="Mr. Smith",
-                room_number="101",
-            ),
-            StudentScheduleItem(
-                day="Tuesday",
-                period=3,
-                start_time="10:30",
-                end_time="11:30",
-                subject_name="Physical Education",
-                subject_code="PE101",
-                teacher_name="Coach Taylor",
-                room_number="Gym",
-            ),
-            StudentScheduleItem(
-                day="Tuesday",
-                period=4,
-                start_time="11:30",
-                end_time="12:30",
-                subject_name="English",
-                subject_code="ENG101",
-                teacher_name="Ms. Davis",
-                room_number="102",
-            ),
-            StudentScheduleItem(
-                day="Tuesday",
-                period=5,
-                start_time="13:30",
-                end_time="14:30",
-                subject_name="Art",
-                subject_code="ART101",
-                teacher_name="Ms. Garcia",
-                room_number="Art Room",
-            ),
-        ]
+        """Get weekly schedule/timetable from database"""
+        from app.models.timetable import Timetable, Period
 
-        # Add more days...
-        return schedule
+        student = (
+            self.db.query(Student)
+            .filter(Student.id == student_id, Student.tenant_id == tenant_id)
+            .first()
+        )
+        if not student or not student.class_id:
+            return []
+
+        timetable = (
+            self.db.query(Timetable)
+            .filter(
+                Timetable.class_id == student.class_id,
+                Timetable.tenant_id == tenant_id,
+            )
+            .first()
+        )
+        if not timetable:
+            return []
+
+        result = []
+        # Sort periods by day and start time if needed
+        sorted_periods = sorted(
+            timetable.periods,
+            key=lambda p: (p.day_of_week, p.start_time),
+        ) if timetable.periods else []
+
+        for i, p in enumerate(sorted_periods, 1):
+            result.append(
+                StudentScheduleItem(
+                    day=p.day_of_week,
+                    period=i,
+                    start_time=p.start_time,
+                    end_time=p.end_time,
+                    subject_name=p.subject.name if p.subject else "Unknown",
+                    subject_code=str(p.subject_id) if p.subject_id else "N/A",
+                    teacher_name=f"{p.teacher.first_name} {p.teacher.last_name}"
+                    if p.teacher
+                    else "Unknown",
+                    room_number=p.room.display_name if p.room else None,
+                )
+            )
+
+        return result
 
     def get_student_grades(
         self, student_id: int, tenant_id: str

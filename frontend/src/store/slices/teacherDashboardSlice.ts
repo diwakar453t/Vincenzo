@@ -31,10 +31,35 @@ export interface TeacherStudentInfo {
     attendance_percentage: number;
 }
 
+export interface TeacherAssignment {
+    id: number;
+    title: string;
+    description?: string;
+    subject_name: string;
+    class_name: string;
+    due_date: string;
+    total_marks: number;
+    assigned_date: string;
+    submission_count: number;
+    pending_count: number;
+}
+
+export interface TeacherScheduleItem {
+    day: string;
+    period: number;
+    start_time: string;
+    end_time: string;
+    class_name: string;
+    subject_name: string;
+    room_number?: string;
+}
+
 interface TeacherDashboardState {
     profile: TeacherProfile | null;
     classes: TeacherClassInfo[];
     students: TeacherStudentInfo[];
+    assignments: TeacherAssignment[];
+    schedule: TeacherScheduleItem[];
     loading: boolean;
     error: string | null;
 }
@@ -43,6 +68,8 @@ const initialState: TeacherDashboardState = {
     profile: null,
     classes: [],
     students: [],
+    assignments: [],
+    schedule: [],
     loading: false,
     error: null,
 };
@@ -83,6 +110,30 @@ export const fetchTeacherStudents = createAsyncThunk(
     }
 );
 
+export const fetchTeacherAssignments = createAsyncThunk(
+    'teacherDashboard/fetchAssignments',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await api.get('/teacher-profile/me/assignments');
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.detail || 'Failed to fetch assignments');
+        }
+    }
+);
+
+export const fetchTeacherSchedule = createAsyncThunk(
+    'teacherDashboard/fetchSchedule',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await api.get('/teacher-profile/me/schedule');
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.detail || 'Failed to fetch schedule');
+        }
+    }
+);
+
 const teacherDashboardSlice = createSlice({
     name: 'teacherDashboard',
     initialState,
@@ -105,6 +156,12 @@ const teacherDashboardSlice = createSlice({
             })
             .addCase(fetchTeacherStudents.fulfilled, (state, action) => {
                 state.students = action.payload.students || action.payload || [];
+            })
+            .addCase(fetchTeacherAssignments.fulfilled, (state, action) => {
+                state.assignments = action.payload.assignments || action.payload || [];
+            })
+            .addCase(fetchTeacherSchedule.fulfilled, (state, action) => {
+                state.schedule = action.payload.schedule || action.payload || [];
             });
     },
 });
