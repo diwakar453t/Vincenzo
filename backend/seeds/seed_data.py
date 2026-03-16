@@ -483,8 +483,22 @@ for title, msg in notifs:
                 is_read=False,
             )
         )
+# Also create notifications for the parent user
+parent_notif_user = user_objs["parent1@demo.preskool.local"]
+for title, msg in notifs:
+    if not db.query(Notification).filter_by(title=title, user_id=parent_notif_user.id, tenant_id=TENANT_ID).first():
+        db.add(
+            Notification(
+                title=title,
+                message=msg,
+                user_id=parent_notif_user.id,
+                sender_id=user_objs["admin@demo.preskool.local"].id,
+                tenant_id=TENANT_ID,
+                is_read=False,
+            )
+        )
 db.commit()
-print("  ✅ 4 notifications created")
+print("  ✅ Notifications created for teacher and parent")
 
 
 # ─── 12. Guardian ────────────────────────────────────────────────────────────
@@ -498,12 +512,18 @@ g, created = get_or_create(
         "phone": "9800000099",
         "relationship_type": "father",
         "address": "123 Demo Street, Mumbai",
+        "user_id": user_objs["parent1@demo.preskool.local"].id,
     },
 )
 if created:
-    # Link to student 1
-    student_objs[0].guardian_id = g.id if hasattr(Student, "guardian_id") else None
     print("  ✅ Guardian profile created")
+
+# Link students 1 & 2 to parent user so parent dashboard shows children
+parent_user = user_objs["parent1@demo.preskool.local"]
+for stu in student_objs[:2]:  # Rahul Kumar and Sneha Gupta
+    if stu.parent_id != parent_user.id:
+        stu.parent_id = parent_user.id
+        print(f"  ✅ Linked {stu.first_name} to parent user")
 db.commit()
 
 
