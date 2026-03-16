@@ -8,9 +8,9 @@ echo "🚀 Starting PreSkool ERP backend..."
 echo "Python: $(python --version)"
 echo "Working directory: $(pwd)"
 
-# Step 0: Ensure dependencies are installed
-echo "📦 Installing dependencies from requirements.txt..."
-pip install --no-cache-dir -r requirements.txt || echo "⚠️  Pip install failed — continuing"
+# Step 0: List dependencies for debugging
+echo "📦 Listing installed packages..."
+pip list > /home/site/wwwroot/LogFiles/installed_packages.txt || echo "⚠️  Pip list failed"
 
 # Step 1: Run database migrations to ensure schema is current
 echo "📦 Running database migrations..."
