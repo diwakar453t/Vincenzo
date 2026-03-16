@@ -104,6 +104,11 @@ jobs:
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
           package: ./backend
+          
+      - name: Ensure Azure App is Started
+        run: |
+          RG=$(az webapp list --query "[?name=='${{ secrets.AZURE_WEBAPP_NAME }}'].resourceGroup | [0]" -o tsv)
+          az webapp start --name ${{ secrets.AZURE_WEBAPP_NAME }} --resource-group $RG
 
       - name: Wait for App Service startup
         run: |
