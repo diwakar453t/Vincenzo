@@ -135,7 +135,7 @@ users_data = [
         "password": "Student@1234",
     },
     {
-        "email": "parent@demo.preskool.local",
+        "email": "parent1@demo.preskool.local",
         "full_name": "Rajesh Kumar",
         "role": UserRole.PARENT.value,
         "password": "Parent@1234",
@@ -485,7 +485,7 @@ print("  ✅ 4 notifications created")
 # ─── 12. Guardian ────────────────────────────────────────────────────────────
 g, created = get_or_create(
     Guardian,
-    email="parent@demo.preskool.local",
+    email="parent1@demo.preskool.local",
     tenant_id=TENANT_ID,
     defaults={
         "first_name": "Rajesh",
@@ -514,7 +514,7 @@ with open("seeds/demo_credentials.txt", "w") as f:
     f.write("Admin:       admin@demo.preskool.local        / Admin@1234\n")
     f.write("Teacher:     teacher1@demo.preskool.local     / Teacher@1234\n")
     f.write("Student:     student1@demo.preskool.local     / Student@1234\n")
-    f.write("Parent:      parent@demo.preskool.local        / Parent@1234\n")
+    f.write("Parent:      parent1@demo.preskool.local        / Parent@1234\n")
 print("\n🚀 Start the backend: uvicorn app.main:app --reload")
 print("🌐 Frontend:          npm run dev  (in /frontend)")
 print("📖 Swagger UI:        http://localhost:8000/docs")
