@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional
 from datetime import date, datetime
 
@@ -12,6 +12,13 @@ class StudentBase(BaseModel):
     date_of_birth: date
     gender: str = Field(..., pattern="^(male|female|other)$")
     email: Optional[EmailStr] = None
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def empty_str_to_none(cls, v):
+        if v == "":
+            return None
+        return v
     phone: Optional[str] = Field(None, max_length=20)
     address: Optional[str] = None
     enrollment_date: date
@@ -40,6 +47,13 @@ class StudentUpdate(BaseModel):
     date_of_birth: Optional[date] = None
     gender: Optional[str] = Field(None, pattern="^(male|female|other)$")
     email: Optional[EmailStr] = None
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def empty_str_to_none(cls, v):
+        if v == "":
+            return None
+        return v
     phone: Optional[str] = Field(None, max_length=20)
     address: Optional[str] = None
     class_id: Optional[int] = None

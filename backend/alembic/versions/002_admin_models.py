@@ -202,8 +202,28 @@ def upgrade() -> None:
         op.f("ix_class_subjects_tenant_id"), "class_subjects", ["tenant_id"]
     )
 
+    # Enable RLS and create policies for all new tables
+    tables = ["subjects", "teachers", "classes", "students", "class_subjects"]
+    for table in tables:
+        op.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY;")
+        op.execute(f"""
+            CREATE POLICY tenant_isolation ON {table}
+            USING (tenant_id = current_setting('app.current_tenant_id')::text);
+        """)
+        op.execute(f"""
+            CREATE POLICY superadmin_all ON {table}
+            USING (current_setting('app.is_superadmin', true)::boolean = true);
+        """)
+
 
 def downgrade() -> None:
+    # Drop policies and disable RLS
+    tables = ["class_subjects", "students", "classes", "teachers", "subjects"]
+    for table in tables:
+        op.execute(f"DROP POLICY IF EXISTS superadmin_all ON {table};")
+        op.execute(f"DROP POLICY IF EXISTS tenant_isolation ON {table};")
+        op.execute(f"ALTER TABLE {table} DISABLE ROW LEVEL SECURITY;")
+
     # Drop tables in reverse order
     op.drop_index(op.f("ix_class_subjects_tenant_id"), table_name="class_subjects")
     op.drop_index(op.f("ix_class_subjects_id"), table_name="class_subjects")

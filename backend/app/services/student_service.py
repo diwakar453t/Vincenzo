@@ -108,7 +108,9 @@ class StudentService:
         self.db.flush()  # Ensures user gets an ID and triggers commit cycle on relations
 
         # 2. Create Student
-        student = Student(**student_data.model_dump(), tenant_id=tenant_id)
+        student_dict = student_data.model_dump()
+        student_dict["email"] = email
+        student = Student(**student_dict, tenant_id=tenant_id)
 
         self.db.add(student)
         self.db.commit()
@@ -241,9 +243,9 @@ class StudentService:
                     first_name=first_name,
                     last_name=last_name,
                     full_name=student_name,
+                    email=email,
                     date_of_birth=date.today(),  # Placeholder
                     gender="Other",
-                    user_id=user.id,
                     enrollment_date=date.today(),
                     tenant_id=tenant_id,
                     status=StudentStatus.ACTIVE.value,

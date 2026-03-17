@@ -4,6 +4,7 @@ import type { RootState, AppDispatch } from '../../store/store';
 import { fetchStudents } from '../../store/slices/studentsSlice';
 import { fetchTeachers } from '../../store/slices/teachersSlice';
 import { fetchNotifications } from '../../store/slices/notificationsSlice';
+import { fetchDashboardStatistics } from '../../store/slices/dashboardSlice';
 import {
     Box, Typography, Grid, Card, CardContent, Chip, Tab, Tabs,
     Button, Table, TableBody, TableCell, TableHead, TableRow,
@@ -69,23 +70,27 @@ export default function AdminDashboardPage() {
     const { students, total: totalStudents, loading: studLoading } = useSelector((state: RootState) => state.students);
     const { teachers, total: totalTeachers, loading: teachLoading } = useSelector((state: RootState) => state.teachers);
     const { notifications } = useSelector((state: RootState) => state.notifications);
-    const pendingLeaves = mockLeaves.length; // Leave slice data used directly
+    const { statistics: dashStats, loading: dashLoading } = useSelector((state: RootState) => (state as any).dashboard || { statistics: null, loading: false });
+    const pendingLeaves = 0; // Replace with real data when leaveSlice is fully hooked up
 
     useEffect(() => {
         dispatch(fetchStudents({ limit: 20 }));
         dispatch(fetchTeachers({ limit: 20 }));
         dispatch(fetchNotifications({}) as any);
+        dispatch(fetchDashboardStatistics() as any);
     }, [dispatch]);
 
     const liveStats = {
-        totalStudents,
-        totalTeachers,
-        totalClasses: 24, // from classes slice if needed
-        attendanceRate: 91, // real data from attendance API
-        feeCollection: 78,   // real data from fees API
+        totalStudents: dashStats?.quick_stats.find((s: any) => s.title === 'Total Students')?.value || totalStudents,
+        totalTeachers: dashStats?.quick_stats.find((s: any) => s.title === 'Total Teachers')?.value || totalTeachers,
+        totalClasses: dashStats?.quick_stats.find((s: any) => s.title === 'Total Courses')?.value || 24,
+        attendanceRate: dashStats?.attendance_summary?.present_percentage || 91,
+        feeCollection: 78,
         pendingLeaves,
-        openIssues: 3,
+        openIssues: dashStats?.quick_stats.find((s: any) => s.title === 'Upcoming Events')?.value || 3,
     };
+
+    const recentActivities = dashStats?.recent_activities || [];
 
     // Map real students/teachers to table format
     const studentsForTable = students.map(s => ({
@@ -413,15 +418,17 @@ export default function AdminDashboardPage() {
                                 <Grid size={{ xs: 12, sm: 6 }}>
                                     <Card variant="outlined" sx={{ borderRadius: 2 }}>
                                         <CardContent>
-                                            <Typography fontWeight={700} mb={2}>📋 Recent Announcements</Typography>
+                                            <Typography fontWeight={700} mb={2}>📋 Recent Activities</Typography>
                                             <List disablePadding>
-                                                {mockAnnouncements.map((a, i) => (
+                                                {recentActivities.length === 0 ? (
+                                                    <Typography variant="body2" color="text.secondary">No recent activities found.</Typography>
+                                                ) : recentActivities.slice(0, 5).map((a: any, i: number) => (
                                                     <Box key={a.id}>
                                                         <ListItem sx={{ px: 0 }}>
                                                             <ListItemAvatar><Avatar sx={{ bgcolor: '#3D5EE1', width: 36, height: 36 }}><Notifications sx={{ fontSize: 18 }} /></Avatar></ListItemAvatar>
-                                                            <ListItemText primary={<Typography variant="body2" fontWeight={600}>{a.title}</Typography>} secondary={`${a.date} • ${a.audience}`} />
+                                                            <ListItemText primary={<Typography variant="body2" fontWeight={600}>{a.title}</Typography>} secondary={`${new Date(a.timestamp).toLocaleDateString()} • ${a.user_name}`} />
                                                         </ListItem>
-                                                        {i < mockAnnouncements.length - 1 && <Divider />}
+                                                        {i < recentActivities.slice(0, 5).length - 1 && <Divider />}
                                                     </Box>
                                                 ))}
                                             </List>

@@ -79,6 +79,9 @@ class TeacherService:
 
     def create_teacher(self, teacher_data: TeacherCreate, tenant_id: str) -> Teacher:
         """Create a new teacher"""
+        from app.models.user import User, UserRole
+        from app.core.auth import get_password_hash
+
         # Check if employee_id already exists
         existing = self.get_teacher_by_employee_id(teacher_data.employee_id, tenant_id)
         if existing:
@@ -86,12 +89,28 @@ class TeacherService:
                 f"Teacher with employee ID {teacher_data.employee_id} already exists"
             )
 
-        # Check if user_id already has a teacher profile
-        existing_user = self.get_teacher_by_user_id(teacher_data.user_id, tenant_id)
-        if existing_user:
-            raise ValueError("User already has a teacher profile")
+        email = getattr(teacher_data, "email", None) or f"{teacher_data.employee_id.lower()}@teacher.local"
+        
+        # 1. Create User
+        existing_user_email = self.db.query(User).filter(User.email == email).first()
+        if existing_user_email:
+            raise ValueError(f"User with email {email} already exists")
 
-        teacher = Teacher(**teacher_data.model_dump(), tenant_id=tenant_id)
+        user = User(
+            email=email,
+            hashed_password=get_password_hash(getattr(teacher_data, "password", None) or "Teacher@1234"),
+            full_name=f"{teacher_data.first_name} {teacher_data.last_name}",
+            role=UserRole.TEACHER.value,
+            tenant_id=tenant_id,
+            is_active=True,
+            is_verified=True,
+        )
+        self.db.add(user)
+        self.db.flush()
+
+        # 2. Create Teacher
+        teacher_dict = teacher_data.model_dump(exclude={"email", "password", "user_id"})
+        teacher = Teacher(**teacher_dict, user_id=user.id, tenant_id=tenant_id)
 
         self.db.add(teacher)
         self.db.commit()

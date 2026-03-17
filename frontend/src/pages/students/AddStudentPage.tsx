@@ -93,7 +93,11 @@ export default function AddStudentPage() {
         e.preventDefault();
         if (!validate()) return;
 
-        const result = await dispatch(createStudent(form));
+        const payload = { ...form };
+        if (!payload.email) delete (payload as any).email;
+        if (!payload.phone) delete (payload as any).phone;
+
+        const result = await dispatch(createStudent(payload));
         if (!result.type.endsWith('/rejected')) {
             setSnackbar({ open: true, message: 'Student created successfully!', severity: 'success' });
             setTimeout(() => navigate('/students'), 1500);

@@ -96,7 +96,8 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
     if (role === 'teacher') return <Navigate to="/teacher-dashboard" replace />;
     if (role === 'parent') return <Navigate to="/parent-dashboard" replace />;
     if (role === 'super_admin' || role === 'superadmin') return <Navigate to="/super-admin-dashboard" replace />;
-    return <Navigate to="/admin-dashboard" replace />;
+    if (role === 'admin') return <Navigate to="/admin-dashboard" replace />;
+    return <Navigate to="/profile" replace />;
   }
   return <>{children}</>;
 }
@@ -128,7 +129,8 @@ function RoleRedirect() {
   if (role === 'teacher') return <Navigate to="/teacher-dashboard" replace />;
   if (role === 'parent') return <Navigate to="/parent-dashboard" replace />;
   if (role === 'super_admin' || role === 'superadmin') return <Navigate to="/super-admin-dashboard" replace />;
-  return <Navigate to="/admin-dashboard" replace />;
+  if (role === 'admin') return <Navigate to="/admin-dashboard" replace />;
+  return <Navigate to="/profile" replace />;
 }
 
 function AppRoutes() {
@@ -192,7 +194,7 @@ function AppRoutes() {
           <Route path="student-dashboard" element={<RoleProtectedRoute allowedRoles={['student']}><StudentDashboardPage /></RoleProtectedRoute>} />
           <Route path="teacher-dashboard" element={<RoleProtectedRoute allowedRoles={['teacher']}><TeacherDashboardPage /></RoleProtectedRoute>} />
           <Route path="parent-dashboard" element={<RoleProtectedRoute allowedRoles={['parent']}><ParentDashboardPage /></RoleProtectedRoute>} />
-          <Route path="admin-dashboard" element={<RoleProtectedRoute allowedRoles={['admin']}><AdminDashboardPage /></RoleProtectedRoute>} />
+          <Route path="admin-dashboard" element={<RoleProtectedRoute allowedRoles={['admin', 'super_admin', 'superadmin']}><AdminDashboardPage /></RoleProtectedRoute>} />
           <Route path="super-admin-dashboard" element={<RoleProtectedRoute allowedRoles={['super_admin', 'superadmin']}><SuperAdminDashboardPage /></RoleProtectedRoute>} />
 
           {/* Profile */}

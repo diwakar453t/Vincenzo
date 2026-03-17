@@ -79,7 +79,7 @@ function getNavItems(role?: string): NavItem[] {
           { label: 'Timetable', path: '/timetable' },
           { label: 'Subjects', path: '/subjects' },
           { label: 'Syllabus', path: '/syllabus' },
-          { label: 'Study Materials', path: '/student-dashboard' },
+          { label: 'Study Materials', path: '/files' },
         ],
       },
       {
@@ -170,11 +170,12 @@ function getNavItems(role?: string): NavItem[] {
       { label: 'Super Admin', icon: <AdminPanelSettings />, path: '/super-admin-dashboard' },
       { label: 'Admin Panel', icon: <SupervisorAccount />, path: '/admin-dashboard' },
       {
-        label: 'Institutions',
-        icon: <Business />,
+        label: 'System',
+        icon: <Settings />,
         children: [
-          { label: 'All Institutions', path: '/super-admin/institutions' },
           { label: 'Domain Management', path: '/settings' },
+          { label: 'Plugins', path: '/plugins' },
+          { label: 'General Settings', path: '/settings' },
         ],
       },
       {
@@ -204,12 +205,7 @@ function getNavItems(role?: string): NavItem[] {
           { label: 'Payments', path: '/payments' },
         ],
       },
-      { label: 'Security & Audit', icon: <Security />, path: '/super-admin-dashboard' },
-      { label: 'Feature Flags', icon: <Flag />, path: '/super-admin-dashboard' },
-      { label: 'Infrastructure', icon: <MonitorHeart />, path: '/super-admin-dashboard' },
       { label: 'Reports', icon: <Assessment />, path: '/reports' },
-      { label: 'Plugins', icon: <Extension />, path: '/plugins' },
-      { label: 'Settings', icon: <Settings />, path: '/settings' },
     ];
   }
 

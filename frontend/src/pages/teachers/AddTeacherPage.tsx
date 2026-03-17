@@ -12,12 +12,14 @@ import { Save, ArrowBack, Person, Email, Phone, School, Badge } from '@mui/icons
 interface FormData {
     first_name: string; last_name: string; email: string; phone: string;
     specialization: string; hire_date: string; status: string; employee_id: string;
+    date_of_birth: string; gender: string;
 }
 
 const initialForm: FormData = {
     first_name: '', last_name: '', email: '', phone: '',
     specialization: '', hire_date: new Date().toISOString().split('T')[0],
     status: 'active', employee_id: '',
+    date_of_birth: '', gender: '',
 };
 
 export default function AddTeacherPage() {
@@ -39,6 +41,8 @@ export default function AddTeacherPage() {
         if (!form.last_name.trim()) newErrors.last_name = 'Required';
         if (!form.employee_id.trim()) newErrors.employee_id = 'Required';
         if (!form.hire_date) newErrors.hire_date = 'Required';
+        if (!form.date_of_birth) newErrors.date_of_birth = 'Required';
+        if (!form.gender) newErrors.gender = 'Required';
         if (form.email && !/\S+@\S+\.\S+/.test(form.email)) newErrors.email = 'Invalid email';
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -47,7 +51,13 @@ export default function AddTeacherPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!validate()) return;
-        const result = await dispatch(createTeacher(form));
+        
+        const payload = { ...form };
+        if (!payload.email) delete (payload as any).email;
+        if (!payload.phone) delete (payload as any).phone;
+        if (!payload.specialization) delete (payload as any).specialization;
+
+        const result = await dispatch(createTeacher(payload));
         if (!result.type.endsWith('/rejected')) {
             setSnackbar({ open: true, message: 'Teacher created successfully!', severity: 'success' });
             setTimeout(() => navigate('/teachers'), 1500);
@@ -127,6 +137,16 @@ export default function AddTeacherPage() {
                                 <Grid size={{ xs: 12, sm: 6 }}>
                                     <TextField label="Employee ID" fullWidth required value={form.employee_id} onChange={handleChange('employee_id')}
                                         error={!!errors.employee_id} helperText={errors.employee_id} placeholder="e.g. TCH-001" />
+                                </Grid>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <TextField label="Gender" select fullWidth required value={form.gender} onChange={handleChange('gender')} error={!!errors.gender} helperText={errors.gender}>
+                                        <MenuItem value="male">Male</MenuItem>
+                                        <MenuItem value="female">Female</MenuItem>
+                                        <MenuItem value="other">Other</MenuItem>
+                                    </TextField>
+                                </Grid>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <TextField label="Date of Birth" type="date" fullWidth required value={form.date_of_birth} onChange={handleChange('date_of_birth')} error={!!errors.date_of_birth} helperText={errors.date_of_birth} slotProps={{ inputLabel: { shrink: true } }} />
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 6 }}>
                                     <TextField label="Status" select fullWidth value={form.status} onChange={handleChange('status')}>

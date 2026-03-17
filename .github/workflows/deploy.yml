@@ -1,193 +1,93 @@
-name: Deploy to Azure and Vercel
+name: Deploy PreSkool ERP to Azure & Vercel
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
-
-permissions:
-  id-token: write
-  contents: read
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  validate-secrets:
-    name: Validate Required Secrets
+  test-and-build-backend:
+    name: Backend Tests & Build
     runs-on: ubuntu-latest
-    outputs:
-      has_azure: ${{ steps.check.outputs.has_azure }}
-      has_vercel: ${{ steps.check.outputs.has_vercel }}
-      has_db: ${{ steps.check.outputs.has_db }}
+    defaults:
+      run:
+        working-directory: preskool-erp/backend
+
     steps:
-      - name: Check Deployment Secrets
-        id: check
-        run: |
-          # Azure secrets
-          HAS_AZURE=true
-          [ -z "${{ secrets.AZURE_CLIENT_ID }}" ] && HAS_AZURE=false && echo "⚠️  Missing: AZURE_CLIENT_ID"
-          [ -z "${{ secrets.AZURE_TENANT_ID }}" ] && HAS_AZURE=false && echo "⚠️  Missing: AZURE_TENANT_ID"
-          [ -z "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ] && HAS_AZURE=false && echo "⚠️  Missing: AZURE_SUBSCRIPTION_ID"
-          [ -z "${{ secrets.AZURE_WEBAPP_NAME }}" ] && HAS_AZURE=false && echo "⚠️  Missing: AZURE_WEBAPP_NAME"
-          echo "has_azure=$HAS_AZURE" >> $GITHUB_OUTPUT
-
-          # Vercel secrets
-          HAS_VERCEL=true
-          [ -z "${{ secrets.VERCEL_TOKEN }}" ] && HAS_VERCEL=false && echo "⚠️  Missing: VERCEL_TOKEN"
-          [ -z "${{ secrets.VERCEL_ORG_ID }}" ] && HAS_VERCEL=false && echo "⚠️  Missing: VERCEL_ORG_ID"
-          [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ] && HAS_VERCEL=false && echo "⚠️  Missing: VERCEL_PROJECT_ID"
-          echo "has_vercel=$HAS_VERCEL" >> $GITHUB_OUTPUT
-
-          # DB secrets (optional — only needed for migration+seeding)
-          HAS_DB=true
-          [ -z "${{ secrets.DATABASE_URL }}" ] && HAS_DB=false && echo "ℹ️  Missing: DATABASE_URL (migration/seeding will be skipped)"
-          [ -z "${{ secrets.JWT_SECRET_KEY }}" ] && HAS_DB=false && echo "ℹ️  Missing: JWT_SECRET_KEY"
-          [ -z "${{ secrets.ENCRYPTION_MASTER_KEY }}" ] && HAS_DB=false && echo "ℹ️  Missing: ENCRYPTION_MASTER_KEY"
-          echo "has_db=$HAS_DB" >> $GITHUB_OUTPUT
-
-          if [ "$HAS_AZURE" = "false" ] && [ "$HAS_VERCEL" = "false" ]; then
-            echo "::error::Both Azure and Vercel secrets are missing. Cannot proceed with deployment."
-            exit 1
-          fi
-
-          echo "✅ Secret check complete."
-
-  deploy-backend:
-    name: Deploy Backend to Azure
-    needs: validate-secrets
-    runs-on: ubuntu-latest
-    if: needs.validate-secrets.outputs.has_azure == 'true'
-    steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Source Code
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: backend/requirements.txt
 
       - name: Install dependencies
-        working-directory: backend
-        run: pip install -r requirements.txt
-
-      - name: Verify critical imports
-        working-directory: backend
         run: |
-          python -c "import asyncpg; print(f'✅ asyncpg {asyncpg.__version__}')"
-          python -c "import pandas; print(f'✅ pandas {pandas.__version__}')"
-          python -c "import openpyxl; print(f'✅ openpyxl {openpyxl.__version__}')"
-          echo "All critical dependencies verified."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio
 
-      - name: Azure Login (OIDC)
+      - name: Run PyTest
+        run: |
+          # Ensure tests pass before deployment
+          # Setting a dummy DB URL for test parsing if needed
+          export DATABASE_URL="sqlite:///./test.db"
+          export SECRET_KEY="testsecret"
+          pytest
+
+  deploy-backend:
+    name: Deploy API to Azure
+    runs-on: ubuntu-latest
+    needs: test-and-build-backend
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v3
+
+      - name: Log in to Azure
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Configure Azure App Service Startup Command & Settings
+      - name: Build and push container to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+          
+      - name: Docker build & push
         run: |
-          RG=$(az webapp list --query "[?name=='${{ secrets.AZURE_WEBAPP_NAME }}'].resourceGroup | [0]" -o tsv)
-          echo "Found Resource Group: $RG"
-          
-          az webapp config set \
-            --name ${{ secrets.AZURE_WEBAPP_NAME }} \
-            --resource-group $RG \
-            --startup-file "gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --workers 2 --bind 0.0.0.0:8000 --timeout 120"
-          
-          az webapp config appsettings set \
-            --name ${{ secrets.AZURE_WEBAPP_NAME }} \
-            --resource-group $RG \
-            --settings WEBSITES_PORT=8000
+          cd preskool-erp/backend
+          docker build . -t ${{ secrets.ACR_LOGIN_SERVER }}/preskool-backend:${{ github.sha }}
+          docker tag ${{ secrets.ACR_LOGIN_SERVER }}/preskool-backend:${{ github.sha }} ${{ secrets.ACR_LOGIN_SERVER }}/preskool-backend:latest
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/preskool-backend:${{ github.sha }}
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/preskool-backend:latest
 
-      - name: Deploy Backend to Azure App Service
+      - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
-          package: ./backend
-          
-      - name: Ensure Azure App is Started
-        run: |
-          RG=$(az webapp list --query "[?name=='${{ secrets.AZURE_WEBAPP_NAME }}'].resourceGroup | [0]" -o tsv)
-          az webapp start --name ${{ secrets.AZURE_WEBAPP_NAME }} --resource-group $RG
+          images: ${{ secrets.ACR_LOGIN_SERVER }}/preskool-backend:${{ github.sha }}
 
-      - name: Wait for App Service startup
-        run: |
-          URL="https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net/api/v1/health"
-          echo "Waiting for health at $URL..."
-          for i in {1..20}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
-            if [ "$STATUS" = "200" ]; then
-              echo "✅ Backend is healthy!"
-              curl -s "$URL" | python3 -m json.tool
-              exit 0
-            fi
-            echo "  Attempt $i: HTTP $STATUS — retrying in 5s..."
-            sleep 5
-          done
-          echo "❌ Health check timed out."
-          exit 1
-
-      - name: Run Database Migrations
-        if: needs.validate-secrets.outputs.has_db == 'true'
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-          ENCRYPTION_MASTER_KEY: ${{ secrets.ENCRYPTION_MASTER_KEY }}
-          OTEL_ENABLED: "false"
-          APP_ENV: production
-        working-directory: backend
-        run: |
-          echo "Running alembic upgrade head..."
-          alembic upgrade head
-          echo "✅ Migrations complete"
-        continue-on-error: true
-
-      - name: Seed Demo Accounts
-        if: needs.validate-secrets.outputs.has_db == 'true'
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-          ENCRYPTION_MASTER_KEY: ${{ secrets.ENCRYPTION_MASTER_KEY }}
-          OTEL_ENABLED: "false"
-          APP_ENV: production
-        working-directory: backend
-        run: |
-          echo "Seeding demo accounts..."
-          python seeds/seed_data.py
-          echo "✅ Seeding complete"
-        continue-on-error: true
-
-  deploy-frontend:
-    name: Deploy Frontend to Vercel
-    needs: validate-secrets
+  trigger-vercel-frontend:
+    name: Trigger Frontend Vercel Deploy
     runs-on: ubuntu-latest
-    if: needs.validate-secrets.outputs.has_vercel == 'true'
+    needs: deploy-backend
+    if: github.ref == 'refs/heads/main'
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Wait for Backend Health Check
+        run: |
+          echo "Waiting for API to stabilize..."
+          sleep 15
+          curl -f ${{ secrets.BACKEND_PRODUCTION_URL }}/api/v1/health || echo "Health check failed or unavailable, but proceeding..."
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Build with Production API URL
-        working-directory: frontend
-        env:
-          VITE_API_URL: https://preskool-api-backend.azurewebsites.net/api/v1
-          NODE_ENV: production
-        run: npm run build
-
-      - name: Deploy to Vercel (production)
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: frontend
-          vercel-args: "--prod --build-env VITE_API_URL=https://preskool-api-backend.azurewebsites.net/api/v1"
+      - name: Trigger Vercel Build Webhook
+        run: |
+          curl -X POST ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}

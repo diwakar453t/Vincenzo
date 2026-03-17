@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr, field_validator
 from typing import Optional
 from datetime import date, datetime
 from decimal import Decimal
@@ -27,7 +27,16 @@ class TeacherBase(BaseModel):
 class TeacherCreate(TeacherBase):
     """Schema for creating a teacher"""
 
-    user_id: int  # Required for creation
+    user_id: Optional[int] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def empty_str_to_none(cls, v):
+        if v == "":
+            return None
+        return v
 
 
 class TeacherUpdate(BaseModel):
