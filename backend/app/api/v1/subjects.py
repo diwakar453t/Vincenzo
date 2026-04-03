@@ -44,138 +44,8 @@ def _require_admin(user: User):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Subject endpoints
-# ═══════════════════════════════════════════════════════════════════════════
-
-
-@router.get("/", response_model=SubjectListResponse)
-def list_subjects(
-    skip: int = 0,
-    limit: int = 100,
-    search: Optional[str] = None,
-    subject_type: Optional[str] = None,
-    group_id: Optional[int] = None,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """List all subjects with pagination and filtering"""
-    user = _get_user(current_user, db)
-    service = SubjectService(db)
-    subjects, total = service.get_subjects(
-        tenant_id=user.tenant_id,
-        skip=skip,
-        limit=limit,
-        search=search,
-        subject_type=subject_type,
-        group_id=group_id,
-    )
-
-    subject_items = [
-        SubjectListItem(
-            id=s.id,
-            name=s.name,
-            code=s.code,
-            credits=s.credits,
-            subject_type=s.subject_type or "theory",
-            group_id=s.group_id,
-            group_name=s.group.name if s.group else None,
-        )
-        for s in subjects
-    ]
-
-    return SubjectListResponse(
-        subjects=subject_items,
-        total=total,
-        skip=skip,
-        limit=limit,
-    )
-
-
-@router.post("/", response_model=SubjectResponse, status_code=status.HTTP_201_CREATED)
-def create_subject(
-    subject_data: SubjectCreate,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Create a new subject"""
-    user = _get_user(current_user, db)
-    _require_admin(user)
-
-    service = SubjectService(db)
-    try:
-        subject = service.create_subject(subject_data, user.tenant_id)
-        resp = SubjectResponse.model_validate(subject)
-        resp.group_name = subject.group.name if subject.group else None
-        return resp
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.get("/{subject_id}", response_model=SubjectResponse)
-def get_subject(
-    subject_id: int,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Get a single subject by ID"""
-    user = _get_user(current_user, db)
-    service = SubjectService(db)
-    subject = service.get_subject(subject_id, user.tenant_id)
-
-    if not subject:
-        raise HTTPException(status_code=404, detail="Subject not found")
-
-    resp = SubjectResponse.model_validate(subject)
-    resp.group_name = subject.group.name if subject.group else None
-    return resp
-
-
-@router.put("/{subject_id}", response_model=SubjectResponse)
-def update_subject(
-    subject_id: int,
-    subject_data: SubjectUpdate,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Update a subject"""
-    user = _get_user(current_user, db)
-    _require_admin(user)
-
-    service = SubjectService(db)
-    try:
-        subject = service.update_subject(subject_id, subject_data, user.tenant_id)
-        if not subject:
-            raise HTTPException(status_code=404, detail="Subject not found")
-        resp = SubjectResponse.model_validate(subject)
-        resp.group_name = subject.group.name if subject.group else None
-        return resp
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.delete("/{subject_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_subject(
-    subject_id: int,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Delete a subject"""
-    user = _get_user(current_user, db)
-    _require_admin(user)
-
-    service = SubjectService(db)
-    try:
-        success = service.delete_subject(subject_id, user.tenant_id)
-        if not success:
-            raise HTTPException(status_code=404, detail="Subject not found")
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Subject Group endpoints
+# Subject Group endpoints — MUST be before /{subject_id} to prevent
+# FastAPI from matching "groups" as an integer path param.
 # ═══════════════════════════════════════════════════════════════════════════
 
 
@@ -255,8 +125,106 @@ def delete_subject_group(
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Class-Subject Assignment endpoints
+# Class-Subject Assignment endpoints — also before /{subject_id}
 # ═══════════════════════════════════════════════════════════════════════════
+
+
+@router.get("/class/{class_id}/subjects", response_model=ClassSubjectsResponse)
+def get_class_subjects(
+    class_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get all subjects assigned to a class"""
+    user = _get_user(current_user, db)
+
+    from app.models.class_model import Class
+
+    class_obj = (
+        db.query(Class)
+        .filter(Class.id == class_id, Class.tenant_id == user.tenant_id)
+        .first()
+    )
+    if not class_obj:
+        raise HTTPException(status_code=404, detail="Class not found")
+
+    service = SubjectService(db)
+    subjects = service.get_class_subjects(class_id, user.tenant_id)
+
+    return ClassSubjectsResponse(
+        class_id=class_id,
+        class_name=class_obj.name,
+        subjects=[ClassSubjectInfo(**s) for s in subjects],
+        total=len(subjects),
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Subject endpoints (individual records — AFTER specific-path routes)
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@router.get("/", response_model=SubjectListResponse)
+def list_subjects(
+    skip: int = 0,
+    limit: int = 100,
+    search: Optional[str] = None,
+    subject_type: Optional[str] = None,
+    group_id: Optional[int] = None,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """List all subjects with pagination and filtering"""
+    user = _get_user(current_user, db)
+    service = SubjectService(db)
+    subjects, total = service.get_subjects(
+        tenant_id=user.tenant_id,
+        skip=skip,
+        limit=limit,
+        search=search,
+        subject_type=subject_type,
+        group_id=group_id,
+    )
+
+    subject_items = [
+        SubjectListItem(
+            id=s.id,
+            name=s.name,
+            code=s.code,
+            credits=s.credits,
+            subject_type=s.subject_type or "theory",
+            group_id=s.group_id,
+            group_name=s.group.name if s.group else None,
+        )
+        for s in subjects
+    ]
+
+    return SubjectListResponse(
+        subjects=subject_items,
+        total=total,
+        skip=skip,
+        limit=limit,
+    )
+
+
+@router.post("/", response_model=SubjectResponse, status_code=status.HTTP_201_CREATED)
+def create_subject(
+    subject_data: SubjectCreate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Create a new subject"""
+    user = _get_user(current_user, db)
+    _require_admin(user)
+
+    service = SubjectService(db)
+    try:
+        subject = service.create_subject(subject_data, user.tenant_id)
+        resp = SubjectResponse.model_validate(subject)
+        resp.group_name = subject.group.name if subject.group else None
+        return resp
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("/{subject_id}/assign/{class_id}", status_code=status.HTTP_200_OK)
@@ -303,31 +271,64 @@ def unassign_subject_from_class(
     return {"message": "Subject unassigned from class successfully"}
 
 
-@router.get("/class/{class_id}/subjects", response_model=ClassSubjectsResponse)
-def get_class_subjects(
-    class_id: int,
+@router.get("/{subject_id}", response_model=SubjectResponse)
+def get_subject(
+    subject_id: int,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Get all subjects assigned to a class"""
+    """Get a single subject by ID"""
     user = _get_user(current_user, db)
+    service = SubjectService(db)
+    subject = service.get_subject(subject_id, user.tenant_id)
 
-    from app.models.class_model import Class
+    if not subject:
+        raise HTTPException(status_code=404, detail="Subject not found")
 
-    class_obj = (
-        db.query(Class)
-        .filter(Class.id == class_id, Class.tenant_id == user.tenant_id)
-        .first()
-    )
-    if not class_obj:
-        raise HTTPException(status_code=404, detail="Class not found")
+    resp = SubjectResponse.model_validate(subject)
+    resp.group_name = subject.group.name if subject.group else None
+    return resp
+
+
+@router.put("/{subject_id}", response_model=SubjectResponse)
+def update_subject(
+    subject_id: int,
+    subject_data: SubjectUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update a subject"""
+    user = _get_user(current_user, db)
+    _require_admin(user)
 
     service = SubjectService(db)
-    subjects = service.get_class_subjects(class_id, user.tenant_id)
+    try:
+        subject = service.update_subject(subject_id, subject_data, user.tenant_id)
+        if not subject:
+            raise HTTPException(status_code=404, detail="Subject not found")
+        resp = SubjectResponse.model_validate(subject)
+        resp.group_name = subject.group.name if subject.group else None
+        return resp
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    return ClassSubjectsResponse(
-        class_id=class_id,
-        class_name=class_obj.name,
-        subjects=[ClassSubjectInfo(**s) for s in subjects],
-        total=len(subjects),
-    )
+
+@router.delete("/{subject_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_subject(
+    subject_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Delete a subject"""
+    user = _get_user(current_user, db)
+    _require_admin(user)
+
+    service = SubjectService(db)
+    try:
+        success = service.delete_subject(subject_id, user.tenant_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Subject not found")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

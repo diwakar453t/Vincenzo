@@ -172,6 +172,24 @@ class TenantMiddleware(BaseHTTPMiddleware):
         if not tenant_id:
             tenant_id = request.query_params.get("tenant_id")
 
+        # 4. JWT token fallback — extract tenant_id from Bearer token
+        # The JWT already contains tenant_id (set at login), so authenticated
+        # requests should ALWAYS work even without the X-Tenant-ID header.
+        if not tenant_id:
+            auth_header = request.headers.get("Authorization", "")
+            if auth_header.startswith("Bearer "):
+                try:
+                    from jose import jwt as jose_jwt, JWTError
+                    token = auth_header[7:]
+                    payload = jose_jwt.decode(
+                        token,
+                        settings.JWT_SECRET_KEY,
+                        algorithms=[settings.JWT_ALGORITHM],
+                    )
+                    tenant_id = payload.get("tenant_id")
+                except Exception:
+                    pass  # Invalid token handled by auth dependency later
+
         # No tenant found — reject (except health check)
         if not tenant_id:
             return JSONResponse(

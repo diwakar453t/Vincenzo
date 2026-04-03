@@ -21,7 +21,7 @@ alembic upgrade head && echo "✅ Migrations complete" || echo "⚠️  Migratio
 
 # Step 2: Seed demo accounts (idempotent — safe to run on every startup)
 echo "🌱 Seeding demo accounts..."
-python seeds/seed_data.py && echo "✅ Seeding complete" || echo "⚠️  Seed step failed — continuing"
+python seeds/seed_initial_data.py && echo "✅ Seeding complete" || echo "⚠️  Seed step failed — continuing"
 
 # Step 3: Start the application
 echo "🌐 Starting gunicorn..."

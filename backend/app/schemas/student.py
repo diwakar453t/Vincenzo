@@ -67,10 +67,26 @@ class StudentUpdate(BaseModel):
     medical_info: Optional[str] = None
 
 
-class StudentResponse(StudentBase):
+class StudentResponse(BaseModel):
     """Schema for student response"""
 
     id: int
+    student_id: str
+    first_name: str
+    last_name: str
+    date_of_birth: date
+    gender: str
+    email: Optional[str] = None   # plain str — allows .local internal emails
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    enrollment_date: date
+    class_id: Optional[int] = None
+    parent_id: Optional[int] = None
+    status: str
+    photo_url: Optional[str] = None
+    emergency_contact: Optional[str] = None
+    emergency_contact_name: Optional[str] = None
+    medical_info: Optional[str] = None
     tenant_id: str
     created_at: datetime
     updated_at: datetime

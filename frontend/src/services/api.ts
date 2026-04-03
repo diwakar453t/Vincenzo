@@ -30,13 +30,26 @@ api.interceptors.request.use(
       const tenantId = state.auth.user?.tenant_id;
       if (tenantId) {
         config.headers['X-Tenant-ID'] = tenantId;
+        // Persist for page-refresh scenarios
+        localStorage.setItem('tenant_id', tenantId);
+      } else {
+        // Fallback: read from localStorage (set at login, survives page reload)
+        const persisted = localStorage.getItem('tenant_id');
+        if (persisted) {
+          config.headers['X-Tenant-ID'] = persisted;
+        }
       }
     } catch {
-      // Store not yet initialized — skip tenant header
+      // Store not yet initialized — try localStorage
+      const persisted = localStorage.getItem('tenant_id');
+      if (persisted) {
+        config.headers['X-Tenant-ID'] = persisted;
+      }
     }
 
     return config;
   },
+
   (error) => Promise.reject(error),
 );
 

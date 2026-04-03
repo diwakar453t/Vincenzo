@@ -225,12 +225,12 @@ class StudentService:
                 )
 
                 # 1. Create User
+                student_email = f"{roll_number.lower()}@student.local"
                 user = User(
-                    email=f"{roll_number.lower()}@student.local",
-                    username=roll_number,
+                    email=student_email,
                     hashed_password=get_password_hash(password),
                     full_name=student_name,
-                    role=UserRole.STUDENT,
+                    role=UserRole.STUDENT.value,
                     tenant_id=tenant_id,
                     is_active=True,
                 )
@@ -242,8 +242,7 @@ class StudentService:
                     student_id=roll_number,
                     first_name=first_name,
                     last_name=last_name,
-                    full_name=student_name,
-                    email=email,
+                    email=student_email,
                     date_of_birth=date.today(),  # Placeholder
                     gender="Other",
                     enrollment_date=date.today(),

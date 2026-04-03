@@ -77,6 +77,10 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       // Persist user so role survives page refresh
       localStorage.setItem('auth_user', JSON.stringify(action.payload.user));
+      // Persist tenant_id so X-Tenant-ID header works after page refresh
+      if (action.payload.user.tenant_id) {
+        localStorage.setItem('tenant_id', action.payload.user.tenant_id);
+      }
     },
     logout: (state) => {
       state.user = null;
@@ -85,6 +89,7 @@ const authSlice = createSlice({
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('auth_user');
+      localStorage.removeItem('tenant_id');
       sessionStorage.removeItem('access_token');
       sessionStorage.removeItem('refresh_token');
     },

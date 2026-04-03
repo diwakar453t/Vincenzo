@@ -38,7 +38,7 @@ def _require_admin(user: User):
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Department endpoints
+# Department LIST endpoint
 # ═══════════════════════════════════════════════════════════════════════
 
 
@@ -57,6 +57,12 @@ def list_departments(
     )
 
 
+# ═══════════════════════════════════════════════════════════════════════
+# IMPORTANT: /tree and /designations/* MUST come BEFORE /{department_id}
+# to prevent FastAPI from treating "tree" or "designations" as an int.
+# ═══════════════════════════════════════════════════════════════════════
+
+
 @router.get("/tree", response_model=DepartmentTreeResponse)
 def department_tree(
     current_user: dict = Depends(get_current_user),
@@ -66,72 +72,6 @@ def department_tree(
     service = DepartmentService(db)
     tree = service.get_tree(user.tenant_id)
     return DepartmentTreeResponse(tree=[DepartmentTreeNode(**n) for n in tree])
-
-
-@router.get("/{department_id}", response_model=DepartmentResponse)
-def get_department(
-    department_id: int,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    user = _get_user(current_user, db)
-    service = DepartmentService(db)
-    d = service.get_department(department_id, user.tenant_id)
-    if not d:
-        raise HTTPException(status_code=404, detail="Department not found")
-    return d
-
-
-@router.post(
-    "/", response_model=DepartmentResponse, status_code=status.HTTP_201_CREATED
-)
-def create_department(
-    data: DepartmentCreate,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    user = _get_user(current_user, db)
-    _require_admin(user)
-    service = DepartmentService(db)
-    d = service.create_department(data, user.tenant_id)
-    result = service.get_department(d.id, user.tenant_id)
-    return result
-
-
-@router.put("/{department_id}", response_model=DepartmentResponse)
-def update_department(
-    department_id: int,
-    data: DepartmentUpdate,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    user = _get_user(current_user, db)
-    _require_admin(user)
-    service = DepartmentService(db)
-    d = service.update_department(department_id, data, user.tenant_id)
-    if not d:
-        raise HTTPException(status_code=404, detail="Department not found")
-    result = service.get_department(d.id, user.tenant_id)
-    return result
-
-
-@router.delete("/{department_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_department(
-    department_id: int,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    user = _get_user(current_user, db)
-    _require_admin(user)
-    service = DepartmentService(db)
-    if not service.delete_department(department_id, user.tenant_id):
-        raise HTTPException(status_code=404, detail="Department not found")
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# Designation endpoints
-# ═══════════════════════════════════════════════════════════════════════
 
 
 @router.get("/designations/all", response_model=DesignationListResponse)
@@ -204,4 +144,70 @@ def delete_designation(
     service = DepartmentService(db)
     if not service.delete_designation(designation_id, user.tenant_id):
         raise HTTPException(status_code=404, detail="Designation not found")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Department individual-record + mutation endpoints (AFTER specific routes)
+# ═══════════════════════════════════════════════════════════════════════
+
+
+@router.get("/{department_id}", response_model=DepartmentResponse)
+def get_department(
+    department_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user = _get_user(current_user, db)
+    service = DepartmentService(db)
+    d = service.get_department(department_id, user.tenant_id)
+    if not d:
+        raise HTTPException(status_code=404, detail="Department not found")
+    return d
+
+
+@router.post(
+    "/", response_model=DepartmentResponse, status_code=status.HTTP_201_CREATED
+)
+def create_department(
+    data: DepartmentCreate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user = _get_user(current_user, db)
+    _require_admin(user)
+    service = DepartmentService(db)
+    d = service.create_department(data, user.tenant_id)
+    result = service.get_department(d.id, user.tenant_id)
+    return result
+
+
+@router.put("/{department_id}", response_model=DepartmentResponse)
+def update_department(
+    department_id: int,
+    data: DepartmentUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user = _get_user(current_user, db)
+    _require_admin(user)
+    service = DepartmentService(db)
+    d = service.update_department(department_id, data, user.tenant_id)
+    if not d:
+        raise HTTPException(status_code=404, detail="Department not found")
+    result = service.get_department(d.id, user.tenant_id)
+    return result
+
+
+@router.delete("/{department_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_department(
+    department_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user = _get_user(current_user, db)
+    _require_admin(user)
+    service = DepartmentService(db)
+    if not service.delete_department(department_id, user.tenant_id):
+        raise HTTPException(status_code=404, detail="Department not found")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
